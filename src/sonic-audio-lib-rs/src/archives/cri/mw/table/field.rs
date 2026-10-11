@@ -7,7 +7,7 @@ pub struct CriTableField
     pub flag: CriFieldFlag,
     pub name: String,
     pub source: Vec<u8>,
-    pub offset: u32, //Is this really needed?
+    pub offset: usize, //Is this really needed?
     pub values: Vec<CriFieldValue>,
 }
 

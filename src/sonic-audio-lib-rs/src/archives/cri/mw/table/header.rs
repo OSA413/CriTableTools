@@ -155,13 +155,13 @@ impl CriTableHeader {
             {
                 if has_flag(field_flag.bits(), CriFieldFlag::Data.bits())
                 {
-                    field_position = binary_reader::u32::read(source, pointer + field_index_pointer, &Endianness::Big, "")?;
-                    field_length = binary_reader::u32::read(source, pointer + field_index_pointer + 0x4, &Endianness::Big, "")?;
+                    field_position = binary_reader::u32::read(source, pointer + field_index_pointer, &Endianness::Big, "")? as usize;
+                    field_length = binary_reader::u32::read(source, pointer + field_index_pointer + 0x4, &Endianness::Big, "")? as usize;
                     field_index_pointer += 0x08;
                 }
                 else
                 {
-                    field_default_value = read_value_by_flag(&ttype, source, starting_pointer, header_string_pool_position as usize, header_data_pool_position as usize, pointer + field_index_pointer)?;
+                    field_default_value = read_value_by_flag(&ttype, source, starting_pointer, header_string_pool_position, header_data_pool_position, pointer + field_index_pointer)?;
                     field_index_pointer += type_offset;
                 }
             }
@@ -169,15 +169,15 @@ impl CriTableHeader {
             if has_flag(field_flag.bits(), CriFieldFlag::RowStorage.bits())
             {
                 field_offset = row_storage_offset;
-                row_storage_offset += type_offset as u32;
+                row_storage_offset += type_offset;
             }
 
             for row_index in 0..header_row_count {
                 let mut row_value = CriFieldValue::Byte(0);
                 if has_flag(field_flag.bits(), CriFieldFlag::RowStorage.bits())
                 {
-                    let value_pointer = CriTableHeader::go_to_value_ptr(Some(starting_pointer), header_rows_position as usize, header_row_length as usize, row_index as usize, field_offset as usize);
-                    row_value = read_value_by_flag(&ttype, source, starting_pointer, header_string_pool_position as usize, header_data_pool_position as usize, value_pointer)?;
+                    let value_pointer = CriTableHeader::go_to_value_ptr(Some(starting_pointer), header_rows_position, header_row_length, row_index, field_offset);
+                    row_value = read_value_by_flag(&ttype, source, starting_pointer, header_string_pool_position, header_data_pool_position, value_pointer)?;
                 }
                 else if has_flag(field_flag.bits(), CriFieldFlag::DefaultValue.bits())
                     && !has_flag(field_flag.bits(), CriFieldFlag::Data.bits())
@@ -195,9 +195,9 @@ impl CriTableHeader {
                     fields.push(CriTableField {
                         flag: field_flag.clone(),
                         name: field_name.clone(),
-                        source: source[field_position as usize..field_position as usize + field_length as usize].to_vec(),
+                        source: source[field_position..field_position + field_length].to_vec(),
                         values: vec![],
-                        offset: field_offset as u32,
+                        offset: field_offset,
                     });
                 }
 
