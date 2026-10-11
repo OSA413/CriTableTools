@@ -75,11 +75,25 @@ impl CriCpkArchive {
             // let mut etocReader = CriTableHeader::read_table(source, Some(etoc_section_pointer), *b"@UTF")?;
 
             while toc_reader.read() {
-                let mut entry = CriCpkEntry {
+                let length = toc_reader.get_field("FileSize").unwrap().to_u32(toc_reader.row_index - 1)? as usize;
+                let position = {
+                    let relative_position = toc_reader.get_field("FileOffset").unwrap().to_u64(toc_reader.row_index - 1)? as usize;
+                    if content_position < toc_position {
+                        relative_position + content_position as usize
+                    } else {
+                        relative_position + toc_position as usize
+                    }
+                };
+                let uncompressed_length = toc_reader.get_field("ExtractSize").unwrap().to_u32(toc_reader.row_index - 1)? as usize;
+                let is_compressed = length != uncompressed_length;
+
+                // etocReader.MoveToRow(tocReader.CurrentRow);
+                //entry.UpdateDateTime = DateTimeFromCpkDateTime(etocReader.GetUInt64("UpdateDateTime"));
+
+                let entry = CriCpkEntry {
                     directory_name: toc_reader.get_field("DirName").unwrap().to_string(toc_reader.row_index - 1)?,
                     name: toc_reader.get_field("FileName").unwrap().to_string(toc_reader.row_index - 1)?,
-                    length: toc_reader.get_field("FileSize").unwrap().to_u32(toc_reader.row_index - 1)?,
-                    position: toc_reader.get_field("FileOffset").unwrap().to_u64(toc_reader.row_index - 1)? as u32,
+                    value: source[position..position + length].to_vec(),
                     id: match is_latest_version {
                         true => toc_reader.get_field("ID").unwrap().to_u32(toc_reader.row_index - 1)?,
                         false => toc_reader.get_field("Info").unwrap().to_u32(toc_reader.row_index - 1)?,
@@ -90,18 +104,8 @@ impl CriCpkArchive {
                         NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
                         NaiveTime::from_hms_opt(0, 0, 0).unwrap()
                     ),
-                    is_compressed: false,
+                    is_compressed,
                 };
-                entry.is_compressed = entry.length != entry.uncompressed_length;
-
-                if content_position < toc_position {
-                    entry.position += content_position as u32;
-                } else {
-                    entry.position += toc_position as u32;
-                }
-
-                // etocReader.MoveToRow(tocReader.CurrentRow);
-                //entry.UpdateDateTime = DateTimeFromCpkDateTime(etocReader.GetUInt64("UpdateDateTime"));
 
                 entries.push(entry);
             }

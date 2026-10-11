@@ -17,5 +17,5 @@ pub enum CriFieldValue {
         #[serde(skip)]
         Vec<u8>
     ),
-    Guid(u128), //I don't remember actually the underlying type of GUID/UUID but afair it's u128
+    Guid(u128),
 }

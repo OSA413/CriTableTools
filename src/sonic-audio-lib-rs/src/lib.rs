@@ -10,10 +10,10 @@ pub mod archives {
             pub mod archive;
             pub mod mode;
             pub mod entry;
-            // pub mod section;
         }
         pub mod mw {
             pub mod table {
+                pub mod common;
                 pub mod field_flag;
                 pub mod field_value;
                 pub mod field;

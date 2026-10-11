@@ -2,11 +2,9 @@ use common_binary::{error::CommonBinaryError};
 use serde::Serialize;
 use sonic_audio_lib_rs::archives::cri::{
     cpk::archive::CriCpkArchive, mw::table::{
-        field::CriTableField, field_value::CriFieldValue, header::CriTableHeader, header_encoding_type::CriTableHeaderEncodingType,
+        common::{UTF_SIGNATURE, is_table_data}, field::CriTableField, field_value::CriFieldValue, header::CriTableHeader, header_encoding_type::CriTableHeaderEncodingType,
     },
 };
-
-const UTF_SIGNATURE: [u8; 4] = *b"@UTF";
 
 #[derive(Serialize)]
 pub struct JsonResult {
@@ -17,7 +15,7 @@ pub struct JsonResult {
 #[derive(Serialize)]
 pub struct TableJson {
     pub name: String,
-    pub encoding: String,
+    pub encoding: &'static str,
     pub fields: Vec<FieldJson>,
     pub rows: Vec<serde_json::Map<String, serde_json::Value>>,
 }
@@ -26,7 +24,7 @@ pub struct TableJson {
 pub struct FieldJson {
     pub name: String,
     #[serde(rename = "type")]
-    pub type_: &'static str,
+    pub ttype: &'static str,
 }
 
 #[derive(Serialize)]
@@ -62,8 +60,8 @@ fn dump_cpk(source: &[u8]) -> Result<CpkJson, CommonBinaryError> {
     let mut entries = Vec::with_capacity(archive.entries.len());
     for entry in &archive.entries {
         let mut table: Option<TableJson> = None;
-        if is_table_data(source, entry.position as usize) {
-            table = match dump_table(source, Some(entry.position as usize)) {
+        if is_table_data(&entry.value, Some(0)) {
+            table = match dump_table(&entry.value, Some(0)) {
                 Ok(table) => Some(table),
                 Err(_) => None,
             }
@@ -91,9 +89,8 @@ fn dump_table(
     let header = CriTableHeader::read_table(source, pointer, UTF_SIGNATURE)?;
 
     let encoding = match header.encoding_type {
-        CriTableHeaderEncodingType::ShiftJis => "shift-jis".to_string(),
-        CriTableHeaderEncodingType::Utf8 => "utf-8".to_string(),
-        CriTableHeaderEncodingType::Unknown(value) => format!("unknown-{value}"),
+        CriTableHeaderEncodingType::ShiftJis => "shift-jis",
+        CriTableHeaderEncodingType::Utf8 => "utf-8",
     };
 
     let fields = header
@@ -101,12 +98,12 @@ fn dump_table(
         .iter()
         .map(|field| FieldJson {
             name: field.name.clone(),
-            type_: field_type_name(field),
+            ttype: field_type_name(field),
         })
         .collect();
 
-    let mut rows = Vec::with_capacity(header.row_count as usize);
-    for row_index in 0..header.row_count as usize {
+    let mut rows = Vec::with_capacity(header.row_count);
+    for row_index in 0..header.row_count {
         let mut values = serde_json::Map::new();
         for field in &header.fields {
             let json_value = serde_json::to_value(&field.values[row_index]).unwrap();
@@ -121,10 +118,6 @@ fn dump_table(
         fields,
         rows,
     })
-}
-
-fn is_table_data(source: &[u8], pointer: usize) -> bool {
-    source.len() - pointer >= UTF_SIGNATURE.len() && source[pointer..pointer+UTF_SIGNATURE.len()] == UTF_SIGNATURE
 }
 
 // Maybe this can be simplified?

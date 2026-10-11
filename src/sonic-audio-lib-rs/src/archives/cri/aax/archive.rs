@@ -11,29 +11,25 @@ pub struct CriAaxArchive {
 
 impl CriAaxArchive {
     pub fn read(source: &[u8], pointer: Option<usize>) -> Result<CriAaxArchive, CommonBinaryError> {
-        let mut entries = Vec::new();
         let mut reader = CriTableHeader::read_table(source, pointer, [0x40, 0x55, 0x54, 0x46])?;
         let mode = match reader.table_name.as_str() {
             "AAX" => CriAaxArchiveMode::Adx,
-            "ADPCM_WII" => CriAaxArchiveMode::Dsp,
             "SWLPCM" => CriAaxArchiveMode::Wav,
-            value => {
-                eprintln!("Unknown AAX type '{value}'. Please report the error with the file(s).");
+            "ADPCM_WII" => {
+                eprintln!("DSP files aren't supported.");
                 return Err(CommonBinaryError::SeeConsole());
-            }
+            },//CriAaxArchiveMode::Dsp,
+            value => {
+                eprintln!("Unknown AAX type '{value}'");
+                return Err(CommonBinaryError::SeeConsole());
+            },
         };
 
-        if mode == CriAaxArchiveMode::Dsp {
-            eprintln!("DSP files aren't supported yet.");
-            return Err(CommonBinaryError::SeeConsole());
-        }
-
+        let mut entries = Vec::with_capacity(reader.row_count);
         while reader.read() {
-            let (length, position) = reader.get_length_and_position(&source, "data");
             entries.push(CriAaxEntry {
                 flag: CriAaxEntryFlag::from(reader.get_field("lpflg").unwrap().to_u8(reader.row_index as usize - 1)?),
-                position,
-                length
+                data: reader.get_field_source(&source, "data"),
             });
         }
 
@@ -43,6 +39,8 @@ impl CriAaxArchive {
         })
     }
 
+    // In the AaxArchive there can be only two entries as maximum: Intro and/or Loop
+    // Maybe redo simpler?
     pub fn add(&mut self, item: CriAaxEntry) {
         if self.entries.len() == 2 || self.entries.iter().find(|entry| entry.flag == item.flag).is_some() {
             return;

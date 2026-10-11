@@ -32,8 +32,7 @@ pub fn extract_csb(path: &str) {
         let output_directory_name = base_directory.join(path.file_stem().unwrap());
 
         let mut cpk_archive: Option<CriCpkArchive> = None;
-        let mut cpk_source: Option<Vec<u8>> = None;
-        let found = find_cpk(&output_directory_name.to_string_lossy());
+        let cpk_path = find_cpk(&output_directory_name.to_string_lossy());
 
         let file_content = fs::read(path).unwrap();
 
@@ -41,10 +40,9 @@ pub fn extract_csb(path: &str) {
 
         while reader.read() {
             if reader.get_field("name").unwrap().to_string(reader.row_index - 1).unwrap() == "SOUND_ELEMENT" {
-                let table_length_and_position = reader.get_length_and_position(&file_content, "utf");
-                let sdl_source = &file_content[table_length_and_position.1 as usize..table_length_and_position.0 as usize + table_length_and_position.1 as usize];
+                let sdl_source = reader.get_field_source(&file_content, "utf");
                 let mut sdl_reader = CriTableHeader::read_table(
-                    sdl_source,
+                    &sdl_source,
                     Some(0),
                     *b"@UTF",
                 ).unwrap();
@@ -57,11 +55,11 @@ pub fn extract_csb(path: &str) {
 
                     let streaming = sdl_reader.get_field("stmflg").unwrap().to_u8(sdl_reader.row_index - 1).unwrap() != 0;
 
-                    if streaming && found.is_none() {
+                    if streaming && cpk_path.is_none() {
                         panic!("Cannot find the external .CPK file for this .CSB file. Please ensure that the external .CPK file is stored in the directory where the .CPK file is.");
-                    } else if streaming && found.is_some() && cpk_archive.is_none() {
+                    } else if streaming && cpk_path.is_some() && cpk_archive.is_none() {
                         println!("The CSB got a CPK, trying to read it also");
-                        cpk_source = Some(fs::read(found.as_ref().unwrap()).unwrap());
+                        let cpk_source = Some(fs::read(cpk_path.as_ref().unwrap()).unwrap());
                         cpk_archive = Some(CriCpkArchive::read(&cpk_source.as_ref().unwrap(), 0).unwrap());
                     }
 
@@ -74,10 +72,7 @@ pub fn extract_csb(path: &str) {
 
                         match cpk_entry {
                             Some(cpk_entry) => {
-                                let aax_source = &cpk_source.as_ref().unwrap()[
-                                    cpk_entry.position as usize..cpk_entry.position as usize + cpk_entry.length as usize
-                                ];
-
+                                let aax_source = &cpk_entry.value;
                                 let aax_archive = CriAaxArchive::read(aax_source, Some(0)).unwrap();
 
                                 for entry in aax_archive.entries {
@@ -86,20 +81,17 @@ pub fn extract_csb(path: &str) {
                                         CriAaxEntryFlag::Loop => "Loop.adx",
                                     };
 
-                                    let data_start_pointer: usize = cpk_entry.position as usize + entry.position as usize;
-
                                     fs::write(
                                         destination_path.clone().join(adx_file_name),
-                                        &cpk_source.as_ref().unwrap()[data_start_pointer..data_start_pointer + entry.length as usize],
+                                        &entry.data,
                                     ).unwrap();
                                 }
                             }
                             None => ()
                         }
                     } else {
-                        let aax_position = sdl_reader.get_length_and_position(sdl_source, "data");
-                        let aax_source = &sdl_source[aax_position.1 as usize..aax_position.0 as usize + aax_position.1 as usize];
-                        let aax_archive = CriAaxArchive::read(aax_source, Some(0)).unwrap();
+                        let aax_source = sdl_reader.get_field_source(&sdl_source, "data");
+                        let aax_archive = CriAaxArchive::read(&aax_source, Some(0)).unwrap();
 
                         for entry in aax_archive.entries {
                             let adx_file_name = match entry.flag {
@@ -107,11 +99,9 @@ pub fn extract_csb(path: &str) {
                                 CriAaxEntryFlag::Loop => "Loop.adx",
                             };
 
-                            let data_start_pointer = table_length_and_position.1 + aax_position.1 + entry.position;
-
                             fs::write(
                                 destination_path.join(adx_file_name),
-                                &file_content[data_start_pointer as usize..data_start_pointer as usize + entry.length as usize],
+                                &entry.data,
                             ).unwrap();
                         }
                     }

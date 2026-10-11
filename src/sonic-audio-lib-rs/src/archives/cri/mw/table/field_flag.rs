@@ -22,7 +22,5 @@ bitflags! {
         const Guid = 12;
 
         const TypeMask = 15;
-        // The source may set any bits
-        const _ = !0;
     }
 }

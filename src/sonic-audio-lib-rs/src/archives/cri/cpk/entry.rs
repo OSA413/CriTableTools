@@ -8,6 +8,5 @@ pub struct CriCpkEntry {
     pub comment: String,
     pub is_compressed: bool,
     pub uncompressed_length: u32,
-    pub length: u32,
-    pub position: u32,
+    pub value: Vec<u8>,
 }
