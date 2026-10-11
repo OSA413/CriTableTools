@@ -1,19 +1,15 @@
 use common_binary::{binary_reader, endianness::Endianness, error::CommonBinaryError};
 
-use crate::archives::cri::mw::table::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType};
+use crate::archives::cri::mw::table::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType, table_reading_result::CriTableReadingResult};
 
-pub struct CriTableHeader {
-    pub unknown_byte: u8,
-    pub encoding_type: CriTableHeaderEncodingType,
-    pub rows_position: usize,
-    pub data_pool_position: usize,
-    pub table_name: String,
-    pub row_length: usize,
-    pub row_count: usize,
+pub struct CriTable {
+    pub name: String,
+    pub encoding: CriTableHeaderEncodingType,
     pub fields: Vec<CriTableField>,
+    pub unknown_byte: u8,
 }
 
-impl CriTableHeader {
+impl CriTable {
     pub fn get_field(&self, field_name: &str) -> Option<&CriTableField> {
         self.fields.iter().find(|field| field.name == field_name)
     }
@@ -22,7 +18,7 @@ impl CriTableHeader {
         starting_pointer.unwrap_or(0) + rows_position + (row_length * row_index) + offset
     }
 
-    pub fn read_table(source: &[u8], pointer: Option<usize>, expected_segnature: [u8; 4]) -> Result<Self, CommonBinaryError> {
+    pub fn read(source: &[u8], pointer: Option<usize>, expected_segnature: [u8; 4]) -> Result<CriTableReadingResult, CommonBinaryError> {
         let starting_pointer = pointer.unwrap_or(0);
 
         if !source[starting_pointer..starting_pointer + 4].eq(&expected_segnature) {
@@ -97,7 +93,7 @@ impl CriTableHeader {
                 let row_value = {
                     if field_flags.row_storage
                     {
-                        let value_pointer = CriTableHeader::go_to_value_ptr(Some(starting_pointer), header_rows_position, header_row_length, row_index, field_offset);
+                        let value_pointer = CriTable::go_to_value_ptr(Some(starting_pointer), header_rows_position, header_row_length, row_index, field_offset);
                         field_type.read_value(source, starting_pointer, header_string_pool_position, header_data_pool_position, value_pointer)?
                     }
                     else if field_flags.default_value && field_type != CriFieldType::Data
@@ -130,40 +126,18 @@ impl CriTableHeader {
 
         let header_table_name = binary_reader::string32::read(source, starting_pointer + header_string_pool_position + header_relative_table_name_pointer as usize, "").unwrap().0;
 
-        Ok(CriTableHeader {
-            unknown_byte: header_unknown_byte,
-            encoding_type: CriTableHeaderEncodingType::from(header_encoding_type),
-            rows_position: header_rows_position,
-            data_pool_position: header_data_pool_position,
-            table_name: header_table_name,
-            row_length: header_row_length,
-            row_count: header_row_count,
-            fields,
-        })
-    }
-
-    pub fn get_field_source(&self, source: &[u8], field_name: &str, row_index: usize) -> Vec<u8> {
-        let field_index = self.fields.iter().position(|x| x.name == field_name);
-
-        let field_index = match field_index {
-            Some(index) => index,
-            None => return vec![],
-        };
-
-        if field_index >= self.fields.len() {
-            return vec![];
-        }
-
-        let field = &self.fields[field_index];
-        if !field.flags.row_storage {
-            return field.source.clone();
-        }
-
-        let ptr = CriTableHeader::go_to_value_ptr(Some(0), self.rows_position, self.row_length, row_index, field.offset);
-        // 0 is header_position in the original C# project, I'm not sure if this will blow up, but so far it works
-        let start = 0 + self.data_pool_position + binary_reader::u32::read(source, ptr, &Endianness::Big, "").unwrap() as usize;
-        let length = binary_reader::u32::read(source, ptr + 4, &Endianness::Big, "").unwrap() as usize;
-
-        return source[start..start + length].to_vec();
+        Ok(
+            CriTableReadingResult {
+                table: CriTable {
+                    unknown_byte: header_unknown_byte,
+                    encoding: CriTableHeaderEncodingType::from(header_encoding_type),
+                    name: header_table_name,
+                    fields,
+                },
+                rows_position: header_rows_position,
+                data_pool_position: header_data_pool_position,
+                row_length: header_row_length,
+            },
+        )
     }
 }

@@ -20,7 +20,8 @@ pub mod archives {
                 pub mod field_value;
                 pub mod field;
                 pub mod header_encoding_type;
-                pub mod header;
+                pub mod table_reading_result;
+                pub mod table;
             }
         }
     }

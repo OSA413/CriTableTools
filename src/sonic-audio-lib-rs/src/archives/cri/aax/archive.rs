@@ -2,7 +2,7 @@ use std::{ffi::OsStr, path::Path};
 
 use common_binary::error::CommonBinaryError;
 
-use crate::archives::cri::{aax::{archive_mode::CriAaxArchiveMode, entry::CriAaxEntry, entry_flag::CriAaxEntryFlag}, mw::table::header::CriTableHeader};
+use crate::archives::cri::{aax::{archive_mode::CriAaxArchiveMode, entry::CriAaxEntry, entry_flag::CriAaxEntryFlag}, mw::table::table::CriTable};
 
 pub struct CriAaxArchive {
     pub mode: CriAaxArchiveMode,
@@ -11,25 +11,25 @@ pub struct CriAaxArchive {
 
 impl CriAaxArchive {
     pub fn read(source: &[u8], pointer: Option<usize>) -> Result<CriAaxArchive, CommonBinaryError> {
-        let reader = CriTableHeader::read_table(source, pointer, [0x40, 0x55, 0x54, 0x46])?;
-        let mode = match reader.table_name.as_str() {
+        let reader = CriTable::read(source, pointer, [0x40, 0x55, 0x54, 0x46])?;
+        let mode = match reader.table.name.as_str() {
             "AAX" => CriAaxArchiveMode::Adx,
             "SWLPCM" => CriAaxArchiveMode::Wav,
             "ADPCM_WII" => {
                 eprintln!("DSP files aren't supported.");
                 return Err(CommonBinaryError::SeeConsole());
-            },//CriAaxArchiveMode::Dsp,
+            },
             value => {
                 eprintln!("Unknown AAX type '{value}'");
                 return Err(CommonBinaryError::SeeConsole());
             },
         };
 
-        let mut entries = Vec::with_capacity(reader.row_count);
-        for row_index in 0..reader.row_count {
+        let mut entries = Vec::with_capacity(reader.row_count());
+        for row_index in 0..reader.row_count() {
             entries.push(CriAaxEntry {
-                flag: CriAaxEntryFlag::from(reader.get_field("lpflg").unwrap().to_u8(row_index)?),
-                data: reader.get_field_source(&source, "data", row_index),
+                flag: CriAaxEntryFlag::from(reader.table.get_field("lpflg").unwrap().to_u8(row_index)?),
+                data: reader.get_field_source(&source, row_index, "data"),
             });
         }
 

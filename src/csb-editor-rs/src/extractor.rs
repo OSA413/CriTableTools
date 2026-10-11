@@ -1,6 +1,6 @@
 use std::{fs::{self, create_dir_all}, path::{Path, PathBuf}};
 
-use sonic_audio_lib_rs::archives::cri::{aax::{archive::CriAaxArchive, entry_flag::CriAaxEntryFlag}, cpk::archive::CriCpkArchive, mw::table::header::CriTableHeader};
+use sonic_audio_lib_rs::archives::cri::{aax::{archive::CriAaxArchive, entry_flag::CriAaxEntryFlag}, cpk::archive::CriCpkArchive, mw::table::table::CriTable};
 
 fn find_cpk(path_to_search: &str) -> Option<PathBuf> {
     let path = &format!("{}.cpk", &path_to_search);
@@ -36,24 +36,24 @@ pub fn extract_csb(path: &str) {
 
         let file_content = fs::read(path).unwrap();
 
-        let reader = CriTableHeader::read_table(&file_content, Some(0), [0x40, 0x55, 0x54, 0x46]).unwrap();
+        let reader = CriTable::read(&file_content, Some(0), [0x40, 0x55, 0x54, 0x46]).unwrap();
 
-        for row_index in 0..reader.row_count {
-            if reader.get_field("name").unwrap().to_string(row_index).unwrap() == "SOUND_ELEMENT" {
-                let sdl_source = reader.get_field_source(&file_content, "utf", row_index);
-                let sdl_reader = CriTableHeader::read_table(
+        for row_index in 0..reader.row_count() {
+            if reader.table.get_field("name").unwrap().to_string(row_index).unwrap() == "SOUND_ELEMENT" {
+                let sdl_source = reader.get_field_source(&file_content, row_index, "utf");
+                let sdl_reader = CriTable::read(
                     &sdl_source,
                     Some(0),
                     *b"@UTF",
                 ).unwrap();
 
-                for sdl_row_index in 0..sdl_reader.row_count
+                for sdl_row_index in 0..sdl_reader.row_count()
                 {
-                    if sdl_reader.get_field("fmt").unwrap().to_u8(sdl_row_index).unwrap() != 0 {
+                    if sdl_reader.table.get_field("fmt").unwrap().to_u8(sdl_row_index).unwrap() != 0 {
                         panic!("The given CSB file contains an audio file which is not an ADX. Only CSB files with ADXs are supported.");
                     }
 
-                    let streaming = sdl_reader.get_field("stmflg").unwrap().to_u8(sdl_row_index).unwrap() != 0;
+                    let streaming = sdl_reader.table.get_field("stmflg").unwrap().to_u8(sdl_row_index).unwrap() != 0;
 
                     if streaming && cpk_path.is_none() {
                         panic!("Cannot find the external .CPK file for this .CSB file. Please ensure that the external .CPK file is stored in the directory where the .CPK file is.");
@@ -63,7 +63,7 @@ pub fn extract_csb(path: &str) {
                         cpk_archive = Some(CriCpkArchive::read(&cpk_source.as_ref().unwrap(), 0).unwrap());
                     }
 
-                    let sdl_name = sdl_reader.get_field("name").unwrap().to_string(sdl_row_index).unwrap();
+                    let sdl_name = sdl_reader.table.get_field("name").unwrap().to_string(sdl_row_index).unwrap();
                     let destination_path = output_directory_name.join(&sdl_name);
                     create_dir_all(&destination_path).unwrap();
 
@@ -90,7 +90,7 @@ pub fn extract_csb(path: &str) {
                             None => ()
                         }
                     } else {
-                        let aax_source = sdl_reader.get_field_source(&sdl_source, "data", sdl_row_index);
+                        let aax_source = sdl_reader.get_field_source(&sdl_source, sdl_row_index, "data");
                         let aax_archive = CriAaxArchive::read(&aax_source, Some(0)).unwrap();
 
                         for entry in aax_archive.entries {

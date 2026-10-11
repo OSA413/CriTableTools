@@ -2,7 +2,7 @@ use common_binary::{error::CommonBinaryError};
 use serde::Serialize;
 use sonic_audio_lib_rs::archives::cri::{
     cpk::archive::CriCpkArchive, mw::table::{
-        common::{UTF_SIGNATURE, is_table_data}, field::CriTableField, field_type::CriFieldType, header::CriTableHeader, header_encoding_type::CriTableHeaderEncodingType,
+        common::{UTF_SIGNATURE, is_table_data}, field::CriTableField, field_type::CriFieldType, table::CriTable, header_encoding_type::CriTableHeaderEncodingType,
     },
 };
 
@@ -86,14 +86,15 @@ fn dump_table(
     source: &[u8],
     pointer: Option<usize>,
 ) -> Result<TableJson, CommonBinaryError> {
-    let header = CriTableHeader::read_table(source, pointer, UTF_SIGNATURE)?;
+    let reader = CriTable::read(source, pointer, UTF_SIGNATURE)?;
 
-    let encoding = match header.encoding_type {
+    let encoding = match reader.table.encoding {
         CriTableHeaderEncodingType::ShiftJis => "shift-jis",
         CriTableHeaderEncodingType::Utf8 => "utf-8",
     };
 
-    let fields = header
+    let fields = reader
+        .table
         .fields
         .iter()
         .map(|field| FieldJson {
@@ -102,10 +103,10 @@ fn dump_table(
         })
         .collect();
 
-    let mut rows = Vec::with_capacity(header.row_count);
-    for row_index in 0..header.row_count {
+    let mut rows = Vec::with_capacity(reader.row_count());
+    for row_index in 0..reader.row_count() {
         let mut values = serde_json::Map::new();
-        for field in &header.fields {
+        for field in &reader.table.fields {
             let json_value = serde_json::to_value(&field.rows[row_index]).unwrap();
             values.insert(field.name.clone(), json_value);
         }
@@ -113,7 +114,7 @@ fn dump_table(
     }
 
     Ok(TableJson {
-        name: header.table_name,
+        name: reader.table.name,
         encoding,
         fields,
         rows,
