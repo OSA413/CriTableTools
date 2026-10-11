@@ -14,6 +14,7 @@ pub mod archives {
         pub mod mw {
             pub mod table {
                 pub mod common;
+                pub mod field_type;
                 pub mod field_flag;
                 pub mod field_value;
                 pub mod field;
@@ -23,5 +24,3 @@ pub mod archives {
         }
     }
 }
-
-pub mod has_flag;

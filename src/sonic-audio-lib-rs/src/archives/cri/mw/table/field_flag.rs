@@ -1,7 +1,9 @@
 use bitflags::bitflags;
 
+use crate::archives::cri::mw::table::{field_type::CriFieldType};
+
 bitflags! {
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub struct CriFieldFlag: u8 {
         const Name = 16;
         const DefaultValue = 32;
@@ -20,7 +22,24 @@ bitflags! {
         const String = 10;
         const Data = 11;
         const Guid = 12;
+    }
+}
 
-        const TypeMask = 15;
+impl CriFieldFlag {
+    pub fn extract_type(&self) -> CriFieldType {
+        return if self.contains(CriFieldFlag::Guid) {CriFieldType::Guid}
+        else if self.contains(CriFieldFlag::Data) {CriFieldType::Data}
+        else if self.contains(CriFieldFlag::String) {CriFieldType::String}
+        else if self.contains(CriFieldFlag::Double) {CriFieldType::Double}
+        else if self.contains(CriFieldFlag::Single) {CriFieldType::Single}
+        else if self.contains(CriFieldFlag::Int64) {CriFieldType::Int64}
+        else if self.contains(CriFieldFlag::UInt64) {CriFieldType::UInt64}
+        else if self.contains(CriFieldFlag::Int32) {CriFieldType::Int32}
+        else if self.contains(CriFieldFlag::UInt32) {CriFieldType::UInt32}
+        else if self.contains(CriFieldFlag::Int16) {CriFieldType::Int16}
+        else if self.contains(CriFieldFlag::UInt16) {CriFieldType::UInt16}
+        else if self.contains(CriFieldFlag::SByte) {CriFieldType::SByte}
+        else if self.contains(CriFieldFlag::Byte) {CriFieldType::Byte}
+        else { panic!("At the dance floor, {self:?}") };
     }
 }
