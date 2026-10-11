@@ -1,6 +1,6 @@
 use common_binary::{binary_reader, endianness::Endianness, error::CommonBinaryError};
 
-use crate::archives::cri::mw::table::{field::CriTableField, field_flag::CriFieldFlag, field_value::CriFieldValue, field_value_wrapper::CriTableFieldRow, header_encoding_type::CriTableHeaderEncodingType};
+use crate::archives::cri::mw::table::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType};
 
 pub struct CriTableHeader {
     pub unknown_byte: u8,
@@ -50,7 +50,8 @@ impl CriTableHeader {
         let mut row_storage_offset = 0;
 
         for field_index in 0..header_field_count {
-            let field_flag = CriFieldFlag::from_bits(binary_reader::u8::read(source, pointer + field_index_pointer, "")?).unwrap();
+            let field_raw_flags = CriFieldRawFlags::from_bits(binary_reader::u8::read(source, pointer + field_index_pointer, "")?).unwrap();
+            let field_flags = field_raw_flags.extract_flags();
             field_index_pointer += 0x01;
             // Maybe redo as a builder pattern?
             let mut field_name_pointer = 0;
@@ -59,34 +60,34 @@ impl CriTableHeader {
             let mut field_offset = 0;
             // /Maybe redo as a builder pattern?
 
-            if field_flag.contains(CriFieldFlag::Name)
+            if field_flags.name
             {
                 field_name_pointer = binary_reader::u32::read(source, pointer + field_index_pointer, &Endianness::Big, "")? as usize;
                 field_index_pointer += 0x04;
             }
 
             let field_name = binary_reader::string32::read(source, starting_pointer + header_string_pool_position + field_name_pointer, "").unwrap().0;
-            let field_type = field_flag.extract_type();
+            let field_type = field_raw_flags.extract_type();
 
             // This value is shared between all default rows...
             let mut field_default_value = CriFieldValue::Byte(0);
 
-            if field_flag.contains(CriFieldFlag::DefaultValue)
+            if field_flags.default_value
             {
-                if field_flag.contains(CriFieldFlag::Data)
-                {
-                    field_position = binary_reader::u32::read(source, pointer + field_index_pointer, &Endianness::Big, "")? as usize;
-                    field_length = binary_reader::u32::read(source, pointer + field_index_pointer + 0x4, &Endianness::Big, "")? as usize;
-                    field_index_pointer += 0x08;
-                }
-                else
-                {
-                    field_default_value = field_type.read_value(source, starting_pointer, header_string_pool_position, header_data_pool_position, pointer + field_index_pointer)?;
-                    field_index_pointer += field_type.get_offset();
+                match field_type {
+                    CriFieldType::Data => {
+                        field_position = binary_reader::u32::read(source, pointer + field_index_pointer, &Endianness::Big, "")? as usize;
+                        field_length = binary_reader::u32::read(source, pointer + field_index_pointer + 0x4, &Endianness::Big, "")? as usize;
+                        field_index_pointer += 0x08;
+                    },
+                    _ => {
+                        field_default_value = field_type.read_value(source, starting_pointer, header_string_pool_position, header_data_pool_position, pointer + field_index_pointer)?;
+                        field_index_pointer += field_type.get_offset();
+                    }
                 }
             }
 
-            if field_flag.contains(CriFieldFlag::RowStorage)
+            if field_flags.row_storage
             {
                 field_offset = row_storage_offset;
                 row_storage_offset += field_type.get_offset();
@@ -94,41 +95,28 @@ impl CriTableHeader {
 
             for row_index in 0..header_row_count {
                 let row_value = {
-                    if field_flag.contains(CriFieldFlag::RowStorage)
+                    if field_flags.row_storage
                     {
                         let value_pointer = CriTableHeader::go_to_value_ptr(Some(starting_pointer), header_rows_position, header_row_length, row_index, field_offset);
-                        CriTableFieldRow {
-                            ttype: field_type,
-                            value: field_type.read_value(source, starting_pointer, header_string_pool_position, header_data_pool_position, value_pointer)?,
-                        }
+                        field_type.read_value(source, starting_pointer, header_string_pool_position, header_data_pool_position, value_pointer)?
                     }
-                    else if field_flag.contains(CriFieldFlag::DefaultValue)
-                        && !field_flag.contains(CriFieldFlag::Data)
+                    else if field_flags.default_value && field_type != CriFieldType::Data
                     {
-                        CriTableFieldRow {
-                            ttype: field_type,
-                            value: field_default_value.clone(),
-                        }
+                        field_default_value.clone()
                     }
                     // Not even per row, and not even constant value? Then there's no storage.
-                    else if !field_flag.contains(CriFieldFlag::RowStorage)
-                        && !field_flag.contains(CriFieldFlag::DefaultValue)
+                    else if !field_flags.row_storage && !field_flags.default_value
                     {
-                        CriTableFieldRow {
-                            ttype: field_type,
-                            value: field_type.clone().get_null_value(),
-                        }
+                        field_type.clone().get_null_value()
                     } else {
-                        CriTableFieldRow {
-                            ttype: field_type,
-                            value: CriFieldValue::Byte(0),
-                        }
+                        CriFieldValue::Byte(0)
                     }
                 };
 
                 if fields.len() <= field_index {
                     fields.push(CriTableField {
-                        flag: field_flag,
+                        flags: field_flags,
+                        ttype: field_type,
                         name: field_name.clone(),
                         source: source[field_position..field_position + field_length].to_vec(),
                         rows: vec![],
@@ -167,7 +155,7 @@ impl CriTableHeader {
         }
 
         let field = &self.fields[field_index];
-        if !field.flag.contains(CriFieldFlag::RowStorage) {
+        if !field.flags.row_storage {
             return field.source.clone();
         }
 

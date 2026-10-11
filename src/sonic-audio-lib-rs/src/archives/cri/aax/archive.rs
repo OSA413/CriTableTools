@@ -28,7 +28,7 @@ impl CriAaxArchive {
         let mut entries = Vec::with_capacity(reader.row_count);
         for row_index in 0..reader.row_count {
             entries.push(CriAaxEntry {
-                flag: CriAaxEntryFlag::from(reader.get_field("lpflg").unwrap().rows[row_index].to_u8()?),
+                flag: CriAaxEntryFlag::from(reader.get_field("lpflg").unwrap().to_u8(row_index)?),
                 data: reader.get_field_source(&source, "data", row_index),
             });
         }

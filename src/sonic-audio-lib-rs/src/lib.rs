@@ -15,8 +15,8 @@ pub mod archives {
             pub mod table {
                 pub mod common;
                 pub mod field_type;
-                pub mod field_flag;
-                pub mod field_value_wrapper;
+                pub mod field_flags;
+                pub mod field_raw_flags;
                 pub mod field_value;
                 pub mod field;
                 pub mod header_encoding_type;

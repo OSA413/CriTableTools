@@ -2,7 +2,7 @@ use common_binary::{error::CommonBinaryError};
 use serde::Serialize;
 use sonic_audio_lib_rs::archives::cri::{
     cpk::archive::CriCpkArchive, mw::table::{
-        common::{UTF_SIGNATURE, is_table_data}, field_type::CriFieldType, field_value_wrapper::CriTableFieldRow, header::CriTableHeader, header_encoding_type::CriTableHeaderEncodingType,
+        common::{UTF_SIGNATURE, is_table_data}, field::CriTableField, field_type::CriFieldType, header::CriTableHeader, header_encoding_type::CriTableHeaderEncodingType,
     },
 };
 
@@ -98,7 +98,7 @@ fn dump_table(
         .iter()
         .map(|field| FieldJson {
             name: field.name.clone(),
-            ttype: field_type_name(&field.rows[0]),
+            ttype: field_type_name(&field),
         })
         .collect();
 
@@ -121,7 +121,7 @@ fn dump_table(
 }
 
 // Maybe this can be simplified?
-fn field_type_name(field: &CriTableFieldRow) -> &'static str {
+fn field_type_name(field: &CriTableField) -> &'static str {
     match field.ttype {
         CriFieldType::Byte => "byte",
         CriFieldType::SByte => "sbyte",

@@ -29,11 +29,11 @@ impl CriCpkArchive {
 
         let (mode, is_latest_version) = match reader.get_field("CpkMode") {
             Some(is_latest_version) => {
-                (CriCpkMode::from(is_latest_version.rows[0].to_u32().unwrap()), true)
+                (CriCpkMode::from(is_latest_version.to_u32(0).unwrap()), true)
             }
             None => {
-                let toc_enabled = reader.get_field("TocOffset").is_some_and(|x| x.rows[0].to_u64().unwrap() > 0);
-                let itoc_enabled = reader.get_field("ItocOffset").is_some_and(|x| x.rows[0].to_u64().unwrap() > 0);
+                let toc_enabled = reader.get_field("TocOffset").is_some_and(|x| x.to_u64(0).unwrap() > 0);
+                let itoc_enabled = reader.get_field("ItocOffset").is_some_and(|x| x.to_u64(0).unwrap() > 0);
 
                 if toc_enabled && !itoc_enabled {
                     (CriCpkMode::FileName, false)
@@ -57,10 +57,10 @@ impl CriCpkArchive {
         }
 
         // Why is this u64?
-        let toc_position = reader.get_field("TocOffset").unwrap().rows[0].to_u64()?;
+        let toc_position = reader.get_field("TocOffset").unwrap().to_u64(0)?;
         // let itocPosition = reader.get_field("ItocOffset").unwrap().to_u64()?;
         // let etocPosition = reader.get_field("EtocOffset").unwrap().to_u64()?;
-        let content_position = reader.get_field("ContentOffset").unwrap().rows[0].to_u64()?;
+        let content_position = reader.get_field("ContentOffset").unwrap().to_u64(0)?;
 
         // let align = reader.get_field("Align").unwrap().to_u16()?;
 
@@ -74,31 +74,31 @@ impl CriCpkArchive {
             // let mut etocReader = CriTableHeader::read_table(source, Some(etoc_section_pointer), *b"@UTF")?;
 
             for toc_row_index in 0..toc_reader.row_count {
-                let length = toc_reader.get_field("FileSize").unwrap().rows[toc_row_index].to_u32()? as usize;
+                let length = toc_reader.get_field("FileSize").unwrap().to_u32(toc_row_index)? as usize;
                 let position = {
-                    let relative_position = toc_reader.get_field("FileOffset").unwrap().rows[toc_row_index].to_u64()? as usize;
+                    let relative_position = toc_reader.get_field("FileOffset").unwrap().to_u64(toc_row_index)? as usize;
                     if content_position < toc_position {
                         relative_position + content_position as usize
                     } else {
                         relative_position + toc_position as usize
                     }
                 };
-                let uncompressed_length = toc_reader.get_field("ExtractSize").unwrap().rows[toc_row_index].to_u32()? as usize;
+                let uncompressed_length = toc_reader.get_field("ExtractSize").unwrap().to_u32(toc_row_index)? as usize;
                 let is_compressed = length != uncompressed_length;
 
                 // etocReader.MoveToRow(tocReader.CurrentRow);
                 //entry.UpdateDateTime = DateTimeFromCpkDateTime(etocReader.GetUInt64("UpdateDateTime"));
 
                 let entry = CriCpkEntry {
-                    directory_name: toc_reader.get_field("DirName").unwrap().rows[toc_row_index].to_string()?,
-                    name: toc_reader.get_field("FileName").unwrap().rows[toc_row_index].to_string()?,
+                    directory_name: toc_reader.get_field("DirName").unwrap().to_string(toc_row_index)?,
+                    name: toc_reader.get_field("FileName").unwrap().to_string(toc_row_index)?,
                     value: source[position..position + length].to_vec(),
                     id: match is_latest_version {
-                        true => toc_reader.get_field("ID").unwrap().rows[toc_row_index].to_u32()?,
-                        false => toc_reader.get_field("Info").unwrap().rows[toc_row_index].to_u32()?,
+                        true => toc_reader.get_field("ID").unwrap().to_u32(toc_row_index)?,
+                        false => toc_reader.get_field("Info").unwrap().to_u32(toc_row_index)?,
                     },
-                    comment: toc_reader.get_field("UserString").unwrap().rows[toc_row_index].to_string()?,
-                    uncompressed_length: toc_reader.get_field("ExtractSize").unwrap().rows[toc_row_index].to_u32()?,
+                    comment: toc_reader.get_field("UserString").unwrap().to_string(toc_row_index)?,
+                    uncompressed_length: toc_reader.get_field("ExtractSize").unwrap().to_u32(toc_row_index)?,
                     update_date_time: NaiveDateTime::new(
                         NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
                         NaiveTime::from_hms_opt(0, 0, 0).unwrap()
@@ -113,7 +113,7 @@ impl CriCpkArchive {
             return Err(CommonBinaryError::SeeConsole());
         }
 
-        let comment = reader.get_field("Comment").unwrap().rows[0].to_string()?;
+        let comment = reader.get_field("Comment").unwrap().to_string(0)?;
 
         Ok(CriCpkArchive { mode, comment, entries })
     }
