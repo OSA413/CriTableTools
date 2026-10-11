@@ -2,7 +2,7 @@ use common_binary::{error::CommonBinaryError};
 use serde::Serialize;
 use sonic_audio_lib_rs::archives::cri::{
     cpk::archive::CriCpkArchive, mw::table::{
-        common::{UTF_SIGNATURE, is_table_data}, field::CriTableField, field_value::CriFieldValue, header::CriTableHeader, header_encoding_type::CriTableHeaderEncodingType,
+        common::{UTF_SIGNATURE, is_table_data}, field_type::CriFieldType, field_value_wrapper::CriTableFieldRow, header::CriTableHeader, header_encoding_type::CriTableHeaderEncodingType,
     },
 };
 
@@ -98,7 +98,7 @@ fn dump_table(
         .iter()
         .map(|field| FieldJson {
             name: field.name.clone(),
-            ttype: field_type_name(field),
+            ttype: field_type_name(&field.rows[0]),
         })
         .collect();
 
@@ -106,7 +106,7 @@ fn dump_table(
     for row_index in 0..header.row_count {
         let mut values = serde_json::Map::new();
         for field in &header.fields {
-            let json_value = serde_json::to_value(&field.values[row_index]).unwrap();
+            let json_value = serde_json::to_value(&field.rows[row_index]).unwrap();
             values.insert(field.name.clone(), json_value);
         }
         rows.push(values);
@@ -121,21 +121,21 @@ fn dump_table(
 }
 
 // Maybe this can be simplified?
-fn field_type_name(field: &CriTableField) -> &'static str {
-    match field.values[0] {
-        CriFieldValue::Byte(_) => "byte",
-        CriFieldValue::SByte(_) => "sbyte",
-        CriFieldValue::UInt16(_) => "uint16",
-        CriFieldValue::Int16(_) => "int16",
-        CriFieldValue::UInt32(_) => "uint32",
-        CriFieldValue::Int32(_) => "int32",
-        CriFieldValue::UInt64(_) => "uint64",
-        CriFieldValue::Int64(_) => "int64",
-        CriFieldValue::Single(_) => "single",
-        CriFieldValue::Double(_) => "double",
-        CriFieldValue::String(_) => "string",
-        CriFieldValue::Data(_) => "data",
-        CriFieldValue::Guid(_) => "guid",
+fn field_type_name(field: &CriTableFieldRow) -> &'static str {
+    match field.ttype {
+        CriFieldType::Byte => "byte",
+        CriFieldType::SByte => "sbyte",
+        CriFieldType::UInt16 => "uint16",
+        CriFieldType::Int16 => "int16",
+        CriFieldType::UInt32 => "uint32",
+        CriFieldType::Int32 => "int32",
+        CriFieldType::UInt64 => "uint64",
+        CriFieldType::Int64 => "int64",
+        CriFieldType::Single => "single",
+        CriFieldType::Double => "double",
+        CriFieldType::String => "string",
+        CriFieldType::Data => "data",
+        CriFieldType::Guid => "guid",
     }
 }
 

@@ -1,6 +1,6 @@
 use common_binary::{binary_reader, endianness::Endianness, error::CommonBinaryError};
 
-use crate::archives::cri::mw::table::{field::CriTableField, field_flag::{CriFieldFlag}, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType};
+use crate::archives::cri::mw::table::{field::CriTableField, field_flag::CriFieldFlag, field_value::CriFieldValue, field_value_wrapper::CriTableFieldRow, header_encoding_type::CriTableHeaderEncodingType};
 
 pub struct CriTableHeader {
     pub unknown_byte: u8,
@@ -11,7 +11,6 @@ pub struct CriTableHeader {
     pub row_length: usize,
     pub row_count: usize,
     pub fields: Vec<CriTableField>,
-    pub row_index: usize,
 }
 
 impl CriTableHeader {
@@ -23,15 +22,6 @@ impl CriTableHeader {
         starting_pointer.unwrap_or(0) + rows_position + (row_length * row_index) + offset
     }
 
-    pub fn read(&mut self) -> bool {
-        if self.row_index >= self.row_count {
-            return false;
-        }
-
-        self.row_index += 1;
-        return true;
-    }
-
     pub fn read_table(source: &[u8], pointer: Option<usize>, expected_segnature: [u8; 4]) -> Result<Self, CommonBinaryError> {
         let starting_pointer = pointer.unwrap_or(0);
 
@@ -40,14 +30,8 @@ impl CriTableHeader {
             return Err(CommonBinaryError::SeeConsole());
         }
 
-        // let header_length = binary_reader::u32::read(source, starting_pointer + 0x04, &Endianness::Big, "")? as usize + 0x8;
         let header_unknown_byte = binary_reader::u8::read(source, starting_pointer + 0x08, "")?;
         let header_encoding_type = binary_reader::u8::read(source, starting_pointer + 0x09, "")? as usize;
-
-        if header_unknown_byte != 0 {
-            eprintln!("Invalid byte for header_UnknownByte ({header_unknown_byte})");
-            return Err(CommonBinaryError::SeeConsole());
-        }
 
         let header_rows_position = binary_reader::u16::read(source, starting_pointer + 0x0A, &Endianness::Big, "")? as usize + 0x8;
         let header_string_pool_position = binary_reader::u32::read(source, starting_pointer + 0x0C, &Endianness::Big, "")? as usize + 0x8;
@@ -109,39 +93,50 @@ impl CriTableHeader {
             }
 
             for row_index in 0..header_row_count {
-                let row_value: CriFieldValue = {
+                let row_value = {
                     if field_flag.contains(CriFieldFlag::RowStorage)
                     {
                         let value_pointer = CriTableHeader::go_to_value_ptr(Some(starting_pointer), header_rows_position, header_row_length, row_index, field_offset);
-                        field_type.clone().read_value(source, starting_pointer, header_string_pool_position, header_data_pool_position, value_pointer)?
+                        CriTableFieldRow {
+                            ttype: field_type,
+                            value: field_type.read_value(source, starting_pointer, header_string_pool_position, header_data_pool_position, value_pointer)?,
+                        }
                     }
                     else if field_flag.contains(CriFieldFlag::DefaultValue)
                         && !field_flag.contains(CriFieldFlag::Data)
                     {
-                        field_default_value.clone()
+                        CriTableFieldRow {
+                            ttype: field_type,
+                            value: field_default_value.clone(),
+                        }
                     }
                     // Not even per row, and not even constant value? Then there's no storage.
                     else if !field_flag.contains(CriFieldFlag::RowStorage)
                         && !field_flag.contains(CriFieldFlag::DefaultValue)
                     {
-                        field_type.clone().get_null_value()
+                        CriTableFieldRow {
+                            ttype: field_type,
+                            value: field_type.clone().get_null_value(),
+                        }
                     } else {
-                        CriFieldValue::Byte(0)
+                        CriTableFieldRow {
+                            ttype: field_type,
+                            value: CriFieldValue::Byte(0),
+                        }
                     }
                 };
 
-                if fields.len() <= field_index as usize {
+                if fields.len() <= field_index {
                     fields.push(CriTableField {
                         flag: field_flag,
-                        ttype: field_type,
                         name: field_name.clone(),
                         source: source[field_position..field_position + field_length].to_vec(),
-                        values: vec![],
+                        rows: vec![],
                         offset: field_offset,
                     });
                 }
 
-                fields[field_index].values.push(row_value);
+                fields[field_index].rows.push(row_value);
             }
         }
 
@@ -156,11 +151,10 @@ impl CriTableHeader {
             row_length: header_row_length,
             row_count: header_row_count,
             fields,
-            row_index: 0,
         })
     }
 
-    pub fn get_field_source(&self, source: &[u8], field_name: &str) -> Vec<u8> {
+    pub fn get_field_source(&self, source: &[u8], field_name: &str, row_index: usize) -> Vec<u8> {
         let field_index = self.fields.iter().position(|x| x.name == field_name);
 
         let field_index = match field_index {
@@ -177,7 +171,7 @@ impl CriTableHeader {
             return field.source.clone();
         }
 
-        let ptr = CriTableHeader::go_to_value_ptr(Some(0), self.rows_position, self.row_length, self.row_index - 1, field.offset);
+        let ptr = CriTableHeader::go_to_value_ptr(Some(0), self.rows_position, self.row_length, row_index, field.offset);
         // 0 is header_position in the original C# project, I'm not sure if this will blow up, but so far it works
         let start = 0 + self.data_pool_position + binary_reader::u32::read(source, ptr, &Endianness::Big, "").unwrap() as usize;
         let length = binary_reader::u32::read(source, ptr + 4, &Endianness::Big, "").unwrap() as usize;
