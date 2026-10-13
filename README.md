@@ -12,6 +12,7 @@ Currently it only supports CSB files (that can be bundled with a CPK file).
 * file alignment since it wasn't implemented in the original code.
 * also the masking seems to be unused (always `false`)
 * ahead-of-time values loading was implemented instead of lazy-loading (I mean the file is read fully in one iteration instead of jumping on the stream in the memory between the pointers and values)
+* Only "latest" version of CSB and CPK and FileName mode are supported
 
 ## Tested games
 

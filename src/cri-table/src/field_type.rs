@@ -1,6 +1,6 @@
 use common_binary::{binary_reader, endianness::Endianness, error::CommonBinaryError};
 
-use crate::archives::cri::mw::table::field_value::CriFieldValue;
+use crate::field_value::CriFieldValue;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CriFieldType {

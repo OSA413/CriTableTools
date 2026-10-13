@@ -1,4 +1,4 @@
-use crate::archives::cri::aax::entry_flag::CriAaxEntryFlag;
+use crate::aax::entry_flag::CriAaxEntryFlag;
 
 pub struct CriAaxEntry {
     pub flag: CriAaxEntryFlag,

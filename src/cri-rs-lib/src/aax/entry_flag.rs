@@ -22,3 +22,12 @@ impl From<CriAaxEntryFlag> for u8 {
         }
     }
 }
+
+impl CriAaxEntryFlag {
+    pub fn to_file_name(&self) -> &'static str {
+        match self {
+            CriAaxEntryFlag::Intro => "Intro.adx",
+            CriAaxEntryFlag::Loop => "Loop.adx",
+        }
+    }
+}

@@ -1,6 +1,8 @@
 use common_binary::{binary_reader, endianness::Endianness, error::CommonBinaryError};
 
-use crate::archives::cri::mw::table::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType, table_reading_result::CriTableReadingResult};
+use crate::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType, table_reading_result::CriTableReadingResult};
+
+pub const UTF_SIGNATURE: [u8; 4] = *b"@UTF";
 
 pub struct CriTable {
     pub name: String,
@@ -10,6 +12,13 @@ pub struct CriTable {
 }
 
 impl CriTable {
+    pub fn row_count(&self) -> usize {
+        match self.fields.get(0) {
+            Some(field) => field.rows.len(),
+            None => 0,
+        }
+    }
+
     pub fn get_field(&self, field_name: &str) -> Option<&CriTableField> {
         self.fields.iter().find(|field| field.name == field_name)
     }

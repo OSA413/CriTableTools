@@ -1,52 +1,45 @@
 use std::{ffi::OsStr, path::Path};
 
 use common_binary::error::CommonBinaryError;
+use cri_table::table::CriTable;
 
-use crate::archives::cri::{aax::{archive_mode::CriAaxArchiveMode, entry::CriAaxEntry, entry_flag::CriAaxEntryFlag}, mw::table::table::CriTable};
+use crate::aax::archive_mode::CriAaxArchiveMode;
 
 pub struct CriAaxArchive {
     pub mode: CriAaxArchiveMode,
-    pub entries: Vec<CriAaxEntry>,
+    pub table: CriTable,
 }
 
 impl CriAaxArchive {
-    pub fn read(source: &[u8], pointer: Option<usize>) -> Result<CriAaxArchive, CommonBinaryError> {
-        let reader = CriTable::read(source, pointer, [0x40, 0x55, 0x54, 0x46])?;
-        let mode = match reader.table.name.as_str() {
+    pub fn read(table: CriTable) -> Result<CriAaxArchive, CommonBinaryError> {
+        let mode = match table.name.as_str() {
             "AAX" => CriAaxArchiveMode::Adx,
             "SWLPCM" => CriAaxArchiveMode::Wav,
             "ADPCM_WII" => {
-                eprintln!("DSP files aren't supported.");
+                eprintln!("DSP files are not supported.");
                 return Err(CommonBinaryError::SeeConsole());
             },
             value => {
-                eprintln!("Unknown AAX type '{value}'");
+                eprintln!("Unknown AAX type [{value}]");
                 return Err(CommonBinaryError::SeeConsole());
             },
         };
 
-        let mut entries = Vec::with_capacity(reader.row_count());
-        for row_index in 0..reader.row_count() {
-            entries.push(CriAaxEntry {
-                flag: CriAaxEntryFlag::from(reader.table.get_field("lpflg").unwrap().to_u8(row_index)?),
-                data: reader.get_field_source(&source, row_index, "data"),
-            });
-        }
-
         Ok(CriAaxArchive {
             mode,
-            entries,
+            table: table,
         })
     }
 
     // In the AaxArchive there can be only two entries as maximum: Intro and/or Loop
     // Maybe redo simpler?
-    pub fn add(&mut self, item: CriAaxEntry) {
-        if self.entries.len() == 2 || self.entries.iter().find(|entry| entry.flag == item.flag).is_some() {
-            return;
-        }
-        self.entries.push(item)
-    }
+    // TODO: move to csb-rs-lib
+    // pub fn add(&mut self, item: CriAaxEntry) {
+    //     if self.entries.len() == 2 || self.entries.iter().find(|entry| entry.flag == item.flag).is_some() {
+    //         return;
+    //     }
+    //     self.entries.push(item)
+    // }
 
     pub fn get_mode_extension(&self) -> &str {
         match self.mode {

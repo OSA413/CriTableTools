@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 
-use crate::archives::cri::mw::table::{field_flags::CriFieldFlags, field_type::CriFieldType};
+use crate::{field_flags::CriFieldFlags, field_type::CriFieldType};
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq)]

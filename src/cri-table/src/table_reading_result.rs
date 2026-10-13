@@ -1,6 +1,6 @@
 use common_binary::{binary_reader, endianness::Endianness};
 
-use crate::archives::cri::mw::table::table::CriTable;
+use crate::table::CriTable;
 
 pub struct CriTableReadingResult {
     pub table: CriTable,
@@ -10,10 +10,6 @@ pub struct CriTableReadingResult {
 }
 
 impl CriTableReadingResult {
-    pub fn row_count(&self) -> usize {
-        self.table.fields.get(0).expect("It is expected for CriTableReadingResult to have at least one field").rows.len()
-    }
-
     pub fn get_field_source(&self, source: &[u8], row_index: usize, field_name: &str) -> Vec<u8> {
         let field_index = self.table.fields.iter().position(|x| x.name == field_name);
 

@@ -1,15 +1,17 @@
 [package]
-name = "csb-lib"
+name = "cri-rs-lib"
 description = "A higher level abstraction for CSB manipulation"
 version = "0.1.0"
 edition = "2024"
-authors = ["Oleg \"OSA413\" Sokolov"]
+authors = ["Oleg \"OSA413\" Sokolov", "Skyth"]
 repository = "https://github.com/OSA413/SonicAudioTools-rs"
 homepage = "https://github.com/OSA413/SonicAudioTools-rs"
 license = "MIT"
 
 [dependencies]
-sonic-audio-lib-rs = { path = "../sonic-audio-lib-rs" }
+cri-table = { path = "../cri-table" }
+chrono = { version = "0.4.45", default-features = false }
+common_binary = { path = "../../src_tools/src/common/binary" }
 
 [lints]
 workspace = true

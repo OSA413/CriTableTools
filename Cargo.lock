@@ -32,17 +32,30 @@ dependencies = [
 ]
 
 [[package]]
-name = "csb-editor-rs"
+name = "cri-rs-lib"
 version = "0.1.0"
 dependencies = [
- "sonic-audio-lib-rs",
+ "chrono",
+ "common_binary",
+ "cri-table",
 ]
 
 [[package]]
-name = "csb-lib"
+name = "cri-table"
+version = "1.0.0"
+dependencies = [
+ "bitflags",
+ "common_binary",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "csb-editor-rs"
 version = "0.1.0"
 dependencies = [
- "sonic-audio-lib-rs",
+ "cri-rs-lib",
+ "cri-table",
 ]
 
 [[package]]
@@ -50,9 +63,10 @@ name = "csb2json"
 version = "0.1.0"
 dependencies = [
  "common_binary",
+ "cri-rs-lib",
+ "cri-table",
  "serde",
  "serde_json",
- "sonic-audio-lib-rs",
 ]
 
 [[package]]
@@ -135,17 +149,6 @@ dependencies = [
  "serde",
  "serde_core",
  "zmij",
-]
-
-[[package]]
-name = "sonic-audio-lib-rs"
-version = "1.0.0"
-dependencies = [
- "bitflags",
- "chrono",
- "common_binary",
- "serde",
- "serde_json",
 ]
 
 [[package]]

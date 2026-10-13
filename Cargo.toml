@@ -1,7 +1,7 @@
 [workspace]
 members = [
-    "src/sonic-audio-lib-rs",
-    "src/csb-lib",
+    "src/cri-rs-lib",
+    "src/cri-table",
     "src/csb-editor-rs",
     "src/csb2json",
 ]

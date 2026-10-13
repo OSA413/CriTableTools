@@ -1,6 +1,6 @@
 use common_binary::error::CommonBinaryError;
 
-use crate::archives::cri::mw::table::{field_flags::CriFieldFlags, field_type::CriFieldType, field_value::CriFieldValue};
+use crate::{field_flags::CriFieldFlags, field_type::CriFieldType, field_value::CriFieldValue};
 
 pub struct CriTableField
 { 
@@ -29,7 +29,7 @@ impl CriTableField {
                 CriFieldValue::UInt16(value) => Ok(value.clone()),
                 value => panic!("Expected value of UInt16, got {value:?}"),
             },
-            ttype => panic!("Expected type of Byte, got {ttype:?}"),
+            ttype => panic!("Expected type of UInt16, got {ttype:?}"),
         }
     }
 
@@ -39,7 +39,7 @@ impl CriTableField {
                 CriFieldValue::UInt32(value) => Ok(value.clone()),
                 value => panic!("Expected value of UInt32, got {value:?}"),
             },
-            ttype => panic!("Expected type of Byte, got {ttype:?}"),
+            ttype => panic!("Expected type of UInt32, got {ttype:?}"),
         }
     }
 
@@ -49,7 +49,7 @@ impl CriTableField {
                 CriFieldValue::UInt64(value) => Ok(value.clone()),
                 value => panic!("Expected value of UInt64, got {value:?}"),
             },
-            ttype => panic!("Expected type of Byte, got {ttype:?}"),
+            ttype => panic!("Expected type of UInt64, got {ttype:?}"),
         }
     }
 
@@ -59,7 +59,18 @@ impl CriTableField {
                 CriFieldValue::String(value) => Ok(value.clone()),
                 value => panic!("Expected value of String, got {value:?}"),
             },
-            ttype => panic!("Expected type of Byte, got {ttype:?}"),
+            ttype => panic!("Expected type of String, got {ttype:?}"),
+        }
+    }
+
+    pub fn to_data(&self, row_index: usize) -> Result<&Vec<u8>, CommonBinaryError> {
+        // To box?
+        match &self.ttype {
+            CriFieldType::Data => match &self.rows[row_index] {
+                CriFieldValue::Data(value) => Ok(value),
+                value => panic!("Expected value of Data, got {value:?}"),
+            },
+            ttype => panic!("Expected type of Data, got {ttype:?}"),
         }
     }
 }

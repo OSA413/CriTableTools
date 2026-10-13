@@ -1,5 +1,5 @@
 [package]
-name = "sonic-audio-lib-rs"
+name = "cri-table"
 description = "TODO"
 version = "1.0.0"
 edition = "2024"
@@ -10,7 +10,6 @@ license = "MIT"
 
 [dependencies]
 common_binary = { path = "../../src_tools/src/common/binary" }
-chrono = { version = "0.4.45", default-features = false }
 bitflags = { version = "2.13.2" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.151" }
