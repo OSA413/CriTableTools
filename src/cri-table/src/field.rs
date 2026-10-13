@@ -1,6 +1,6 @@
 use common_binary::error::CommonBinaryError;
 
-use crate::{field_flags::CriFieldFlags, field_type::CriFieldType, field_value::CriFieldValue};
+use crate::{field_flags::CriFieldFlags, field_type::CriFieldType, field_value::CriFieldValue, table::{CriTable, UTF_SIGNATURE}};
 
 pub struct CriTableField
 { 
@@ -68,6 +68,23 @@ impl CriTableField {
         match &self.ttype {
             CriFieldType::Data => match &self.rows[row_index] {
                 CriFieldValue::Data(value) => Ok(value),
+                value => panic!("Expected value of Data, got {value:?}"),
+            },
+            ttype => panic!("Expected type of Data, got {ttype:?}"),
+        }
+    }
+
+    // TODO fix
+    pub fn to_table(&self, row_index: usize) -> Result<CriTable, CommonBinaryError> {
+        match &self.ttype {
+            CriFieldType::Data => match &self.rows[row_index] {
+                CriFieldValue::Data(value) => {
+                    CriTable::read(
+                        value,
+                        Some(0),
+                        UTF_SIGNATURE,
+                    ).map(|reader| reader.table)
+                },
                 value => panic!("Expected value of Data, got {value:?}"),
             },
             ttype => panic!("Expected type of Data, got {ttype:?}"),

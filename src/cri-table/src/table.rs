@@ -57,22 +57,21 @@ impl CriTable {
         for field_index in 0..header_field_count {
             let field_raw_flags = CriFieldRawFlags::from_bits(binary_reader::u8::read(source, pointer + field_index_pointer, "")?).unwrap();
             let field_flags = field_raw_flags.extract_flags();
+            let field_type = field_raw_flags.extract_type();
+
+            if !field_flags.name {
+                eprintln!("Only tables with names are supported.");
+                return Err(CommonBinaryError::SeeConsole());
+            }
+
             field_index_pointer += 0x01;
-            // Maybe redo as a builder pattern?
-            let mut field_name_pointer = 0;
             let mut field_position = 0;
             let mut field_length = 0;
             let mut field_offset = 0;
-            // /Maybe redo as a builder pattern?
 
-            if field_flags.name
-            {
-                field_name_pointer = binary_reader::u32::read(source, pointer + field_index_pointer, &Endianness::Big, "")? as usize;
-                field_index_pointer += 0x04;
-            }
-
+            let field_name_pointer = binary_reader::u32::read(source, pointer + field_index_pointer, &Endianness::Big, "")? as usize;
             let field_name = binary_reader::string32::read(source, starting_pointer + header_string_pool_position + field_name_pointer, "").unwrap().0;
-            let field_type = field_raw_flags.extract_type();
+            field_index_pointer += 0x04;
 
             // This value is shared between all default rows...
             let mut field_default_value = CriFieldValue::Byte(0);

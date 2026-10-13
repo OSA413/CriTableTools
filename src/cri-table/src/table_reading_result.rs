@@ -1,6 +1,6 @@
 use common_binary::{binary_reader, endianness::Endianness};
 
-use crate::table::CriTable;
+use crate::{field_value::CriFieldValue, table::CriTable};
 
 pub struct CriTableReadingResult {
     pub table: CriTable,
@@ -10,7 +10,7 @@ pub struct CriTableReadingResult {
 }
 
 impl CriTableReadingResult {
-    pub fn get_field_source(&self, source: &[u8], row_index: usize, field_name: &str) -> Vec<u8> {
+    pub fn get_field_source(&self, source: &[u8], field_name: &str, row_index: usize) -> Vec<u8> {
         let field_index = self.table.fields.iter().position(|x| x.name == field_name);
 
         let field_index = match field_index {
@@ -24,7 +24,10 @@ impl CriTableReadingResult {
 
         let field = &self.table.fields[field_index];
         if !field.flags.row_storage {
-            return field.source.clone();
+            return match &field.rows[row_index] {
+                CriFieldValue::Data(data) => data.clone(),
+                _ => panic!("Roadside panic")
+            }
         }
 
         let ptr = CriTable::go_to_value_ptr(Some(0), self.rows_position, self.row_length, row_index, field.offset);

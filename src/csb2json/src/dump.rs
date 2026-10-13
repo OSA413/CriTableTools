@@ -1,6 +1,8 @@
+use std::path::Path;
+
 use common_binary::{error::CommonBinaryError};
-use cri_rs_lib::cpk::archive::CriCpkArchive;
-use cri_table::{field::CriTableField, field_type::CriFieldType, header_encoding_type::CriTableHeaderEncodingType, table::{CriTable, UTF_SIGNATURE}};
+use cri_rs_lib::{cpk::archive::CriCpkArchive, csb::archive::CriCsbArchive};
+use cri_table::{field::CriTableField, field_type::CriFieldType, header_encoding_type::CriTableHeaderEncodingType, table::CriTable};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -39,22 +41,15 @@ pub struct CpkEntryJson {
     pub table: TableJson,
 }
 
-pub fn dump(
-    csb_source: &[u8],
-    cpk_source: Option<&[u8]>,
+pub fn dump_csb(
+    csb_path: &Path,
 ) -> Result<JsonResult, CommonBinaryError> {
-    let csb = dump_table_from_source(csb_source, Some(0))?;
-    let cpk = match cpk_source {
-        Some(source) => Some(dump_cpk(source)?),
-        None => None,
-    };
-    Ok(JsonResult { csb, cpk })
+    let csb = CriCsbArchive::read(csb_path)?;
+    Ok(JsonResult { csb: dump_table(&csb.table)?, cpk: csb.stream.map(|cpk| dump_cpk(cpk).unwrap()) })
 }
 
-fn dump_cpk(source: &[u8]) -> Result<CpkJson, CommonBinaryError> {
-    let archive = CriCpkArchive::read(source, 0)?;
-
-    let entries = archive.entries.iter().map(|entry| CpkEntryJson {
+fn dump_cpk(cpk: CriCpkArchive) -> Result<CpkJson, CommonBinaryError> {
+    let entries = cpk.entries.iter().map(|entry| CpkEntryJson {
         id: entry.id,
         directory_name: entry.directory_name.clone(),
         name: entry.name.clone(),
@@ -62,8 +57,8 @@ fn dump_cpk(source: &[u8]) -> Result<CpkJson, CommonBinaryError> {
     }).collect();
 
     Ok(CpkJson {
-        mode: format!("{:?}", archive.mode),
-        comment: archive.comment,
+        mode: format!("{:?}", cpk.mode),
+        comment: cpk.comment,
         entries,
     })
 }
@@ -101,16 +96,12 @@ fn dump_table(table: &CriTable) -> Result<TableJson, CommonBinaryError> {
     })
 }
 
-fn dump_table_from_source(
-    source: &[u8],
-    pointer: Option<usize>,
-) -> Result<TableJson, CommonBinaryError> {
-    dump_table(
-        &CriTable::read(source, pointer, UTF_SIGNATURE)?.table
-    )
+pub fn dump_file(csb_path: &str) {
+    let dump_result = dump_csb(Path::new(csb_path)).unwrap();
+    let json = serde_json::to_string_pretty(&dump_result).unwrap();
+    println!("{json}");
 }
 
-// Maybe this can be simplified?
 fn field_type_name(field: &CriTableField) -> &'static str {
     match field.ttype {
         CriFieldType::Byte => "Byte",
