@@ -13,7 +13,7 @@ pub struct CriTable {
 
 impl CriTable {
     pub fn row_count(&self) -> usize {
-        match self.fields.get(0) {
+        match self.fields.first() {
             Some(field) => field.rows.len(),
             None => 0,
         }
@@ -42,6 +42,7 @@ impl CriTable {
         let header_string_pool_position = binary_reader::u32::read(source, starting_pointer + 0x0C, &Endianness::Big, "")? as usize + 0x8;
         let header_data_pool_position = binary_reader::u32::read(source, starting_pointer + 0x10, &Endianness::Big, "")? as usize + 0x8;
         let header_relative_table_name_pointer = binary_reader::u32::read(source, starting_pointer + 0x14, &Endianness::Big, "")? as usize;
+        let header_table_name = binary_reader::string32::read(source, starting_pointer + header_string_pool_position + header_relative_table_name_pointer as usize, "").unwrap().0;
         let header_field_count = binary_reader::u16::read(source, starting_pointer + 0x18, &Endianness::Big, "")? as usize;
         let header_row_length = binary_reader::u16::read(source, starting_pointer + 0x1A, &Endianness::Big, "")? as usize;
         let header_row_count = binary_reader::u32::read(source, starting_pointer + 0x1C, &Endianness::Big, "")? as usize;
@@ -54,7 +55,7 @@ impl CriTable {
 
         let mut row_storage_offset = 0;
 
-        for field_index in 0..header_field_count {
+        for _ in 0..header_field_count {
             let field_raw_flags = CriFieldRawFlags::from_bits(binary_reader::u8::read(source, pointer + field_index_pointer, "")?).unwrap();
             let field_flags = field_raw_flags.extract_flags();
             let field_type = field_raw_flags.extract_type();
@@ -65,8 +66,6 @@ impl CriTable {
             }
 
             field_index_pointer += 0x01;
-            let mut field_position = 0;
-            let mut field_length = 0;
             let mut field_offset = 0;
 
             let field_name_pointer = binary_reader::u32::read(source, pointer + field_index_pointer, &Endianness::Big, "")? as usize;
@@ -74,65 +73,63 @@ impl CriTable {
             field_index_pointer += 0x04;
 
             // This value is shared between all default rows...
-            let mut field_default_value = CriFieldValue::Byte(0);
-
-            if field_flags.default_value
-            {
+            let field_default_value = if field_flags.default_value {
                 match field_type {
-                    CriFieldType::Data => {
-                        field_position = binary_reader::u32::read(source, pointer + field_index_pointer, &Endianness::Big, "")? as usize;
-                        field_length = binary_reader::u32::read(source, pointer + field_index_pointer + 0x4, &Endianness::Big, "")? as usize;
+                    CriFieldType::Data => { 
                         field_index_pointer += 0x08;
+                        None
                     },
                     _ => {
-                        field_default_value = field_type.read_value(source, starting_pointer, header_string_pool_position, header_data_pool_position, pointer + field_index_pointer)?;
-                        field_index_pointer += field_type.get_offset();
+                        let offset = field_type.get_offset();
+                        field_index_pointer += offset;
+                        Some(
+                            field_type.read_value(
+                                source,
+                                starting_pointer,
+                                header_string_pool_position,
+                                header_data_pool_position,
+                                pointer + field_index_pointer - offset
+                            )?
+                        )
                     }
                 }
-            }
+            } else { None };
 
-            if field_flags.row_storage
-            {
+            if field_flags.row_storage {
                 field_offset = row_storage_offset;
                 row_storage_offset += field_type.get_offset();
             }
 
+            let mut rows = Vec::with_capacity(header_row_count);
             for row_index in 0..header_row_count {
                 let row_value = {
-                    if field_flags.row_storage
-                    {
+                    if field_flags.row_storage {
                         let value_pointer = CriTable::go_to_value_ptr(Some(starting_pointer), header_rows_position, header_row_length, row_index, field_offset);
                         field_type.read_value(source, starting_pointer, header_string_pool_position, header_data_pool_position, value_pointer)?
                     }
-                    else if field_flags.default_value && field_type != CriFieldType::Data
-                    {
-                        field_default_value.clone()
+                    else if field_flags.default_value && field_type != CriFieldType::Data {
+                        field_default_value.clone().unwrap()
                     }
                     // Not even per row, and not even constant value? Then there's no storage.
-                    else if !field_flags.row_storage && !field_flags.default_value
-                    {
+                    else if !field_flags.row_storage && !field_flags.default_value {
                         field_type.clone().get_null_value()
                     } else {
                         CriFieldValue::Byte(0)
                     }
                 };
 
-                if fields.len() <= field_index {
-                    fields.push(CriTableField {
-                        flags: field_flags,
-                        ttype: field_type,
-                        name: field_name.clone(),
-                        source: source[field_position..field_position + field_length].to_vec(),
-                        rows: vec![],
-                        offset: field_offset,
-                    });
-                }
-
-                fields[field_index].rows.push(row_value);
+                rows.push(row_value);
             }
-        }
 
-        let header_table_name = binary_reader::string32::read(source, starting_pointer + header_string_pool_position + header_relative_table_name_pointer as usize, "").unwrap().0;
+            
+            fields.push(CriTableField {
+                flags: field_flags,
+                ttype: field_type,
+                name: field_name,
+                rows,
+                offset: field_offset,
+            });
+        }
 
         Ok(
             CriTableReadingResult {

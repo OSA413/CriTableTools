@@ -27,7 +27,7 @@ bitflags! {
 
 impl CriFieldRawFlags {
     pub fn extract_type(&self) -> CriFieldType {
-        return if self.contains(CriFieldRawFlags::Guid) {CriFieldType::Guid}
+        if self.contains(CriFieldRawFlags::Guid) {CriFieldType::Guid}
         else if self.contains(CriFieldRawFlags::Data) {CriFieldType::Data}
         else if self.contains(CriFieldRawFlags::String) {CriFieldType::String}
         else if self.contains(CriFieldRawFlags::Double) {CriFieldType::Double}
@@ -40,7 +40,7 @@ impl CriFieldRawFlags {
         else if self.contains(CriFieldRawFlags::UInt16) {CriFieldType::UInt16}
         else if self.contains(CriFieldRawFlags::SByte) {CriFieldType::SByte}
         else if self.contains(CriFieldRawFlags::Byte) {CriFieldType::Byte}
-        else { panic!("At the dance floor, {self:?}") };
+        else { panic!("At the dance floor, {self:?}") }
     }
 
     pub fn extract_flags(&self) -> CriFieldFlags {

@@ -52,14 +52,14 @@ impl CriFieldType {
             CriFieldType::Double => CriFieldValue::Double(binary_reader::f64::read(source, value_pointer, &Endianness::Big, "")?),
             CriFieldType::String => {
                 let string_pointer = binary_reader::u32::read(source, value_pointer, &Endianness::Big, "")? as usize;
-                let string_pointer = starting_pointer + header_string_pool_position as usize + string_pointer;
+                let string_pointer = starting_pointer + header_string_pool_position + string_pointer;
                 let string = binary_reader::string::read(source, string_pointer, "")?.0;
                 CriFieldValue::String(string)
             },
             CriFieldType::Data => {
                 let position = binary_reader::u32::read(source, value_pointer, &Endianness::Big, "")? as usize;
                 let length = binary_reader::u32::read(source, value_pointer + 0x04, &Endianness::Big, "")? as usize;
-                let start = starting_pointer + position + header_data_pool_position as usize;
+                let start = starting_pointer + position + header_data_pool_position;
                 CriFieldValue::Data(source[start..start + length].to_vec())
             },
             CriFieldType::Guid => todo!("guid"),

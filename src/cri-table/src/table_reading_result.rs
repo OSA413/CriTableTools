@@ -35,6 +35,6 @@ impl CriTableReadingResult {
         let start = 0 + self.data_pool_position + binary_reader::u32::read(source, ptr, &Endianness::Big, "").unwrap() as usize;
         let length = binary_reader::u32::read(source, ptr + 4, &Endianness::Big, "").unwrap() as usize;
 
-        return source[start..start + length].to_vec();
+        source[start..start + length].to_vec()
     }
 }
