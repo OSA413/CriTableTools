@@ -53,7 +53,7 @@ fn dump_cpk(cpk: CriCpkArchive) -> Result<CpkJson, CommonBinaryError> {
         id: entry.id,
         directory_name: entry.directory_name.clone(),
         name: entry.name.clone(),
-        table: dump_table(&entry.table).unwrap(),
+        table: dump_table(&entry.aax_archive).unwrap(),
     }).collect();
 
     Ok(CpkJson {

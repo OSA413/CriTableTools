@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CriFieldFlags {
     pub name: bool,
     pub default_value: bool,

@@ -1,13 +1,13 @@
 use common_binary::error::CommonBinaryError;
 
-use crate::{field_flags::CriFieldFlags, field_type::CriFieldType, field_value::CriFieldValue, table::{CriTable, UTF_SIGNATURE}};
+use crate::{field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, table::CriTable};
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct CriTableField
 { 
     pub flags: CriFieldFlags,
     pub ttype: CriFieldType,
     pub name: String,
-    pub offset: usize, //Is this really needed?
     pub rows: Vec<CriFieldValue>,
 }
 
@@ -63,30 +63,32 @@ impl CriTableField {
     }
 
     pub fn to_data(&self, row_index: usize) -> Result<&Vec<u8>, CommonBinaryError> {
-        // To box?
         match &self.ttype {
             CriFieldType::Data => match &self.rows[row_index] {
                 CriFieldValue::Data(value) => Ok(value),
                 value => panic!("Expected value of Data, got {value:?}"),
             },
+            CriFieldType::ProbablyTable => match &self.rows[row_index] {
+                CriFieldValue::ProbablyTable(table_or_data) => match table_or_data {
+                    TableOrData::Data(value) => Ok(value),
+                    value => panic!("Expected value of Data, got {value:?}"),
+                },
+                ttype => panic!("Expected type of ProbablyTable, got {ttype:?}"),
+            }
             ttype => panic!("Expected type of Data, got {ttype:?}"),
         }
     }
 
-    // TODO fix
-    pub fn to_table(&self, row_index: usize) -> Result<CriTable, CommonBinaryError> {
+    pub fn to_table(&self, row_index: usize) -> Result<&CriTable, CommonBinaryError> {
         match &self.ttype {
-            CriFieldType::Data => match &self.rows[row_index] {
-                CriFieldValue::Data(value) => {
-                    CriTable::read(
-                        value,
-                        Some(0),
-                        UTF_SIGNATURE,
-                    ).map(|reader| reader.table)
+            CriFieldType::ProbablyTable => match &self.rows[row_index] {
+                CriFieldValue::ProbablyTable(value) => match value {
+                    TableOrData::Table(table) => Ok(table),
+                    value_type => panic!("Expected value of Table, got {value_type:?}"),
                 },
-                value => panic!("Expected value of Data, got {value:?}"),
+                value => panic!("Expected value of ProbablyTable, got {value:?}"),
             },
-            ttype => panic!("Expected type of Data, got {ttype:?}"),
+            ttype => panic!("Expected type of ProbablyTable, got {ttype:?}"),
         }
     }
 }

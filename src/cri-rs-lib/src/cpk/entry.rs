@@ -1,5 +1,6 @@
 use chrono::{NaiveDateTime};
-use cri_table::table::CriTable;
+
+use crate::aax::archive::CriAaxArchive;
 
 pub struct CriCpkEntry {
     pub update_date_time: NaiveDateTime,
@@ -7,7 +8,5 @@ pub struct CriCpkEntry {
     pub name: String,
     pub id: u32,
     pub comment: String,
-    pub is_compressed: bool,
-    pub uncompressed_length: u32,
-    pub table: CriTable,
+    pub aax_archive: CriAaxArchive,
 }

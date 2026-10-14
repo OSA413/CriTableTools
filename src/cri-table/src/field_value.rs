@@ -1,4 +1,6 @@
 use serde::Serialize;
+
+use crate::table::CriTable;
 #[derive(Clone, Serialize, Debug, PartialEq)]
 #[serde(tag = "type", content = "value")]
 pub enum CriFieldValue {
@@ -18,4 +20,18 @@ pub enum CriFieldValue {
         Vec<u8>
     ),
     Guid(u128),
+    // This is a "virtual" type to ease your (and my) suffering
+    ProbablyTable(TableOrData),
+}
+
+#[derive(Clone, Serialize, Debug, PartialEq)]
+pub enum TableOrData {
+    Table(
+        #[serde(skip)]
+        CriTable
+    ),
+    Data(
+        #[serde(skip)]
+        Vec<u8>
+    ),
 }

@@ -1,6 +1,6 @@
 use common_binary::{binary_reader, endianness::Endianness, error::CommonBinaryError};
 
-use crate::field_value::CriFieldValue;
+use crate::{field_value::{CriFieldValue, TableOrData}, table::{CriTable, UTF_SIGNATURE}};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CriFieldType {
@@ -17,6 +17,8 @@ pub enum CriFieldType {
     String = 10,
     Data = 11,
     Guid = 12,
+    // This is a "virtual" type to ease your (and my) suffering
+    ProbablyTable,
 }
 
 impl CriFieldType {
@@ -34,6 +36,7 @@ impl CriFieldType {
             CriFieldType::UInt64 => 8,
             CriFieldType::Double => 8,
             CriFieldType::Data => 8,
+            CriFieldType::ProbablyTable => 8,
             CriFieldType::Guid => 16,
         }
     }
@@ -62,6 +65,21 @@ impl CriFieldType {
                 let start = starting_pointer + position + header_data_pool_position;
                 CriFieldValue::Data(source[start..start + length].to_vec())
             },
+            CriFieldType::ProbablyTable => {
+                let position = binary_reader::u32::read(source, value_pointer, &Endianness::Big, "").unwrap() as usize;
+                let length = binary_reader::u32::read(source, value_pointer + 0x4, &Endianness::Big, "").unwrap() as usize;
+                let start = starting_pointer + header_data_pool_position + position;
+
+                let table_or_data = if CriTable::is_table(source, Some(start), UTF_SIGNATURE) {
+                    TableOrData::Table(
+                        CriTable::read(source, Some(start), UTF_SIGNATURE).unwrap()
+                    )
+                } else {
+                    TableOrData::Data(source[start..start + length].to_vec())
+                };
+
+                CriFieldValue::ProbablyTable(table_or_data)
+            },
             CriFieldType::Guid => todo!("guid"),
         };
         Ok(result)
@@ -81,6 +99,7 @@ impl CriFieldType {
             CriFieldType::Double => CriFieldValue::Double(0.0),
             CriFieldType::String => CriFieldValue::String(String::new()),
             CriFieldType::Data => CriFieldValue::Data(vec![]),
+            CriFieldType::ProbablyTable => CriFieldValue::ProbablyTable(TableOrData::Data(vec![])),
             CriFieldType::Guid => todo!("guid"),
         }
     }

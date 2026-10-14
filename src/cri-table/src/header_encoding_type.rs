@@ -1,5 +1,5 @@
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CriTableHeaderEncodingType {
     // Is it actually just an ASCII?
     // In case of needed proper Shift-JIS support, include this crate:

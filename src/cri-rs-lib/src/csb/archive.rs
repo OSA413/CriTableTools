@@ -15,17 +15,11 @@ impl CriCsbArchive {
         let output_directory_name = base_directory.join(path.file_stem().unwrap());
         let cpk_path = find_cpk(&output_directory_name.to_string_lossy());
         let file_content = fs::read(path).unwrap();
-        let csb_reader = CriTable::read(&file_content, Some(0), UTF_SIGNATURE).unwrap();
+        let csb_table = CriTable::read(&file_content, Some(0), UTF_SIGNATURE).unwrap();
 
-        for row_index in 0..csb_reader.table.row_count() {
-            if csb_reader.table.get_field("name").unwrap().to_string(row_index).unwrap() == "SOUND_ELEMENT" {
-                let sdl_source = &csb_reader.get_field_source(&file_content, "utf", row_index);
-                let sdl_reader = CriTable::read(
-                    &sdl_source,
-                    Some(0),
-                    *b"@UTF",
-                ).unwrap();
-                let sdl_table = sdl_reader.table;
+        for row_index in 0..csb_table.row_count() {
+            if csb_table.get_field("name").unwrap().to_string(row_index).unwrap() == "SOUND_ELEMENT" {
+                let sdl_table = &csb_table.get_field("utf").unwrap().to_table(row_index).unwrap();
                 for sdl_row_index in 0..sdl_table.row_count() {
                     if sdl_table.get_field("fmt").unwrap().to_u8(sdl_row_index).unwrap() != 0 {
                         eprintln!("The given CSB file contains an audio file which is not an ADX. Only CSB files with ADXs are supported.");
@@ -41,14 +35,14 @@ impl CriCsbArchive {
                         },
                         (true, Some(cpk_path)) => {
                             let cpk = CriCpkArchive::read(&fs::read(cpk_path).unwrap(), 0).unwrap();
-                            return Ok(CriCsbArchive { table: csb_reader.table, stream: Some(cpk) })
+                            return Ok(CriCsbArchive { table: csb_table, stream: Some(cpk) })
                         },
-                        (false, _) => return Ok(CriCsbArchive { table: csb_reader.table, stream: None }),
+                        (false, _) => return Ok(CriCsbArchive { table: csb_table, stream: None }),
                     }
                 }
             }
         }
         
-        return Ok(CriCsbArchive { table: csb_reader.table, stream: None });
+        return Ok(CriCsbArchive { table: csb_table, stream: None });
     }
 }

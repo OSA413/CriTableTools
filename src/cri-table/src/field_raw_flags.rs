@@ -28,6 +28,8 @@ bitflags! {
 impl CriFieldRawFlags {
     pub fn extract_type(&self) -> CriFieldType {
         if self.contains(CriFieldRawFlags::Guid) {CriFieldType::Guid}
+        else if self.contains(CriFieldRawFlags::Data)
+            && self.contains(CriFieldRawFlags::RowStorage) {CriFieldType::ProbablyTable}
         else if self.contains(CriFieldRawFlags::Data) {CriFieldType::Data}
         else if self.contains(CriFieldRawFlags::String) {CriFieldType::String}
         else if self.contains(CriFieldRawFlags::Double) {CriFieldType::Double}

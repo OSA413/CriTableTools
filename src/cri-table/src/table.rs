@@ -1,9 +1,10 @@
 use common_binary::{binary_reader, endianness::Endianness, error::CommonBinaryError};
 
-use crate::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType, table_reading_result::CriTableReadingResult};
+use crate::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType};
 
 pub const UTF_SIGNATURE: [u8; 4] = *b"@UTF";
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct CriTable {
     pub name: String,
     pub encoding: CriTableHeaderEncodingType,
@@ -27,11 +28,16 @@ impl CriTable {
         starting_pointer.unwrap_or(0) + rows_position + (row_length * row_index) + offset
     }
 
-    pub fn read(source: &[u8], pointer: Option<usize>, expected_segnature: [u8; 4]) -> Result<CriTableReadingResult, CommonBinaryError> {
+    pub fn is_table(source: &[u8], pointer: Option<usize>, expected_segnature: [u8; 4]) -> bool {
+        let starting_pointer = pointer.unwrap_or(0);
+        source[starting_pointer..starting_pointer + 4].eq(&expected_segnature)
+    }
+
+    pub fn read(source: &[u8], pointer: Option<usize>, expected_segnature: [u8; 4]) -> Result<CriTable, CommonBinaryError> {
         let starting_pointer = pointer.unwrap_or(0);
 
-        if !source[starting_pointer..starting_pointer + 4].eq(&expected_segnature) {
-            eprintln!("Invalid signature");
+        if !CriTable::is_table(source, pointer, expected_segnature) {
+            eprintln!("Invalid signature, expected {expected_segnature:?}, got {:?} at {starting_pointer}", source[starting_pointer..starting_pointer + 4].to_vec());
             return Err(CommonBinaryError::SeeConsole());
         }
 
@@ -104,10 +110,10 @@ impl CriTable {
             for row_index in 0..header_row_count {
                 let row_value = {
                     if field_flags.row_storage {
-                        let value_pointer = CriTable::go_to_value_ptr(Some(starting_pointer), header_rows_position, header_row_length, row_index, field_offset);
+                        let value_pointer = starting_pointer + header_rows_position + (header_row_length * row_index) + field_offset;
                         field_type.read_value(source, starting_pointer, header_string_pool_position, header_data_pool_position, value_pointer)?
                     }
-                    else if field_flags.default_value && field_type != CriFieldType::Data {
+                    else if field_flags.default_value && field_type != CriFieldType::Data && field_type != CriFieldType::ProbablyTable {
                         field_default_value.clone().unwrap()
                     }
                     // Not even per row, and not even constant value? Then there's no storage.
@@ -127,21 +133,15 @@ impl CriTable {
                 ttype: field_type,
                 name: field_name,
                 rows,
-                offset: field_offset,
             });
         }
 
         Ok(
-            CriTableReadingResult {
-                table: CriTable {
-                    unknown_byte: header_unknown_byte,
-                    encoding: CriTableHeaderEncodingType::from(header_encoding_type),
-                    name: header_table_name,
-                    fields,
-                },
-                rows_position: header_rows_position,
-                data_pool_position: header_data_pool_position,
-                row_length: header_row_length,
+            CriTable {
+                unknown_byte: header_unknown_byte,
+                encoding: CriTableHeaderEncodingType::from(header_encoding_type),
+                name: header_table_name,
+                fields,
             },
         )
     }

@@ -1,13 +1,11 @@
-use std::{ffi::OsStr, path::Path};
-
 use common_binary::error::CommonBinaryError;
 use cri_table::table::CriTable;
 
-use crate::aax::archive_mode::CriAaxArchiveMode;
+use crate::aax::{archive_mode::CriAaxArchiveMode, entry::CriAaxEntry, entry_flag::CriAaxEntryFlag};
 
 pub struct CriAaxArchive {
     pub mode: CriAaxArchiveMode,
-    pub table: CriTable,
+    pub entries: Vec<CriAaxEntry>,
 }
 
 impl CriAaxArchive {
@@ -25,9 +23,16 @@ impl CriAaxArchive {
             },
         };
 
+        let mut entries = Vec::with_capacity(table.row_count());
+        for row_index in 0..table.row_count() {
+            let flag = CriAaxEntryFlag::from(table.get_field("lpflg").unwrap().to_u8(row_index).unwrap());
+            let data = table.get_field("data").unwrap().to_data(row_index).unwrap().to_owned();
+            entries.push(CriAaxEntry { flag, data });
+        }
+
         Ok(CriAaxArchive {
             mode,
-            table: table,
+            entries,
         })
     }
 
@@ -40,21 +45,4 @@ impl CriAaxArchive {
     //     }
     //     self.entries.push(item)
     // }
-
-    pub fn get_mode_extension(&self) -> &str {
-        match self.mode {
-            CriAaxArchiveMode::Adx => ".adx",
-            CriAaxArchiveMode::Dsp => ".dsp",
-            CriAaxArchiveMode::Wav => ".wav",
-        }
-    }
-
-    pub fn set_mode_from_extension(&mut self, file_path: &OsStr) {
-        self.mode = match Path::new(file_path).extension().unwrap().to_str().unwrap() {
-            ".adx" => CriAaxArchiveMode::Adx,
-            ".dsp" => CriAaxArchiveMode::Dsp,
-            ".wav" => CriAaxArchiveMode::Wav,
-            _ => panic!("This beat is not supported yet.")
-        }
-    }
 }
