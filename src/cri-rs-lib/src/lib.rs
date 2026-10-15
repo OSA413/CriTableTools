@@ -12,7 +12,7 @@ pub mod cpk {
     pub mod entry;
 }
 pub mod csb {
-    pub mod archive;   
+    pub mod archive;
 }
 
 pub fn find_cpk(path_to_search: &str) -> Option<PathBuf> {
@@ -28,5 +28,5 @@ pub fn find_cpk(path_to_search: &str) -> Option<PathBuf> {
         return Some(path.to_path_buf());
     }
 
-    return None;
+    None
 }

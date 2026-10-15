@@ -3,13 +3,15 @@ use cri_table::table::CriTable;
 
 use crate::aax::{archive_mode::CriAaxArchiveMode, entry::CriAaxEntry, entry_flag::CriAaxEntryFlag};
 
+#[derive(Debug)]
 pub struct CriAaxArchive {
+    pub name: String,
     pub mode: CriAaxArchiveMode,
     pub entries: Vec<CriAaxEntry>,
 }
 
 impl CriAaxArchive {
-    pub fn read(table: CriTable) -> Result<CriAaxArchive, CommonBinaryError> {
+    pub fn read(table: &CriTable, name: &str) -> Result<CriAaxArchive, CommonBinaryError> {
         let mode = match table.name.as_str() {
             "AAX" => CriAaxArchiveMode::Adx,
             "SWLPCM" => CriAaxArchiveMode::Wav,
@@ -31,6 +33,7 @@ impl CriAaxArchive {
         }
 
         Ok(CriAaxArchive {
+            name: name.to_string(),
             mode,
             entries,
         })

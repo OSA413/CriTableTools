@@ -1,4 +1,4 @@
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum CriAaxEntryFlag {
     Intro = 0,
     Loop = 1,

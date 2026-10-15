@@ -63,7 +63,6 @@ name = "csb2json"
 version = "0.1.0"
 dependencies = [
  "common_binary",
- "cri-rs-lib",
  "cri-table",
  "serde",
  "serde_json",

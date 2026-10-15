@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use common_binary::{error::CommonBinaryError};
-use cri_rs_lib::{cpk::archive::CriCpkArchive, csb::archive::CriCsbArchive};
 use cri_table::{field::CriTableField, field_type::CriFieldType, header_encoding_type::CriTableHeaderEncodingType, table::CriTable};
 use serde::Serialize;
 
@@ -45,7 +44,7 @@ pub fn dump_csb(
     csb_path: &Path,
 ) -> Result<JsonResult, CommonBinaryError> {
     let csb = CriCsbArchive::read(csb_path)?;
-    Ok(JsonResult { csb: dump_table(&csb.table)?, cpk: csb.stream.map(|cpk| dump_cpk(cpk).unwrap()) })
+    Ok(JsonResult { csb: dump_table(&csb.entries)?, cpk: csb.stream.map(|cpk| dump_cpk(cpk).unwrap()) })
 }
 
 fn dump_cpk(cpk: CriCpkArchive) -> Result<CpkJson, CommonBinaryError> {

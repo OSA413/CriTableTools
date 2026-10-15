@@ -12,6 +12,10 @@ pub struct CriTableField
 }
 
 impl CriTableField {
+    pub fn to_bool(&self, row_index: usize) -> Result<bool, CommonBinaryError> {
+        Ok(self.to_u8(row_index).unwrap() != 0)
+    }
+
     pub fn to_u8(&self, row_index: usize) -> Result<u8, CommonBinaryError> {
         match &self.ttype {
             CriFieldType::Byte => match &self.rows[row_index] {

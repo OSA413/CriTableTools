@@ -1,4 +1,4 @@
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum CriAaxArchiveMode {
     Adx = 0,
     Dsp = 4,

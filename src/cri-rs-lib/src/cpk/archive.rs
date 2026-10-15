@@ -4,6 +4,7 @@ use cri_table::table::{CriTable, UTF_SIGNATURE};
 
 use crate::{aax::archive::CriAaxArchive, cpk::{entry::CriCpkEntry, mode::CriCpkMode}};
 
+#[derive(Debug)]
 pub struct CriCpkArchive
 {
     pub mode: CriCpkMode,
@@ -66,16 +67,16 @@ impl CriCpkArchive {
                     relative_position + toc_position as usize
                 }
             };
-           
+            
+            let name = toc_table.get_field("FileName").unwrap().to_string(toc_row_index)?;
             let aax_table = CriTable::read(source, Some(position), UTF_SIGNATURE).unwrap();
-            let aax_archive = CriAaxArchive::read(aax_table).unwrap();
+            let aax_archive = CriAaxArchive::read(&aax_table, &name).unwrap();
 
             // etocReader.MoveToRow(tocReader.CurrentRow);
             // entry.UpdateDateTime = DateTimeFromCpkDateTime(etocReader.GetUInt64("UpdateDateTime"));
 
             let entry = CriCpkEntry {
                 directory_name: toc_table.get_field("DirName").unwrap().to_string(toc_row_index)?,
-                name: toc_table.get_field("FileName").unwrap().to_string(toc_row_index)?,
                 aax_archive,
                 id: match is_latest_version {
                     true => toc_table.get_field("ID").unwrap().to_u32(toc_row_index)?,
@@ -92,18 +93,5 @@ impl CriCpkArchive {
         }
 
         Ok(CriCpkArchive { mode, comment, entries })
-    }
-
-    pub fn get_by_path(&self, path: &str) -> Option<&CriCpkEntry> {
-        let corrected_path = path.replace("\\", "/");
-
-        return self.entries.iter().find(|entry| {
-            let search = match entry.directory_name.is_empty() {
-                true => entry.name.clone(),
-                false => format!("{}/{}", entry.directory_name.replace("\\", "/"), entry.name),
-            };
-
-            return search == corrected_path;
-        });
     }
 }

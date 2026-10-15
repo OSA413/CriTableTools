@@ -10,7 +10,6 @@ license = "MIT"
 
 [dependencies]
 cri-table = { path = "../cri-table" }
-cri-rs-lib = { path = "../cri-rs-lib" }
 common_binary = { path = "../../src_tools/src/common/binary" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.151" }
