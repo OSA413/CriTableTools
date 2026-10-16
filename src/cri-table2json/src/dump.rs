@@ -1,13 +1,13 @@
-use std::path::Path;
+use std::fs;
 
 use common_binary::{error::CommonBinaryError};
-use cri_table::{field::CriTableField, field_type::CriFieldType, header_encoding_type::CriTableHeaderEncodingType, table::CriTable};
+use cri_table::{field::CriTableField, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableHeaderEncodingType, table::{CriTable, UTF_SIGNATURE}};
 use serde::Serialize;
 
 #[derive(Serialize)]
-pub struct JsonResult {
-    pub csb: TableJson,
-    pub cpk: Option<CpkJson>,
+#[serde(tag = "type", content = "value")]
+pub enum TableJsonWrapper {
+    Table(TableJson),
 }
 
 #[derive(Serialize)]
@@ -25,41 +25,18 @@ pub struct FieldJson {
     pub ttype: &'static str,
 }
 
-#[derive(Serialize)]
-pub struct CpkJson {
-    pub mode: String,
-    pub comment: String,
-    pub entries: Vec<CpkEntryJson>,
-}
-
-#[derive(Serialize)]
-pub struct CpkEntryJson {
-    pub id: u32,
-    pub directory_name: String,
-    pub name: String,
-    pub table: TableJson,
-}
-
-pub fn dump_csb(
-    csb_path: &Path,
-) -> Result<JsonResult, CommonBinaryError> {
-    let csb = CriCsbArchive::read(csb_path)?;
-    Ok(JsonResult { csb: dump_table(&csb.entries)?, cpk: csb.stream.map(|cpk| dump_cpk(cpk).unwrap()) })
-}
-
-fn dump_cpk(cpk: CriCpkArchive) -> Result<CpkJson, CommonBinaryError> {
-    let entries = cpk.entries.iter().map(|entry| CpkEntryJson {
-        id: entry.id,
-        directory_name: entry.directory_name.clone(),
-        name: entry.name.clone(),
-        table: dump_table(&entry.aax_archive).unwrap(),
-    }).collect();
-
-    Ok(CpkJson {
-        mode: format!("{:?}", cpk.mode),
-        comment: cpk.comment,
-        entries,
-    })
+pub fn dump_file(
+    path: &str,
+) -> Result<TableJsonWrapper, CommonBinaryError> {
+    let source=  fs::read(path).unwrap();
+    let first_signature = [source[0], source[1], source[2], source[3]];
+    let pointer = if first_signature == *b"CPK " {
+        0x10
+    } else {
+        0
+    };
+    let table = CriTable::read(&source, Some(pointer), UTF_SIGNATURE)?;
+    Ok(TableJsonWrapper::Table(dump_table(&table)?))
 }
 
 fn dump_table(table: &CriTable) -> Result<TableJson, CommonBinaryError> {
@@ -81,7 +58,13 @@ fn dump_table(table: &CriTable) -> Result<TableJson, CommonBinaryError> {
     for row_index in 0..table.row_count() {
         let mut values = serde_json::Map::new();
         for field in &table.fields {
-            let json_value = serde_json::to_value(&field.rows[row_index]).unwrap();
+            let json_value = match &field.rows[row_index] {
+                CriFieldValue::ProbablyTable(table_or_data) => match table_or_data {
+                    TableOrData::Table(cri_table) => serde_json::to_value(TableJsonWrapper::Table(dump_table(cri_table).unwrap())),
+                    value => serde_json::to_value(value),
+                },
+                value => serde_json::to_value(value),
+            }.unwrap();
             values.insert(field.name.clone(), json_value);
         }
         rows.push(values);
@@ -95,8 +78,8 @@ fn dump_table(table: &CriTable) -> Result<TableJson, CommonBinaryError> {
     })
 }
 
-pub fn dump_file(csb_path: &str) {
-    let dump_result = dump_csb(Path::new(csb_path)).unwrap();
+pub fn print_file(path: &str) {
+    let dump_result = dump_file(path).unwrap();
     let json = serde_json::to_string_pretty(&dump_result).unwrap();
     println!("{json}");
 }
@@ -116,6 +99,7 @@ fn field_type_name(field: &CriTableField) -> &'static str {
         CriFieldType::String => "String",
         CriFieldType::Data => "Data",
         CriFieldType::Guid => "Guid",
+        CriFieldType::ProbablyTable => "Data",
     }
 }
 

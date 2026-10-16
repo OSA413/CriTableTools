@@ -25,6 +25,7 @@ pub enum CriFieldValue {
 }
 
 #[derive(Clone, Serialize, Debug, PartialEq)]
+#[serde(tag = "type", content = "value")]
 pub enum TableOrData {
     Table(
         #[serde(skip)]

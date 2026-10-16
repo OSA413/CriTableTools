@@ -3,7 +3,7 @@ members = [
     "src/cri-rs-lib",
     "src/cri-table",
     "src/csb-editor-rs",
-    "src/csb2json",
+    "src/cri-table2json",
 ]
 resolver = "3"
 
