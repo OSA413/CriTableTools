@@ -5,3 +5,5 @@ pub mod field_value;
 pub mod field;
 pub mod header_encoding_type;
 pub mod table;
+
+pub static VERSION: &str = env!("CARGO_PKG_VERSION");

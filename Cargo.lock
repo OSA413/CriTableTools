@@ -42,7 +42,7 @@ dependencies = [
 
 [[package]]
 name = "cri-table"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "bitflags",
  "common_binary",
@@ -62,7 +62,7 @@ dependencies = [
 
 [[package]]
 name = "csb-editor-rs"
-version = "0.1.0"
+version = "0.5.0"
 dependencies = [
  "cri-rs-lib",
  "cri-table",

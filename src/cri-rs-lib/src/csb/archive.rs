@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use common_binary::error::CommonBinaryError::{self, SeeConsole};
 use cri_table::table::{CriTable, UTF_SIGNATURE};
-use crate::{aax::archive::CriAaxArchive, cpk::archive::CriCpkArchive, find_cpk};
+use crate::{aax::archive::CriAaxArchive, cpk::archive::CriCpkArchive, find_related_cpk};
 
 pub struct CriCsbArchive {
     pub sound: CriSoundArchive,
@@ -52,9 +52,7 @@ struct CsbFields {
 }
 
 fn get_csb_fields(csb_table: &CriTable) -> CsbFields {
-    // Maybe redo as a builder pattern?
     let mut sound_element = None;
-    // /Maybe redo as a builder pattern?
 
     for row_index in 0..csb_table.row_count() {
         match csb_table.get_field("name").unwrap().to_string(row_index).unwrap().as_str() {
@@ -70,29 +68,20 @@ fn get_csb_fields(csb_table: &CriTable) -> CsbFields {
 
 impl CriCsbArchive {
     pub fn read(path: &Path) -> Result<CriCsbArchive, CommonBinaryError> {
-        let base_directory = path.parent().unwrap();
-        let output_directory_name = base_directory.join(path.file_stem().unwrap());
         let file_content = fs::read(path).unwrap();
         let csb_table = CriTable::read(&file_content, Some(0), UTF_SIGNATURE).unwrap();
         
-        let cpk_path = find_cpk(&output_directory_name.to_string_lossy());
+        let cpk_path = find_related_cpk(&path);
         let cpk_data = cpk_path.map(|path| fs::read(path).unwrap());
         let cpk = cpk_data.map(|data| CriCpkArchive::read(&data, 0).unwrap());
 
-        // Redo as builder pattern?
-        let mut sound_data = None;
-        // /Redo as builder pattern?
-
         let fields = get_csb_fields(&csb_table);
-
-        if let Some(sdl_table) = fields.sound_element {
-            sound_data = Some(get_sound_data(&sdl_table, cpk).unwrap());
-        };
 
         return Ok(
             CriCsbArchive {
                 sound: CriSoundArchive {
-                    data: sound_data.unwrap(),
+                    data: fields.sound_element
+                        .map(|sdl_table| get_sound_data(&sdl_table, cpk).unwrap()).unwrap()
                 },
             }
         );

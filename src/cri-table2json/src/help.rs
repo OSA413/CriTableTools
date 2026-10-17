@@ -1,16 +1,21 @@
 pub fn print() {
-    println!("            csb2json by OSA413
-        Built upon Skyth's CsbEditor and SonicAudioLib
+    println!("            cri-table2json by OSA413
+        Built upon Skyth's SonicAudioLib
         
         Released under the MIT License
         {}
 
 Usage:
-    `csb2json <file.csb>`
-    `csb2json <file.csb> --cpk <file.cpk>`
+    `cri-table2json <file>`
+        Print the content of <file> if it's a CriTable file (CSB, CPK)
+    
+    `cri-table2json -v` and
+    `cri-table2json --version`
+        Show versions of used tools.
 
-Options:
-    `--cpk <path>`      include external CPK into json dump
-    `-h`, `--help`      print this help
-    `-v`, `--version`   print version", env!("CARGO_PKG_REPOSITORY"));
+    `cri-table2json` and
+    `cri-table2json -h` and
+    `cri-table2json --help`
+        Show this help message.",
+    env!("CARGO_PKG_REPOSITORY"));
 }

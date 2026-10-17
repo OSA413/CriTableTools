@@ -1,4 +1,8 @@
 pub fn print() {
-    println!("csb2json: {}", env!("CARGO_PKG_VERSION"));
-    // todo: add underlying library versions
+    println!(
+        "cri-table2json: {}
+cri-table: {}",
+        env!("CARGO_PKG_VERSION"),
+        cri_table::VERSION,
+    );
 }
