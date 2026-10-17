@@ -4,6 +4,16 @@ A set of tools to modify CRIWARE file formats.
 
 Currently it only supports CSB files (that can be bundled with a CPK file).
 
+The latest version of the programs can be found on [GitHub Actions](https://github.com/OSA413/SonicAudioTools-rs/actions).
+
+More or less suitable for use versions are planned to be published on GitHub's release page.
+
+------------
+
+Please note that most of the CLI tools support the `--help` flag to show help.
+
+------------
+
 ## What is left behind / will not be implemented in the Rust rewrite
 
 * Only CSB/CPK files are supported
@@ -13,6 +23,16 @@ Currently it only supports CSB files (that can be bundled with a CPK file).
 * also the masking seems to be unused (always `false`)
 * ahead-of-time values loading was implemented instead of lazy-loading (I mean the file is read fully in one iteration instead of jumping on the stream in the memory between the pointers and values)
 * Only "latest" version of CSB and CPK and FileName mode are supported
+
+## List of tools
+
+### cri-table2json
+
+A tool for a convenient examination of arbitrary CriTable files (CSB, CPK...)
+
+### csb-editor-rs (wip)
+
+A tool to extract audio files from a CSB file (supports related CPK files)
 
 ## Tested games
 
