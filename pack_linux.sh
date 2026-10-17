@@ -2,19 +2,19 @@
 set -e
 echo "Removing old distribution package..."
 rm -rf "./dist"
-mkdir -p "./dist/SonicAudioTools-rs/licenses"
+mkdir -p "./dist/CriTableTools/licenses"
 
 echo "Copying new distribution files..."
 
-cp ./target/release/cri-table2json ./dist/SonicAudioTools-rs/cri-table2json
-cp ./target/release/csb-editor-rs ./dist/SonicAudioTools-rs/csb-editor-rs
+cp ./target/release/cri-table2json ./dist/CriTableTools/cri-table2json
+cp ./target/release/csb-editor-rs ./dist/CriTableTools/csb-editor-rs
 
-cp ./LICENSE.md ./dist/SonicAudioTools-rs/licenses/LICENSE
+cp ./LICENSE.md ./dist/CriTableTools/licenses/LICENSE
 cargo install -f copydeps cargo-bundle-licenses
-cargo bundle-licenses --format json --output "./dist/SonicAudioTools-rs/licenses/Rust-THIRDPARTY.json"
+cargo bundle-licenses --format json --output "./dist/CriTableTools/licenses/Rust-THIRDPARTY.json"
 
 echo "Creating SHA256SUMS..."
 cd dist
 find * -type f -exec sha256sum {} \; >> "SHA256SUMS_linux"
 
-7z a "./SonicAudioTools-rs_linux.zip" ./* -mx=9
+7z a "./CriTableTools_linux.zip" ./* -mx=9

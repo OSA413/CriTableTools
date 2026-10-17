@@ -4,8 +4,8 @@ description = "A low level crate to manipulate CriTable"
 version = "1.1.0"
 edition = "2024"
 authors = ["Oleg \"OSA413\" Sokolov", "Skyth"]
-repository = "https://github.com/OSA413/SonicAudioTools-rs"
-homepage = "https://github.com/OSA413/SonicAudioTools-rs"
+repository = "https://github.com/OSA413/CriTableTools"
+homepage = "https://github.com/OSA413/CriTableTools"
 license = "MIT"
 
 [dependencies]

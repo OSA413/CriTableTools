@@ -45,8 +45,8 @@ jobs:
         
       - uses: actions/upload-artifact@v7
         with:
-          name: SonicAudioTools-rs_linux.zip
-          path: dist/SonicAudioTools-rs_linux.zip
+          name: CriTableTools_linux.zip
+          path: dist/CriTableTools_linux.zip
           archive: false
 
       - uses: actions/upload-artifact@v7
@@ -72,7 +72,7 @@ jobs:
 
       - uses: actions/download-artifact@v8
         with: 
-          name: SonicAudioTools-rs_linux.zip
+          name: CriTableTools_linux.zip
           skip-decompress: true
 
       - uses: softprops/action-gh-release@v3
@@ -80,4 +80,4 @@ jobs:
         with:
           files: |
             SHA256SUMS_linux
-            SonicAudioTools-rs_linux.zip
+            CriTableTools_linux.zip
