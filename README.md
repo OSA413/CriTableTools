@@ -14,7 +14,7 @@ Please note that most of the CLI tools support the `--help` flag to show help.
 
 ------------
 
-## What is left behind / will not be implemented in the Rust rewrite
+## What is left behind / will not be implemented in the Rust rewrite (as for now)
 
 * Only CSB/CPK files are supported
 * the compression of files, since in the original code the reading was only implemented, but I want to write the files as well.
