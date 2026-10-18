@@ -40,6 +40,7 @@ A tool to extract audio files from a CSB file (supports related CPK files)
 * Sonic 4 Episode 2 (PC) (read/extraction)
 * Sonic Generations (PC) (read/extraction)
 * Sonic Lost World (PC) (CPK read)
+* Sonic Forces (PC) (CPK read)
 
 ## Want to contribute?
 
