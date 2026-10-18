@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use common_binary::error::CommonBinaryError::{self, SeeConsole};
 use cri_table::table::{CriTable, UTF_SIGNATURE};
-use crate::{aax::archive::CriAaxArchive, cpk::archive::CriCpkArchive, find_related_cpk};
+use crate::{aax::archive::CriAaxArchive, cpk::sound::archive::CriCpkArchive, find_related_cpk};
 
 pub struct CriCsbArchive {
     pub sound: CriSoundArchive,

@@ -2,7 +2,7 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use common_binary::error::CommonBinaryError;
 use cri_table::table::{CriTable, UTF_SIGNATURE};
 
-use crate::{aax::archive::CriAaxArchive, cpk::{entry::CriCpkEntry, mode::CriCpkMode}};
+use crate::{aax::archive::CriAaxArchive, cpk::sound::{entry::CriCpkEntry, mode::CriCpkMode}};
 
 #[derive(Debug)]
 pub struct CriCpkArchive
