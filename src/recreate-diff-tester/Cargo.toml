@@ -1,0 +1,19 @@
+[package]
+name = "recreate-diff-tester"
+description = "A temporary tool to test CriTable recreation"
+version = "0.5.0"
+edition = "2024"
+authors = ["Oleg \"OSA413\" Sokolov"]
+repository = "https://github.com/OSA413/CriTableTools"
+homepage = "https://github.com/OSA413/CriTableTools"
+license = "MIT"
+
+[dependencies]
+similar = "3.2.0"
+cri-table = { path = "../cri-table" }
+cri-rs-lib = { path = "../cri-rs-lib" }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = { version = "1.0.151" }
+
+[lints]
+workspace = true

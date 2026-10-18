@@ -1,4 +1,4 @@
-use common_binary::{binary_reader, endianness::Endianness, error::CommonBinaryError};
+use common_binary::{binary_reader, binary_writer, endianness::Endianness, error::CommonBinaryError};
 
 use crate::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType};
 
@@ -22,10 +22,6 @@ impl CriTable {
 
     pub fn get_field(&self, field_name: &str) -> Option<&CriTableField> {
         self.fields.iter().find(|field| field.name == field_name)
-    }
-
-    pub fn go_to_value_ptr(starting_pointer: Option<usize>, rows_position: usize, row_length: usize, row_index: usize, offset: usize) -> usize {
-        starting_pointer.unwrap_or(0) + rows_position + (row_length * row_index) + offset
     }
 
     pub fn is_table(source: &[u8], pointer: Option<usize>, expected_segnature: [u8; 4]) -> bool {
@@ -144,5 +140,17 @@ impl CriTable {
                 fields,
             },
         )
+    }
+
+    pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
+        let mut result = Vec::new();
+        
+        for _ in 0..0x20 {
+            result.push(0);
+        }
+
+        binary_writer::string32::write(&mut result, 0, "@UTF", "").unwrap();
+
+        Ok(result)
     }
 }
