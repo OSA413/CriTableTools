@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use common_binary::{binary_reader, binary_writer, endianness::Endianness, error::CommonBinaryError};
 
-use crate::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType};
+use crate::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType, table_write_helpers::{TableFieldsInfoWriteResult, TableHeaderInfoWriteResult, TableHeaderWriteResult, TableStringPoolBUilderEntry}};
 
 pub const UTF_SIGNATURE: [u8; 4] = *b"@UTF";
 
@@ -77,9 +79,19 @@ impl CriTable {
             // This value is shared between all default rows...
             let field_default_value = if field_flags.default_value {
                 match field_type {
-                    CriFieldType::Data => { 
-                        field_index_pointer += 0x08;
-                        None
+                    CriFieldType::Data => {
+                        // TODO: check
+                        let offset = field_type.get_offset();
+                        field_index_pointer += offset;
+                        Some(
+                            field_type.read_value(
+                                source,
+                                starting_pointer,
+                                header_string_pool_position,
+                                header_data_pool_position,
+                                pointer + field_index_pointer - offset
+                            )?
+                        )
                     },
                     _ => {
                         let offset = field_type.get_offset();
@@ -129,6 +141,7 @@ impl CriTable {
                 ttype: field_type,
                 name: field_name,
                 rows,
+                default_value: field_default_value,
             });
         }
 
@@ -142,12 +155,136 @@ impl CriTable {
         )
     }
 
-    pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
-        let mut result = Vec::new();
-        
-        for _ in 0..0x20 {
-            result.push(0);
+    fn write_table_signature(&self, pointer: usize) -> TableHeaderWriteResult {
+        let mut data = Vec::with_capacity(0x8);
+        for _ in 0..0x08 {
+            data.push(0 as u8);
         }
+
+        binary_writer::string32::write(&mut data, 0, "@UTF", "table signature").unwrap();
+
+        // Length, excluding the table header length (8)
+        // So, this is probably the length of the inner table
+
+        TableHeaderWriteResult {
+            data,
+            pointer,
+            length_pointer: 0x04 - pointer,
+        }
+    }
+
+    fn write_table_info(&self, pointer: usize) -> TableHeaderInfoWriteResult {
+        let mut data = Vec::new();
+        for _ in 0..0x18 {
+            data.push(0 as u8);
+        }
+
+        // u8 unknown_byte, always 0
+        // u8 encoding_type, only 0 (shift-jis) for now
+        // u16 row_position
+        let row_position_pointer = 0x02;
+        // u32 string_pool_position
+        let string_pool_position_pointer = 0x04;
+        // u32 data_pool_position
+        let data_pool_position_pointer = 0x08;
+        // u32 table_name_position
+        let table_name_position_pointer = 0x0C;
+        // field_count
+        binary_writer::u16::write(&mut data, 0x10, self.fields.len() as u16, &Endianness::Big, "").unwrap();
+        // row_length
+        binary_writer::u16::write(
+            &mut data,
+            0x12,
+            self.fields.iter().map(|field| field.ttype.get_offset() as u16).sum(),
+            &Endianness::Big,
+            "",
+        ).unwrap();
+        // row_count
+        binary_writer::u32::write(
+            &mut data,
+            0x14,
+            match self.fields.first() {
+                Some(field) => field.rows.len() as u32,
+                None => 0
+            },
+            &Endianness::Big,
+            "",
+        ).unwrap();
+
+        TableHeaderInfoWriteResult {
+            data,
+            pointer,
+            row_position_pointer,
+            string_pool_position_pointer,
+            data_pool_position_pointer,
+            table_name_position_pointer,
+        }
+    }
+
+    fn write_fields_info(&self, pointer: usize, string_pool: HashMap<String, u32>) -> TableFieldsInfoWriteResult {
+        let mut data: Vec<Vec<u8>> = Vec::new();
+
+        for field in &self.fields {
+            let field_data: Vec<Vec<u8>> = vec![
+                CriFieldRawFlags::from_flags_and_type(&field.flags, &field.ttype).bits().to_be_bytes().to_vec(),
+                string_pool.get(&field.name).unwrap().to_be_bytes().to_vec(),
+            ];
+            data.push(field_data.concat());
+        }
+
+        TableFieldsInfoWriteResult {
+            data: data.concat(),
+            length: 0,
+            pointer,
+        }
+    }
+
+    fn build_string_pool(&self) -> HashMap<String, u32> {
+        let mut result: Vec<TableStringPoolBUilderEntry> = Vec::new();
+        for field in &self.fields {
+            if result.iter().find(|entry| entry.string == field.name).is_none() {
+                if let Some(default_value) = &field.default_value {
+                    match default_value {
+                        CriFieldValue::String(value) => {
+                            result.push(TableStringPoolBUilderEntry {
+                                string: value.clone(),
+                                pointer: 0,
+                            });
+                        },
+                        _ => (),
+                    }
+                    
+                }
+            }
+        }
+        for field in &self.fields {
+            if result.iter().find(|entry| entry.string == field.name).is_none() {
+                result.push(TableStringPoolBUilderEntry {
+                    string: field.name.clone(),
+                    pointer: result.last().unwrap().pointer + result.last().unwrap().string.len() as u32 + 1,
+                });
+            }
+        };
+
+        result.into_iter().map(|entry| {
+            return (entry.string, entry.pointer);
+        }).collect()
+    }
+
+    pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
+        let string_pool = self.build_string_pool();
+        // data_pool
+
+        let signature = self.write_table_signature(0x00);
+        let header_info = self.write_table_info(0x08);
+        let fields_info = self.write_fields_info(0, string_pool);
+        // let rows_info = self.write_rows_info();
+
+        let mut result = [
+            signature.data,
+            header_info.data,
+            fields_info.data,
+        ].concat();
 
         binary_writer::string32::write(&mut result, 0, "@UTF", "").unwrap();
 

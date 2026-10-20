@@ -52,7 +52,7 @@ dependencies = [
 
 [[package]]
 name = "cri-table"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "bitflags",
  "common_binary",
@@ -62,7 +62,7 @@ dependencies = [
 
 [[package]]
 name = "cri-table2json"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "common_binary",
  "cri-table",

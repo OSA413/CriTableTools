@@ -9,6 +9,7 @@ pub struct CriTableField
     pub ttype: CriFieldType,
     pub name: String,
     pub rows: Vec<CriFieldValue>,
+    pub default_value: Option<CriFieldValue>,
 }
 
 impl CriTableField {

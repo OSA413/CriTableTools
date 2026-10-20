@@ -23,6 +23,7 @@ pub struct FieldJson {
     pub name: String,
     #[serde(rename = "type")]
     pub ttype: &'static str,
+    pub default_value: serde_json::Value,
 }
 
 pub fn dump_file(
@@ -51,6 +52,7 @@ fn dump_table(table: &CriTable) -> Result<TableJson, CommonBinaryError> {
         .map(|field| FieldJson {
             name: field.name.clone(),
             ttype: field_type_name(&field),
+            default_value: serde_json::to_value(field.default_value.clone()).unwrap(),
         })
         .collect();
 
