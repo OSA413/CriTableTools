@@ -1,10 +1,16 @@
 use std::collections::HashMap;
+use itertools::Itertools;
 
 use common_binary::{binary_reader, binary_writer, endianness::Endianness, error::CommonBinaryError};
 
-use crate::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType, table_write_helpers::{TableFieldsInfoWriteResult, TableHeaderInfoWriteResult, TableHeaderWriteResult, TableStringPoolBUilderEntry}};
+use crate::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableHeaderEncodingType, table_write_helpers::{TableDataPoolBuilderEntry, TableFieldsInfoWriteResult, TableHeaderInfoWriteResult, TableHeaderWriteResult, TableRowsInfoWriteResult, TableStringPoolBuilderEntry}};
+use sha2::{Sha256, Digest};
 
 pub const UTF_SIGNATURE: [u8; 4] = *b"@UTF";
+
+pub fn get_sha256(data: impl AsRef<[u8]>) -> String {
+    Sha256::digest(data).iter().map(|x| format!("{x:02x}")).collect()
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CriTable {
@@ -161,7 +167,7 @@ impl CriTable {
             data.push(0 as u8);
         }
 
-        binary_writer::string32::write(&mut data, 0, "@UTF", "table signature").unwrap();
+        binary_writer::string::write(&mut data, 0, "@UTF", "table signature").unwrap();
 
         // Length, excluding the table header length (8)
         // So, this is probably the length of the inner table
@@ -174,7 +180,7 @@ impl CriTable {
     }
 
     fn write_table_info(&self, pointer: usize) -> TableHeaderInfoWriteResult {
-        let mut data = Vec::new();
+        let mut data = Vec::with_capacity(0x18);
         for _ in 0..0x18 {
             data.push(0 as u8);
         }
@@ -195,7 +201,10 @@ impl CriTable {
         binary_writer::u16::write(
             &mut data,
             0x12,
-            self.fields.iter().map(|field| field.ttype.get_offset() as u16).sum(),
+            self.fields.iter()
+                .filter(|field| field.flags.row_storage)
+                .map(|field| field.ttype.get_offset() as u16)
+                .sum(),
             &Endianness::Big,
             "",
         ).unwrap();
@@ -220,73 +229,375 @@ impl CriTable {
             table_name_position_pointer,
         }
     }
+    
+    fn length_nice(value: usize) -> usize {
+        value + (8 - value % 8) % 8_usize
+    }
 
-    fn write_fields_info(&self, pointer: usize, string_pool: HashMap<String, u32>) -> TableFieldsInfoWriteResult {
-        let mut data: Vec<Vec<u8>> = Vec::new();
+    fn write_fields_info(&self, pointer: usize, string_pool: &HashMap<String, u32>, data_pool: &HashMap<String, (u32, Vec<u8>)>) -> TableFieldsInfoWriteResult {
+        let mut data: Vec<Vec<u8>> = Vec::with_capacity(self.fields.len());
 
         for field in &self.fields {
-            let field_data: Vec<Vec<u8>> = vec![
-                CriFieldRawFlags::from_flags_and_type(&field.flags, &field.ttype).bits().to_be_bytes().to_vec(),
+            let mut field_data: Vec<Vec<u8>> = vec![
+                vec![CriFieldRawFlags::from_flags_and_type(&field.flags, &field.ttype).bits()],
                 string_pool.get(&field.name).unwrap().to_be_bytes().to_vec(),
             ];
+
+            if let Some(default_value) = &field.default_value {
+                match default_value {
+                    CriFieldValue::String(value) => {
+                        field_data.push(string_pool.get(value).unwrap().to_be_bytes().to_vec());
+                    },
+                    CriFieldValue::Data(value) => {
+                        let hash = get_sha256(value);
+                        field_data.push([
+                            data_pool.get(&hash).unwrap().0.to_be_bytes().to_vec(),
+                            (value.len() as u32).to_be_bytes().to_vec(),
+                        ].concat());
+                    },
+                    CriFieldValue::ProbablyTable(table_or_data) => {
+                        let value = match table_or_data {
+                            TableOrData::Data(value) => value.to_owned(),
+                            TableOrData::Table(table) => table.write().unwrap().to_owned(),
+                        };
+                        let hash = get_sha256(&value);
+                        field_data.push([
+                            data_pool.get(&hash).unwrap().0.to_be_bytes().to_vec(),
+                            (value.len() as u32).to_be_bytes().to_vec(),
+                        ].concat());
+                    },
+                    _ => {
+                        field_data.push(field.ttype.write_value(default_value.clone()));
+                    }
+                }
+            }
+
             data.push(field_data.concat());
         }
 
         TableFieldsInfoWriteResult {
             data: data.concat(),
-            length: 0,
+            pointer,
+        }
+    }
+
+    fn write_rows_info(&self, pointer: usize, string_pool: &HashMap<String, u32>, data_pool: &HashMap<String, (u32, Vec<u8>)>) -> TableRowsInfoWriteResult {
+        let row_count = match self.fields.first() {
+            Some(field) => field.rows.len(),
+            None => 0,
+        };
+        let mut data: Vec<Vec<u8>> = Vec::with_capacity(row_count);
+
+        for row_index in 0..row_count {
+            for field in &self.fields {
+                if !field.flags.row_storage {
+                    continue;
+                }
+                match &field.rows[row_index] {
+                    CriFieldValue::Byte(value) => {
+                        data.push(vec![value.clone()]);
+                    },
+                    CriFieldValue::SByte(value) => {
+                        data.push(vec![value.clone() as u8]);
+                    }
+                    CriFieldValue::UInt16(value) => {
+                        data.push(value.to_be_bytes().to_vec());
+                    }
+                    CriFieldValue::Int16(value) => {
+                        data.push(value.to_be_bytes().to_vec());
+                    }
+                    CriFieldValue::UInt32(value) => {
+                        data.push(value.to_be_bytes().to_vec());
+                    }
+                    CriFieldValue::Int32(value) => {
+                        data.push(value.to_be_bytes().to_vec());
+                    }
+                    CriFieldValue::UInt64(value) => {
+                        data.push(value.to_be_bytes().to_vec());
+                    }
+                    CriFieldValue::Int64(value) => {
+                        data.push(value.to_be_bytes().to_vec());
+                    }
+                    CriFieldValue::Single(value) => {
+                        data.push(value.to_be_bytes().to_vec());
+                    }
+                    CriFieldValue::Double(value) => {
+                        data.push(value.to_be_bytes().to_vec());
+                    }
+                    CriFieldValue::String(value) => {
+                        data.push(string_pool.get(value).unwrap().to_be_bytes().to_vec());
+                    }
+                    CriFieldValue::Data(value) => {
+                        let hash = get_sha256(value);
+                        data.push([
+                            data_pool.get(&hash).unwrap().0.to_be_bytes().to_vec(),
+                            (value.len() as u32).to_be_bytes().to_vec(),
+                        ].concat());
+                    },
+                    CriFieldValue::Guid(_) => {
+                        panic!("guid is not implemented");
+                    }
+                    CriFieldValue::ProbablyTable(table_or_data) => {
+                        match table_or_data {
+                            TableOrData::Data(value) => {
+                                let hash = get_sha256(value);
+                                data.push([
+                                    data_pool.get(&hash).unwrap().0.to_be_bytes().to_vec(),
+                                    (value.len() as u32).to_be_bytes().to_vec(),
+                                ].concat());
+                            },
+                            TableOrData::Table(table) => {
+                                let value = table.write().unwrap().clone();
+                                let hash = get_sha256(&value);
+                                let bytes = [
+                                    data_pool.get(&hash).unwrap().0.to_be_bytes().to_vec(),
+                                    (value.len() as u32).to_be_bytes().to_vec(),
+                                ].concat();
+                                data.push(bytes);
+                            }
+                        }
+                    },
+                }
+            }
+        }
+
+        TableRowsInfoWriteResult {
+            data: data.concat(),
             pointer,
         }
     }
 
     fn build_string_pool(&self) -> HashMap<String, u32> {
-        let mut result: Vec<TableStringPoolBUilderEntry> = Vec::new();
-        for field in &self.fields {
-            if result.iter().find(|entry| entry.string == field.name).is_none() {
-                if let Some(default_value) = &field.default_value {
-                    match default_value {
-                        CriFieldValue::String(value) => {
-                            result.push(TableStringPoolBUilderEntry {
-                                string: value.clone(),
-                                pointer: 0,
-                            });
-                        },
-                        _ => (),
-                    }
-                    
-                }
-            }
+        let row_count = match self.fields.first() {
+            Some(field) => field.rows.len(),
+            None => 0,
+        };
+        let mut result: Vec<TableStringPoolBuilderEntry> = Vec::with_capacity(
+            2 + self.fields.len() * (1 + row_count)
+        );
+        result.push(TableStringPoolBuilderEntry {
+            string: "<NULL>".to_string(),
+            pointer: 0,
+        });
+
+        if result.iter().find(|entry| entry.string == self.name).is_none() {
+            result.push(TableStringPoolBuilderEntry {
+                string: self.name.clone(),
+                pointer: result.last().unwrap().pointer + result.last().unwrap().string.len() as u32 + 1,
+            });
         }
+
         for field in &self.fields {
             if result.iter().find(|entry| entry.string == field.name).is_none() {
-                result.push(TableStringPoolBUilderEntry {
+                result.push(TableStringPoolBuilderEntry {
                     string: field.name.clone(),
                     pointer: result.last().unwrap().pointer + result.last().unwrap().string.len() as u32 + 1,
                 });
             }
         };
 
+        for field in &self.fields {
+            if let Some(default_value) = &field.default_value {
+                match default_value {
+                    CriFieldValue::String(value) => {
+                        if result.iter().find(|entry| entry.string == *value).is_none() {
+                            result.push(TableStringPoolBuilderEntry {
+                                string: value.clone(),
+                                pointer: result.last().unwrap().pointer + result.last().unwrap().string.len() as u32 + 1,
+                            });
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        }
+
+        for field in &self.fields {
+            for row in &field.rows {
+                if let CriFieldValue::String(value) = row {
+                    if result.iter().find(|entry| &entry.string == value).is_none() {
+                        result.push(TableStringPoolBuilderEntry {
+                            string: value.clone(),
+                            pointer: result.last().unwrap().pointer + result.last().unwrap().string.len() as u32 + 1,
+                        });
+                    }
+                }
+            }
+        }
+
         result.into_iter().map(|entry| {
             return (entry.string, entry.pointer);
         }).collect()
     }
 
+    fn build_data_pool(&self) -> HashMap<String, (u32, Vec<u8>)> {
+        let row_count = match self.fields.first() {
+            Some(field) => field.rows.len(),
+            None => 0,
+        };
+        let mut result: Vec<TableDataPoolBuilderEntry> = Vec::with_capacity(
+            self.fields.len() * (1 + row_count)
+        );
+
+        for field in &self.fields {
+            if let Some(default_value) = &field.default_value {
+                let hash =  get_sha256(field.ttype.write_value(default_value.clone()));
+                if result.iter().find(|entry| entry.hash == hash).is_none() {
+                    match default_value {
+                        CriFieldValue::Data(value) => {
+                            result.push(TableDataPoolBuilderEntry {
+                                data: value.clone(),
+                                hash,
+                                pointer: Some(0),
+                            });
+                        },
+                        CriFieldValue::ProbablyTable(table_or_data) => {
+                            let data = match table_or_data {
+                                TableOrData::Table(table) => table.write().unwrap(),
+                                TableOrData::Data(data) => data.to_vec()
+                            };
+                            result.push(TableDataPoolBuilderEntry {
+                                data: data,
+                                hash,
+                                pointer: Some(0),
+                            });
+                        }
+                        _ => (),
+                    }
+                    
+                }
+            }
+        }
+
+        // Just to be safe, I've never seen such value but the next code relies on the previous entry
+        if let None = result.last() {
+            result.push(TableDataPoolBuilderEntry {
+                data: vec![],
+                pointer: None,
+                hash: get_sha256(vec![]),
+            });
+        }
+
+        for field in &self.fields {
+            for row in &field.rows {
+                if let CriFieldValue::Data(value) = row {
+                    let hash = get_sha256(&value);
+                    if result.iter().find(|entry| entry.hash == hash).is_none() {
+                        let last_pointer = result.last().unwrap().pointer;
+                        result.push(TableDataPoolBuilderEntry {
+                            data: value.clone(),
+                            hash,
+                            pointer: Some(last_pointer.unwrap_or(0) + result.last().unwrap().data.len() as u32),
+                        });
+                    }
+                } else if let CriFieldValue::ProbablyTable(table_or_data) = row {
+                    let data: Vec<u8> = match table_or_data {
+                        TableOrData::Data(data) => data.clone(),
+                        TableOrData::Table(table) => table.write().unwrap(),
+                    };
+
+                    let hash = get_sha256(&data);
+                    if result.iter().find(|entry| entry.hash == hash).is_none() {
+                        let last_pointer = result.last().unwrap().pointer;
+                        result.push(TableDataPoolBuilderEntry {
+                            data: data,
+                            hash,
+                            pointer: Some(last_pointer.unwrap_or(0) + result.last().unwrap().data.len() as u32),
+                        });
+                    }
+                }
+            }
+        };
+
+        result.into_iter().map(|entry| {
+            return (entry.hash, (entry.pointer.unwrap_or(0), entry.data));
+        }).collect()
+    }
+
     pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
         let string_pool = self.build_string_pool();
-        // data_pool
+        let data_pool = self.build_data_pool();
 
         let signature = self.write_table_signature(0x00);
+        let signature_length = signature.data.len();
         let header_info = self.write_table_info(0x08);
-        let fields_info = self.write_fields_info(0, string_pool);
-        // let rows_info = self.write_rows_info();
+        let fields_info = self.write_fields_info(0, &string_pool, &data_pool);
+        let rows_info = self.write_rows_info(0, &string_pool, &data_pool);
+        let string_pool_max = string_pool.iter().max_by_key(|entry| entry.1).unwrap();
+        let string_pool_size = string_pool_max.0.len() + string_pool_max.1.clone() as usize + 1;
+        let mut binary_string_pool = Vec::with_capacity(string_pool_size);
+        for _ in 0..string_pool_size {
+            binary_string_pool.push(0);
+        }
+        for entry in &string_pool {
+            binary_writer::string::write(&mut binary_string_pool, entry.1.clone() as usize, &entry.0, "string pool entry").unwrap();
+        }
 
-        let mut result = [
+        let binary_data_pool = data_pool.iter().sorted_by_key(|entry| entry.1.0).map(|entry| &entry.1.1).map(|x| x.clone()).concat().iter().map(|x| x.clone()).collect::<Vec<u8>>();
+        
+        let row_position = signature.data.len()
+            + header_info.data.len()
+            + fields_info.data.len()
+            - signature.data.len();
+
+        let string_pool_position = row_position + rows_info.data.len();
+        let data_pool_position = CriTable::length_nice(string_pool_position + string_pool_size) as u32;
+
+        let mut before_data = [
             signature.data,
             header_info.data,
             fields_info.data,
+            rows_info.data,
+            binary_string_pool,
         ].concat();
 
-        binary_writer::string32::write(&mut result, 0, "@UTF", "").unwrap();
+        for _ in 0..CriTable::length_nice(before_data.len()) - before_data.len() {
+            before_data.push(0);
+        }
+
+        let mut result = [
+            before_data,
+            binary_data_pool,
+        ].concat();
+
+        let result_length = result.len();
+        
+        binary_writer::string::write(&mut result, 0, "@UTF", "").unwrap();
+        binary_writer::u32::write(
+            &mut result,
+            0x04,
+            (result_length - signature_length) as u32,
+            &Endianness::Big,
+            ""
+        ).unwrap();
+        binary_writer::u16::write(
+            &mut result,
+            0x0A,
+            row_position as u16,
+            &Endianness::Big,
+            ""
+        ).unwrap();
+        binary_writer::u32::write(
+            &mut result,
+            0x0C,
+            string_pool_position as u32,
+            &Endianness::Big,
+            ""
+        ).unwrap();
+        binary_writer::u32::write(
+            &mut result,
+            0x10,
+            data_pool_position as u32,
+            &Endianness::Big,
+            ""
+        ).unwrap();
+        binary_writer::u32::write(
+            &mut result,
+            0x14,
+            string_pool.get(&self.name).unwrap().clone(),
+            &Endianness::Big,
+            ""
+        ).unwrap();
 
         Ok(result)
     }

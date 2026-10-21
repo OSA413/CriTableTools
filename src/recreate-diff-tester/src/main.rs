@@ -95,7 +95,9 @@ fn main() {
     let file_path = args.next().unwrap();
     let file_content = fs::read(&file_path).unwrap();
     let original_table = CriTable::read(&file_content, None, UTF_SIGNATURE).unwrap();
-    let recreated_table = CriTable::read(&original_table.write().unwrap(), None, UTF_SIGNATURE).unwrap();
+    let recreated_table_content = original_table.write().unwrap();
+    fs::write(format!("{}.recreated", file_path), &recreated_table_content).unwrap();
+    let recreated_table = CriTable::read(&recreated_table_content, None, UTF_SIGNATURE).unwrap();
 
     let diff = TextDiff::from_lines(
         print_table(&original_table),
