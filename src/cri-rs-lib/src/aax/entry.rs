@@ -1,9 +1,10 @@
 use std::fmt::{self, Formatter};
 
-use crate::aax::entry_flag::CriAaxEntryFlag;
+use crate::aax::loop_flag::CriAaxLoopFlag;
 
+#[derive(Clone)]
 pub struct CriAaxEntry {
-    pub flag: CriAaxEntryFlag,
+    pub flag: CriAaxLoopFlag,
     pub data: Vec<u8>
 }
 

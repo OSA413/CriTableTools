@@ -1,10 +1,21 @@
 use std::{ffi::OsStr, path::{Path, PathBuf}};
 
+pub mod sound_archive_mode;
+pub mod sound_archive;
 pub mod aax {
-    pub mod archive_mode;
     pub mod archive;
-    pub mod entry_flag;
     pub mod entry;
+    pub mod loop_flag;
+}
+pub mod adpcm_wii {
+    pub mod archive;
+    pub mod entry;
+    pub mod loop_flag;
+}
+pub mod swlpcm {
+    // pub mod archive;
+    // pub mod entry;
+    // pub mod loop_flag;
 }
 pub mod cpk {
     pub mod data {
@@ -17,7 +28,14 @@ pub mod cpk {
     }
 }
 pub mod csb {
-    pub mod archive;
+    pub mod games {
+        pub mod black_knight {
+            pub mod archive;
+        }
+        pub mod other {
+            pub mod archive;
+        }
+    }
 }
 
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -2,7 +2,7 @@
 members = [
     "src/cri-rs-lib",
     "src/cri-table",
-    "src/csb-editor-rs",
+    "src/csb-rs",
     "src/cri-table2json",
     "src/recreate-diff-tester"
 ]

@@ -1,7 +1,7 @@
 [package]
-name = "csb-editor-rs"
+name = "csb-rs"
 description = "A tool to read and edit CSB files (also with CPK containers)"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2024"
 authors = ["Oleg \"OSA413\" Sokolov", "Skyth"]
 repository = "https://github.com/OSA413/CriTableTools"
@@ -11,6 +11,10 @@ license = "MIT"
 [dependencies]
 cri-table = { path = "../cri-table" }
 cri-rs-lib = { path = "../cri-rs-lib" }
+common_utils = { path = "../../src_tools/src/common/utils" }
+common_binary = { path = "../../src_tools/src/common/binary" }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = { version = "1.0.151" }
 
 [lints]
 workspace = true

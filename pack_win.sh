@@ -7,7 +7,7 @@ mkdir -p "./dist/CriTableTools/licenses"
 echo "Copying new distribution files..."
 
 cp ./target/release/cri-table2json.exe ./dist/CriTableTools/cri-table2json.exe
-cp ./target/release/csb-editor-rs.exe ./dist/CriTableTools/csb-editor-rs.exe
+cp ./target/release/csb-rs.exe ./dist/CriTableTools/csb-rs.exe
 
 cp ./LICENSE.md ./dist/CriTableTools/licenses/LICENSE
 cargo install -f copydeps cargo-bundle-licenses

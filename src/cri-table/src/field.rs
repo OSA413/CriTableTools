@@ -1,4 +1,4 @@
-use common_binary::error::CommonBinaryError;
+use common_binary::error::{CommonBinaryError, PointerOutOfBoundsDetails};
 
 use crate::{field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, table::CriTable};
 
@@ -27,6 +27,16 @@ impl CriTableField {
         }
     }
 
+    pub fn to_i8(&self, row_index: usize) -> Result<i8, CommonBinaryError> {
+        match &self.ttype {
+            CriFieldType::SByte => match &self.rows[row_index] {
+                CriFieldValue::SByte(value) => Ok(*value),
+                value => panic!("Expected value of SByte, got {value:?}"),
+            },
+            ttype => panic!("Expected type of SByte, got {ttype:?}"),
+        }
+    }
+
     pub fn to_u16(&self, row_index: usize) -> Result<u16, CommonBinaryError> {
         match &self.ttype {
             CriFieldType::UInt16 => match &self.rows[row_index] {
@@ -37,13 +47,47 @@ impl CriTableField {
         }
     }
 
+    pub fn to_i16(&self, row_index: usize) -> Result<i16, CommonBinaryError> {
+        match &self.ttype {
+            CriFieldType::Int16 => match &self.rows[row_index] {
+                CriFieldValue::Int16(value) => Ok(*value),
+                value => panic!("Expected value of Int16, got {value:?}"),
+            },
+            ttype => panic!("Expected type of Int16, got {ttype:?}"),
+        }
+    }
+
     pub fn to_u32(&self, row_index: usize) -> Result<u32, CommonBinaryError> {
         match &self.ttype {
-            CriFieldType::UInt32 => match &self.rows[row_index] {
-                CriFieldValue::UInt32(value) => Ok(*value),
-                value => panic!("Expected value of UInt32, got {value:?}"),
+            CriFieldType::UInt32 => match &self.rows.get(row_index) {
+                Some(row) => match row {
+                    CriFieldValue::UInt32(value) => Ok(*value),
+                    value => panic!("Expected value of UInt32, got {value:?}"),
+                },
+                None => return Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
+                    pointer: row_index,
+                    source_len: self.rows.len(),
+                    when: "tryint to access row of field for u32".to_string(),
+                }))
             },
             ttype => panic!("Expected type of UInt32, got {ttype:?}"),
+        }
+    }
+
+    pub fn to_f32(&self, row_index: usize) -> Result<f32, CommonBinaryError> {
+        match &self.ttype {
+            CriFieldType::Single => match &self.rows.get(row_index) {
+                Some(row) => match row {
+                    CriFieldValue::Single(value) => Ok(*value),
+                    value => panic!("Expected value of Single, got {value:?}"),
+                },
+                None => return Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
+                    pointer: row_index,
+                    source_len: self.rows.len(),
+                    when: "tryint to access row of field for f32".to_string(),
+                }))
+            },
+            ttype => panic!("Expected type of Single, got {ttype:?}"),
         }
     }
 
@@ -59,9 +103,16 @@ impl CriTableField {
 
     pub fn to_string(&self, row_index: usize) -> Result<String, CommonBinaryError> {
         match &self.ttype {
-            CriFieldType::String => match &self.rows[row_index] {
-                CriFieldValue::String(value) => Ok(value.clone()),
-                value => panic!("Expected value of String, got {value:?}"),
+            CriFieldType::String => match &self.rows.get(row_index) {
+                Some(row) => match row {
+                    CriFieldValue::String(value) => Ok(value.clone()),
+                    value => panic!("Expected value of String, got {value:?}"),
+                },
+                None => return Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
+                    pointer: row_index,
+                    source_len: self.rows.len(),
+                    when: "trying to access row of field to for string".to_string(),
+                }))
             },
             ttype => panic!("Expected type of String, got {ttype:?}"),
         }
