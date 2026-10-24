@@ -146,7 +146,7 @@ impl CriAdpcmWiiArchiveWrapper {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CriAdpcmWiiArchive {
     pub fmt: u8,
     pub name: String,

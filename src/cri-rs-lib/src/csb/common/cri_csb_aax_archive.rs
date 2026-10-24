@@ -1,170 +1,32 @@
 use std::{fs, path::Path};
 
-use common_binary::error::CommonBinaryError::{self, SeeConsole};
-use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType, table::{CriTable, UTF_SIGNATURE}};
-use crate::{aax::archive::CriAaxArchive, cpk::sound::archive::CriCpkArchive, find_related_cpk, sound_archive::CriSoundArchiveEnum};
+use common_binary::error::CommonBinaryError;
+use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableHeaderEncodingType, table::{CriTable, UTF_SIGNATURE}};
 
-struct CriCsbTables {
-    pub info: Option<CriTable>,
-    pub cue: Option<CriTable>,
-    pub synth: Option<CriTable>,
-    pub sound_element: Option<CriTable>,
-    pub isaac: Option<CriTable>,
-    pub voice_limit_group: Option<CriTable>,
+use crate::{aax::archive::CriAaxArchive, cpk::sound::archive::CriCpkArchive, csb::{common::{cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}, cri_csb_archive::get_csb_fields}, games::{black_knight::archive::CriGraph, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup}}}, find_related_cpk, sound_archive::CriSoundArchiveEnum};
+
+pub struct CriCsbAaxArchive {
+    pub info: Vec<CriCsbAaxInfo>,
+    pub cue: Vec<CriCsbAaxCue>,
+    pub synth: Vec<CriCsbAaxSynth>,
+    pub sound_element: Vec<CriCsbAaxSoundElement>,
+    pub isaac: Vec<CriCsbAaxIsaac>,
+    pub voice_limit_group: Vec<CriCsbAaxVoiceLimitGroup>,
 }
 
-pub struct CriCsbArchive {
-    pub info: Vec<CriCsbInfo>,
-    pub cue: Vec<CriCsbCue>,
-    pub synth: Vec<CriCsbSynth>,
-    pub sound_element: Vec<CriCsbSoundElement>,
-    pub isaac: Vec<CriCsbIsaac>,
-    pub voice_limit_group: Vec<CriCsbVoiceLimitGroup>,
-}
-
-pub struct CriCsbInfo{ 
-    pub data_fmt_version: u32,
-    pub ext_size: u32,
-}
-
-pub struct CriCsbCue{ 
-    pub name: String,
-    pub id: u32,
-    pub synth: String,
-    pub udata: String,
-    pub flags: u8,
-}
-
-pub struct CriCsbSynth{ 
-    pub synname: String,
-    pub syntype: u8,
-    pub cmplxtype: u8,
-    pub lnkname: String,
-    pub issetname: String,
-    pub volume: i16,
-    pub pitch: i16,
-    pub dlytim: u32,
-    pub s_cntrl: u8,
-    pub eg_dly: u16,
-    pub eg_atk: u16,
-    pub eg_hld: u16,
-    pub eg_dcy: u16,
-    pub eg_rel: u16,
-    pub eg_sus: u16,
-    pub f_type: u8,
-    pub f_cof1: u16,
-    pub f_cof2: u16,
-    pub f_reso: u16,
-    pub f_roff: u8,
-    pub dryoname: String,
-    pub mtxrtr: String,
-    // Wet-dry world
-    pub dry0: u16,
-    pub dry1: u16,
-    pub dry2: u16,
-    pub dry3: u16,
-    pub dry4: u16,
-    pub dry5: u16,
-    pub dry6: u16,
-    pub dry7: u16,
-    pub wetoname: String,
-    pub wet0: u16,
-    pub wet1: u16,
-    pub wet2: u16,
-    pub wet3: u16,
-    pub wet4: u16,
-    pub wet5: u16,
-    pub wet6: u16,
-    pub wet7: u16,
-    pub wcnct0: String,
-    pub wcnct1: String,
-    pub wcnct2: String,
-    pub wcnct3: String,
-    pub wcnct4: String,
-    pub wcnct5: String,
-    pub wcnct6: String,
-    pub wcnct7: String,
-    pub vl_gname: String,
-    pub vl_type: u8,
-    pub vl_prio: u8,
-    pub vl_phtime: u16,
-    pub vl_pcdlt: i8,
-    pub p3d_vo: i16,
-    pub p3d_vg: i16,
-    pub p3d_ao: i16,
-    pub p3d_ag: i16,
-    pub p3d_ido: i16,
-    pub p3d_idg: i16,
-    // Wet-dry world, again
-    pub dry0g: u8,
-    pub dry1g: u8,
-    pub dry2g: u8,
-    pub dry3g: u8,
-    pub dry4g: u8,
-    pub dry5g: u8,
-    pub dry6g: u8,
-    pub dry7g: u8,
-    pub wet0g: u8,
-    pub wet1g: u8,
-    pub wet2g: u8,
-    pub wet3g: u8,
-    pub wet4g: u8,
-    pub wet5g: u8,
-    pub wet6g: u8,
-    pub wet7g: u8,
-    pub f1_type: u8,
-    pub f1_cofo: u16,
-    pub f1_cofg: u16,
-    pub f1_resoo: u16,
-    pub f1_resog: u16,
-    pub f2_type: u8,
-    pub f2_coflo: u16,
-    pub f2_coflg: u16,
-    pub f2_cofho: u16,
-    pub f2_cofhg: u16,
-}
-
-pub struct CriCsbSoundElement {
-    pub name: String,
-    pub data: CriCsbSoundElementData,
-    pub fmt: u8,
-    pub nch: u8,
-    pub stmflg: u8,
-    pub sfreq: u32,
-    pub nsmpl: u32,
-}
-
-#[derive(Debug)]
-pub enum CriCsbSoundElementData {
-    Aax(CriAaxArchive),
-    Stream(CriCpkArchive),
-}
-
-struct CriCsbIsaac {
-    pub name: String,
-    pub ptname: String,
-    pub ttype: u8,
-    pub grph: u8,
-    pub rndrng: u8,
-}
-struct CriCsbVoiceLimitGroup{ 
-    pub vlgname: String,
-    pub vlgnvoice: u32,
-}
-
-fn get_sound_data(sdl_table: &CriTable, cpk: Option<CriCpkArchive>) -> Result<Vec<CriCsbSoundElement>, CommonBinaryError> {
+pub fn get_aax_sound_data(sdl_table: &CriTable, cpk: Option<CriCpkArchive>) -> Result<Vec<CriCsbAaxSoundElement>, CommonBinaryError> {
     let is_streaming = sdl_table.get_field("stmflg").unwrap().to_bool(0).unwrap();
     // if sdl_table.get_field("fmt").unwrap().to_bool(0).unwrap() {
     //     eprintln!("The given CSB file contains an audio file which is not an ADX. Only CSB files with ADXs are supported.");
-    //     return Err(SeeConsole());
+    //     return Err(CommonBinaryError::SeeConsole());
     // }
 
     match (is_streaming, cpk) {
         (true, None) => {
             eprintln!("Cannot find the external .CPK file for this .CSB file. Please ensure that the external .CPK file is stored in the directory where the .CPK file is.");
-            return Err(SeeConsole());
+            return Err(CommonBinaryError::SeeConsole());
         },
-        (true, Some(cpk)) => {
+        (true, Some(_cpk)) => {
             panic!("CPK not yet implemented"); //return Ok(vec![CriCsbSoundElement::Stream(cpk)]);
         }
         (false, _) => {
@@ -172,9 +34,9 @@ fn get_sound_data(sdl_table: &CriTable, cpk: Option<CriCpkArchive>) -> Result<Ve
             for sdl_row_index in 0..sdl_table.row_count() {
                 let sdl_name = sdl_table.get_field("name").unwrap().to_string(sdl_row_index).unwrap();                
                 let aax_table = sdl_table.get_field("data").unwrap().to_table(sdl_row_index).unwrap();
-                sound_entries.push(CriCsbSoundElement {
+                sound_entries.push(CriCsbAaxSoundElement {
                     name: sdl_name.clone(),
-                    data: CriCsbSoundElementData::Aax(
+                    data: CriCsbAaxSoundElementData::Aax(
                         match CriAaxArchive::read(aax_table, &sdl_name).unwrap().data {
                             CriSoundArchiveEnum::Aax(cri_aax_archive) => cri_aax_archive,
                             _ => panic!("cpk data crash"),
@@ -192,41 +54,11 @@ fn get_sound_data(sdl_table: &CriTable, cpk: Option<CriCpkArchive>) -> Result<Ve
     };
 }
 
-fn get_csb_fields(csb_table: &CriTable) -> CriCsbTables {
-    let mut info = None;
-    let mut cue = None;
-    let mut synth = None;
-    let mut sound_element = None;
-    let mut isaac = None;
-    let mut voice_limit_group = None;
-
-    for row_index in 0..csb_table.row_count() {
-        match csb_table.get_field("name").unwrap().to_string(row_index).unwrap().as_str() {
-            "INFO" => info = Some(csb_table.get_field("utf").unwrap().to_table(row_index).unwrap().to_owned()),
-            "CUE" => cue = Some(csb_table.get_field("utf").unwrap().to_table(row_index).unwrap().to_owned()),
-            "SYNTH" => synth = Some(csb_table.get_field("utf").unwrap().to_table(row_index).unwrap().to_owned()),
-            "SOUND_ELEMENT" => sound_element = Some(csb_table.get_field("utf").unwrap().to_table(row_index).unwrap().to_owned()),
-            "ISAAC" => isaac = Some(csb_table.get_field("utf").unwrap().to_table(row_index).unwrap().to_owned()),
-            "VOICE_LIMIT_GROUP" => voice_limit_group = Some(csb_table.get_field("utf").unwrap().to_table(row_index).unwrap().to_owned()),
-            table_name => println!("Detacted unknown table with name [{}]", table_name),
-        }
-    }
-
-    CriCsbTables {
-        info,
-        cue,
-        synth,
-        sound_element,
-        isaac,
-        voice_limit_group,
-    }
-}
-
-impl CriCsbArchive {
-    pub fn read(path: &Path) -> Result<CriCsbArchive, CommonBinaryError> {
+impl CriCsbAaxArchive {
+    pub fn read(path: &Path) -> Result<CriCsbAaxArchive, CommonBinaryError> {
         let file_content = fs::read(path).unwrap();
         let csb_table = CriTable::read(&file_content, Some(0), UTF_SIGNATURE).unwrap();
-        
+
         let cpk_path = find_related_cpk(&path);
         let cpk_data = cpk_path.map(|path| fs::read(path).unwrap());
         let cpk = cpk_data.map(|data| CriCpkArchive::read(&data, 0).unwrap());
@@ -234,7 +66,7 @@ impl CriCsbArchive {
         let parent_fields = get_csb_fields(&csb_table);
 
         return Ok(
-            CriCsbArchive {
+            CriCsbAaxArchive {
                 info: {
                     let mut result = Vec::new();
                     if let Some(table) = parent_fields.info {
@@ -244,7 +76,7 @@ impl CriCsbArchive {
                         };
                         
                         for row_index in 0..row_count {
-                            result.push(CriCsbInfo {
+                            result.push(CriCsbAaxInfo {
                                 data_fmt_version: table.get_field("DataFmtVer").unwrap().to_u32(row_index).unwrap(),
                                 ext_size: table.get_field("ExtSize").unwrap().to_u32(row_index).unwrap(),
                             });
@@ -261,7 +93,7 @@ impl CriCsbArchive {
                         };
                         
                         for row_index in 0..row_count {
-                            result.push(CriCsbCue {
+                            result.push(CriCsbAaxCue {
                                 name: table.get_field("name").unwrap().to_string(row_index).unwrap(),
                                 id: table.get_field("id").unwrap().to_u32(row_index).unwrap(),
                                 synth: table.get_field("synth").unwrap().to_string(row_index).unwrap(),
@@ -281,7 +113,7 @@ impl CriCsbArchive {
                         };
                         
                         for row_index in 0..row_count {
-                            result.push(CriCsbSynth {
+                            result.push(CriCsbAaxSynth {
                                 // Special thanks to VSCode's multi-cursor feature
                                 synname: table.get_field("synname").unwrap().to_string(row_index).unwrap(),
                                 syntype: table.get_field("syntype").unwrap().to_u8(row_index).unwrap(), 
@@ -373,7 +205,7 @@ impl CriCsbArchive {
                     result
                 },
                 sound_element: parent_fields.sound_element
-                    .map(|sdl_table| get_sound_data(&sdl_table, cpk).unwrap()).unwrap(),
+                    .map(|sdl_table| get_aax_sound_data(&sdl_table, cpk).unwrap()).unwrap(),
                 isaac: {
                     let mut result = Vec::new();
                     if let Some(table) = parent_fields.isaac {
@@ -383,11 +215,11 @@ impl CriCsbArchive {
                         };
                         
                         for row_index in 0..row_count {
-                            result.push(CriCsbIsaac {
+                            result.push(CriCsbAaxIsaac {
                                 name: table.get_field("name").unwrap().to_string(row_index).unwrap(), 
                                 ptname: table.get_field("ptname").unwrap().to_string(row_index).unwrap(), 
                                 ttype: table.get_field("type").unwrap().to_u8(row_index).unwrap(), 
-                                grph: table.get_field("grph").unwrap().to_u8(row_index).unwrap(), 
+                                grph: CriGraph::from_table(&table.get_field("grph").unwrap().to_table(row_index).unwrap()).unwrap(),
                                 rndrng: table.get_field("rndrng").unwrap().to_u8(row_index).unwrap(), 
                             });
                         }
@@ -406,7 +238,7 @@ impl CriCsbArchive {
                             // This is a known special case when fields are defined but have no rows
                             if let Ok(vlgname) = table.get_field("vlgname").unwrap().to_string(row_index)
                             && let Ok(vlgnvoice) = table.get_field("vlgnvoice").unwrap().to_u32(row_index) {
-                                result.push(CriCsbVoiceLimitGroup {
+                                result.push(CriCsbAaxVoiceLimitGroup {
                                     vlgname,
                                     vlgnvoice,
                                 });
@@ -483,13 +315,14 @@ impl CriCsbArchive {
                         default_value: false,
                         row_storage: true,
                     },
-                    ttype: CriFieldType::Byte,
+                    ttype: CriFieldType::UInt32,
                     default_value: None,
                     name: "ExtSize".to_string(),
                     rows: vec![],
                 },
             ],
         };
+
         let mut cue_table = CriTable {
             name: "TBLCUE".to_string(),
             encoding: CriTableHeaderEncodingType::ShiftJis,
@@ -538,10 +371,10 @@ impl CriCsbArchive {
                         // one - <NULL>)
                         // As for now I'll leave it as false
                         default_value: false,
-                        row_storage: true,
+                        row_storage: false,
                     },
                     ttype: CriFieldType::String,
-                    default_value: None,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
                     name: "udata".to_string(),
                     rows: vec![],
                 },
@@ -558,585 +391,603 @@ impl CriCsbArchive {
                 },
             ],
         };
+
         let mut synth_table = CriTable {
             name: "TBLSYN".to_string(),
             encoding: CriTableHeaderEncodingType::ShiftJis,
             unknown_byte: 0,
             fields: vec![
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    ttype: CriFieldType::Byte,
-                    default_value: None,
-                    name: "cmplxtype".to_string(),
-                    rows: vec![],
-                },
-                CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::String,
                     default_value: None,
                     name: "synname".to_string(),
-                    ttype: CriFieldType::String,
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::Byte,
                     default_value: None,
                     name: "syntype".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
                     default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
                     name: "cmplxtype".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::String,
                     default_value: None,
                     name: "lnkname".to_string(),
-                    ttype: CriFieldType::String,
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::String,
                     default_value: None,
                     name: "issetname".to_string(),
-                    ttype: CriFieldType::String,
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::Int16,
                     default_value: None,
                     name: "volume".to_string(),
-                    ttype: CriFieldType::Int16,
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::Int16,
                     default_value: None,
                     name: "pitch".to_string(),
-                    ttype: CriFieldType::Int16,
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::UInt32,
                     default_value: None,
                     name: "dlytim".to_string(),
-                    ttype: CriFieldType::UInt32,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
-                    name: "s_cntrl".to_string(),
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
                     ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(0)),
+                    name: "s_cntrl".to_string(),
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: None,
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
                     name: "eg_dly".to_string(),
-                    ttype: CriFieldType::UInt16,
+                    rows: vec![],
                 },
                 CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
                     default_value: Some(CriFieldValue::UInt16(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
                     name: "eg_atk".to_string(),
-                    ttype: CriFieldType::UInt16,
+                    rows: vec![],
                 },
                 CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
                     default_value: Some(CriFieldValue::UInt16(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
                     name: "eg_hld".to_string(),
-                    ttype: CriFieldType::UInt16,
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::UInt16,
                     default_value: None,
                     name: "eg_dcy".to_string(),
-                    ttype: CriFieldType::UInt16,
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::UInt16,
                     default_value: None,
                     name: "eg_rel".to_string(),
-                    ttype: CriFieldType::UInt16,
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::UInt16,
                     default_value: None,
                     name: "eg_sus".to_string(),
-                    ttype: CriFieldType::UInt16,
+                    rows: vec![],
                 },
                 CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
                     default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
                     name: "f_type".to_string(),
-                    ttype: CriFieldType::Byte,
-                },
-                CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
                     rows: vec![],
-                    name: "vl_prio".to_string(),
-                    ttype: CriFieldType::Byte,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,  
-                    },
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
                     default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "f_cof1".to_string(),
                     rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "f_cof2".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "f_reso".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(0)),
+                    name: "f_roff".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::String,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    name: "dryoname".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::String,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    name: "mtxrtr".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "dry0".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "dry1".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "dry2".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "dry3".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "dry4".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "dry5".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "dry6".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "dry7".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::String,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    name: "wetoname".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::UInt16,
+                    default_value: None,
+                    name: "wet0".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "wet1".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "wet2".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "wet3".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "wet4".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "wet5".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "wet6".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "wet7".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::String,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    name: "wcnct0".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::String,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    name: "wcnct1".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::String,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    name: "wcnct2".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::String,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    name: "wcnct3".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::String,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    name: "wcnct4".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::String,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    name: "wcnct5".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::String,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    name: "wcnct6".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::String,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    name: "wcnct7".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::String,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    name: "vl_gname".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(0)),
+                    name: "vl_type".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(0)),
+                    name: "vl_prio".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
                     name: "vl_phtime".to_string(),
-                    ttype: CriFieldType::UInt16
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::SByte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
-                    name: "vl_pcdlt".to_string(),
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
                     ttype: CriFieldType::SByte,
+                    default_value: Some(CriFieldValue::SByte(0)),
+                    name: "vl_pcdlt".to_string(),
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::Int16,
                     default_value: None,
                     name: "p3d_vo".to_string(),
-                    ttype: CriFieldType::Int16,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Int16(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Int16,
+                    default_value: Some(CriFieldValue::Int16(1000)),
                     name: "p3d_vg".to_string(),
-                    ttype: CriFieldType::Int16,
+                    rows: vec![],
                 },
                 CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Int16,
                     default_value: Some(CriFieldValue::Int16(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
                     name: "p3d_ao".to_string(),
-                    ttype: CriFieldType::Int16,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Int16(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Int16,
+                    default_value: Some(CriFieldValue::Int16(1000)),
                     name: "p3d_ag".to_string(),
-                    ttype: CriFieldType::Int16,
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::Int16,
                     default_value: None,
                     name: "p3d_ido".to_string(),
-                    ttype: CriFieldType::Int16,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Int16(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Int16,
+                    default_value: Some(CriFieldValue::Int16(1000)),
                     name: "p3d_idg".to_string(),
-                    ttype: CriFieldType::Int16,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "dry0g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "dry1g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "dry2g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "dry3g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "dry4g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "dry5g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "dry6g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "dry7g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "wet0g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "wet1g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "wet2g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "wet3g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "wet4g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "wet5g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "wet6g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(255)),
                     name: "wet7g".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::Byte,
                     default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
                     name: "f1_type".to_string(),
-                    ttype: CriFieldType::Byte,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::UInt16(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
-                    name: "f1_cof".to_string(),
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
                     ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "f1_cofo".to_string(),
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,  
-                    },
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
                     default_value: Some(CriFieldValue::UInt16(0)),
-                    rows: vec![],
                     name: "f1_cofg".to_string(),
-                    ttype: CriFieldType::UInt16
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::UInt16(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
-                    name: "f1_res".to_string(),
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
                     ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(0)),
+                    name: "f1_resoo".to_string(),
+                    rows: vec![],
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,  
-                    },
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
                     default_value: Some(CriFieldValue::UInt16(0)),
-                    rows: vec![],
                     name: "f1_resog".to_string(),
-                    ttype: CriFieldType::UInt16
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::Byte(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
-                    name: "f2_type".to_string(),
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
                     ttype: CriFieldType::Byte,
+                    default_value: Some(CriFieldValue::Byte(0)),
+                    name: "f2_type".to_string(),
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::UInt16(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
-                    rows: vec![],
-                    name: "f2_cof".to_string(),
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
                     ttype: CriFieldType::UInt16,
-                },
-                CriTableField {
                     default_value: Some(CriFieldValue::UInt16(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
+                    name: "f2_coflo".to_string(),
                     rows: vec![],
-                    name: "f2_cof".to_string(),
-                    ttype: CriFieldType::UInt16,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(1000)),
+                    name: "f2_coflg".to_string(),
                     rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags { name: true, default_value: false, row_storage: true },
+                    ttype: CriFieldType::UInt16,
                     default_value: None,
                     name: "f2_cofho".to_string(),
-                    ttype: CriFieldType::UInt16,
+                    rows: vec![],
                 },
                 CriTableField {
-                    default_value: Some(CriFieldValue::UInt16(0)),
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: true,
-                        row_storage: true,
-                    },
+                    flags: CriFieldFlags { name: true, default_value: true, row_storage: false },
+                    ttype: CriFieldType::UInt16,
+                    default_value: Some(CriFieldValue::UInt16(1000)),
+                    name: "f2_cofhg".to_string(),
                     rows: vec![],
-                    name: "f2_cof".to_string(),
-                ttype: CriFieldType::UInt16,
-                }
+                },
             ],
         };
+
         let mut sound_element_table = CriTable {
             name: "TBLSDL".to_string(),
             encoding: CriTableHeaderEncodingType::ShiftJis,
@@ -1168,7 +1019,7 @@ impl CriCsbArchive {
                     flags: CriFieldFlags {
                         name: true,
                         default_value: true,
-                        row_storage: true,
+                        row_storage: false,
                     },
                     ttype: CriFieldType::Byte,
                     default_value: Some(CriFieldValue::Byte(4)),
@@ -1190,7 +1041,7 @@ impl CriCsbArchive {
                     flags: CriFieldFlags {
                         name: true,
                         default_value: true,
-                        row_storage: true,
+                        row_storage: false,
                     },
                     ttype: CriFieldType::Byte,
                     default_value: Some(CriFieldValue::Byte(0)),
@@ -1221,6 +1072,7 @@ impl CriCsbArchive {
                 },
             ],
         };
+
         let mut isaac_table = CriTable {
             name: "TBLISC".to_string(),
             encoding: CriTableHeaderEncodingType::ShiftJis,
@@ -1235,6 +1087,17 @@ impl CriCsbArchive {
                     ttype: CriFieldType::String,
                     default_value: None,
                     name: "name".to_string(),
+                    rows: vec![],
+                },
+                CriTableField {
+                    flags: CriFieldFlags {
+                        name: true,
+                        default_value: false,
+                        row_storage: true,
+                    },
+                    ttype: CriFieldType::String,
+                    default_value: None,
+                    name: "ptname".to_string(),
                     rows: vec![],
                 },
                 CriTableField {
@@ -1272,6 +1135,7 @@ impl CriCsbArchive {
                 },
             ],
         };
+
         let mut voice_limit_group_table = CriTable {
             name: "TBLVLG".to_string(),
             encoding: CriTableHeaderEncodingType::ShiftJis,
@@ -1301,7 +1165,7 @@ impl CriCsbArchive {
                 },
             ],
         };
-
+        
         for entry in &self.info {
             info_table.fields[0].rows.push(CriFieldValue::UInt32(entry.data_fmt_version));
             info_table.fields[1].rows.push(CriFieldValue::UInt32(entry.ext_size));
@@ -1405,8 +1269,11 @@ impl CriCsbArchive {
         for entry in &self.sound_element {
             sound_element_table.fields[0].rows.push(CriFieldValue::String(entry.name.clone()));
             sound_element_table.fields[1].rows.push(CriFieldValue::Data(match &entry.data {
-                CriCsbSoundElementData::Aax(cri_aax_archive) => cri_aax_archive.write().unwrap(),
-                CriCsbSoundElementData::Stream(cri_cpk_archive) => todo!("or not todo"),
+                CriCsbAaxSoundElementData::Aax(cri_aax_archive) => cri_aax_archive
+                    .write().unwrap(),
+                CriCsbAaxSoundElementData::Stream(_) => {
+                    todo!("cpk stream write");
+                }
             }));
             sound_element_table.fields[2].rows.push(CriFieldValue::Byte(entry.fmt));
             sound_element_table.fields[3].rows.push(CriFieldValue::Byte(entry.nch));
@@ -1414,6 +1281,43 @@ impl CriCsbArchive {
             sound_element_table.fields[5].rows.push(CriFieldValue::UInt32(entry.sfreq));
             sound_element_table.fields[6].rows.push(CriFieldValue::UInt32(entry.nsmpl));
         }
+
+        for entry in &self.isaac {
+            isaac_table.fields[0].rows.push(CriFieldValue::String(entry.name.clone()));
+            isaac_table.fields[1].rows.push(CriFieldValue::String(entry.ptname.clone()));
+            isaac_table.fields[2].rows.push(CriFieldValue::Byte(entry.ttype));
+            isaac_table.fields[3].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.grph.to_table().unwrap())));
+            isaac_table.fields[4].rows.push(CriFieldValue::Byte(entry.rndrng));
+        }
+
+        for entry in &self.voice_limit_group {
+            voice_limit_group_table.fields[0].rows.push(CriFieldValue::String(entry.vlgname.clone()));
+            voice_limit_group_table.fields[1].rows.push(CriFieldValue::UInt32(entry.vlgnvoice.clone()));
+        }
+
+        parent_table.fields[0].rows.push(CriFieldValue::String("INFO".to_string()));
+        parent_table.fields[1].rows.push(CriFieldValue::Byte(7));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(info_table)));
+
+        parent_table.fields[0].rows.push(CriFieldValue::String("CUE".to_string()));
+        parent_table.fields[1].rows.push(CriFieldValue::Byte(1));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(cue_table)));
+
+        parent_table.fields[0].rows.push(CriFieldValue::String("SYNTH".to_string()));
+        parent_table.fields[1].rows.push(CriFieldValue::Byte(2));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(synth_table)));
+        
+        parent_table.fields[0].rows.push(CriFieldValue::String("SOUND_ELEMENT".to_string()));
+        parent_table.fields[1].rows.push(CriFieldValue::Byte(4));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(sound_element_table)));
+        
+        parent_table.fields[0].rows.push(CriFieldValue::String("ISAAC".to_string()));
+        parent_table.fields[1].rows.push(CriFieldValue::Byte(5));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(isaac_table)));
+        
+        parent_table.fields[0].rows.push(CriFieldValue::String("VOICE_LIMIT_GROUP".to_string()));
+        parent_table.fields[1].rows.push(CriFieldValue::Byte(6));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(voice_limit_group_table)));
 
         parent_table.write()
     }

@@ -28,11 +28,18 @@ pub mod cpk {
     }
 }
 pub mod csb {
+    pub mod common {
+        pub mod cri_csb_aax_archive;
+        pub mod cri_csb_aax_sound_element;
+        pub mod cri_csb_adpcm_wii_archive;
+        pub mod cri_csb_adpcm_wii_sound_element;
+        pub mod cri_csb_archive;
+    }
     pub mod games {
         pub mod black_knight {
             pub mod archive;
         }
-        pub mod other {
+        pub mod episodes {
             pub mod archive;
         }
     }

@@ -1,5 +1,5 @@
 use common_binary::error::CommonBinaryError;
-use cri_table::{header_encoding_type::CriTableHeaderEncodingType, table::CriTable};
+use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType, table::CriTable};
 
 use crate::{aax::{entry::CriAaxEntry, loop_flag::CriAaxLoopFlag}, sound_archive::{CriSoundArchive, CriSoundArchiveEnum}};
 
@@ -30,14 +30,45 @@ impl CriAaxArchive {
     }
 
     pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
-        let result = CriTable {
+        let mut result = CriTable {
             name: "AAX".to_string(),
             encoding: CriTableHeaderEncodingType::ShiftJis,
-            fields: vec![],
+            fields: vec![
+                CriTableField {
+                    flags: CriFieldFlags {
+                        name: true,
+                        default_value: false,
+                        row_storage: true,
+                    },
+                    ttype: CriFieldType::Data,
+                    name: "data".to_string(),
+                    rows: vec![],
+                    default_value: None,
+                },
+                CriTableField {
+                    flags: CriFieldFlags {
+                        name: true,
+                        default_value: false,
+                        row_storage: true,
+                    },
+                    ttype: CriFieldType::Byte,
+                    name: "lpflg".to_string(),
+                    rows: vec![],
+                    default_value: None,
+                }
+            ],
             unknown_byte: 0,
         };
 
-        
+        if let Some(intro) = self.entries.iter().find(|entry| entry.flag == CriAaxLoopFlag::Intro) {
+            result.fields[0].rows.push(CriFieldValue::Data(intro.data.clone()));
+            result.fields[1].rows.push(CriFieldValue::Byte(intro.flag.clone() as u8));
+        };
+
+        if let Some(r#loop) = self.entries.iter().find(|entry| entry.flag == CriAaxLoopFlag::Loop) {
+            result.fields[0].rows.push(CriFieldValue::Data(r#loop.data.clone()));
+            result.fields[1].rows.push(CriFieldValue::Byte(r#loop.flag.clone() as u8));
+        };
 
         result.write()
     }

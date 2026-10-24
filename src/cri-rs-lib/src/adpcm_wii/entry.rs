@@ -2,6 +2,7 @@ use std::fmt::{self, Formatter};
 
 use crate::adpcm_wii::loop_flag::CriDspLoopFlag;
 
+#[derive(Clone)]
 pub struct CriAdpcmWiiEntry {
     pub sfreq: u32,
     pub nsmpl: u32,

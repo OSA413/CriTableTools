@@ -1,6 +1,6 @@
 use std::{fs::{self, create_dir_all}, path::Path};
 
-use cri_rs_lib::{adpcm_wii::archive::CriAdpcmWiiArchiveWrapper, csb::games::black_knight::archive::{CriCsbAdpcmWiiSoundElementData, CriCsbArchive, CriCsbCue, CriCsbSoundElementMetaInfo, CriCsbSynth}};
+use cri_rs_lib::{adpcm_wii::archive::CriAdpcmWiiArchiveWrapper, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElementData}, games::black_knight::archive::CriCsbSoundElementMetaInfo}};
 
 fn extract_dps(dps: &CriAdpcmWiiArchiveWrapper, base_dir: &Path) {
     for entry in &dps.entries {
@@ -44,7 +44,7 @@ fn extract_dps(dps: &CriAdpcmWiiArchiveWrapper, base_dir: &Path) {
 }
 
 pub fn extract_csb(path: &Path) {
-    let csb = CriCsbArchive::read(path).unwrap();
+    let csb = CriCsbAdpcmWiiArchive::read(path).unwrap();
     let base_directory = path.parent().unwrap();
     let output_directory_name = base_directory.join(path.file_stem().unwrap());
 

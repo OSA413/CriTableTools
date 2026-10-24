@@ -2,7 +2,7 @@ use std::{collections::HashMap, ffi::OsStr, fs, path::{Path, PathBuf}};
 
 use common_binary::error::CommonBinaryError;
 use common_utils::walk_dir::walk_dir;
-use cri_rs_lib::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag}, csb::games::black_knight::archive::{CriCsbAdpcmWiiSoundElementData, CriCsbArchive, CriCsbCue, CriCsbInfo, CriCsbIsaac, CriCsbSoundElement, CriCsbSoundElementMetaInfo, CriCsbSynth, CriCsbVoiceLimitGroup}};
+use cri_rs_lib::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag}, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}}, games::black_knight::archive::{CriCsbAdpcmWiiCue, CriCsbAdpcmWiiInfo, CriCsbAdpcmWiiIsaac, CriCsbAdpcmWiiSynth, CriCsbAdpcmWiiVoiceLimitGroup, CriCsbSoundElementMetaInfo}}};
 
 static SOUND_DSP_LOWERCASE: &'static str = "sound.dsp";
 static SOUND_LOOP_DSP_LOWERCASE: &'static str = "soundloop.dsp";
@@ -44,7 +44,7 @@ pub fn parse_entry(entry: &Path) -> Option<(ParsedDsp, CriDspLoopFlag)> {
 }
 
 pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
-    let mut csb = CriCsbArchive {
+    let mut csb = CriCsbAdpcmWiiArchive {
         info: vec![],
         cue: vec![],
         synth: vec![],
@@ -97,6 +97,7 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
     }
 
     for entry in adpcm_wii_archive_pool {
+        // Twice read?
         let sound_element_meta_data = fs::read_to_string(entry.1.0.join("sound_element.json"))
             .map(|data| serde_json::from_str::<CriCsbSoundElementMetaInfo>(&data))
             .unwrap()
@@ -106,7 +107,7 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
             .strip_prefix(path).unwrap()
             .to_string_lossy().replace('\\', "/");
 
-        csb.sound_element.push(CriCsbSoundElement {
+        csb.sound_element.push(CriCsbAdpcmWiiSoundElement {
             name: relative_name,
             data: CriCsbAdpcmWiiSoundElementData::AdpcmWii(entry.1.1),
             fmt: sound_element_meta_data.fmt,
@@ -118,17 +119,17 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
     }
 
     csb.cue = fs::read_to_string(path.join("cue.json"))
-        .map(|data| serde_json::from_str::<Vec<CriCsbCue>>(&data))
+        .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiCue>>(&data))
         .unwrap()
         .unwrap();
 
     csb.synth = fs::read_to_string(path.join("synth.json"))
-        .map(|data| serde_json::from_str::<Vec<CriCsbSynth>>(&data))
+        .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiSynth>>(&data))
         .unwrap()
         .unwrap();
 
     csb.info = fs::read_to_string(path.join("table_info.json"))
-        .map(|data| serde_json::from_str::<Vec<CriCsbInfo>>(&data))
+        .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiInfo>>(&data))
         .unwrap()
         .unwrap();
 
@@ -136,7 +137,7 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
 
     for entry in isaac_entries {
         let isaac_info = fs::read_to_string(entry)
-            .map(|data| serde_json::from_str::<CriCsbIsaac>(&data))
+            .map(|data| serde_json::from_str::<CriCsbAdpcmWiiIsaac>(&data))
             .unwrap()
             .unwrap();
     
@@ -144,7 +145,7 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
     }
     
     csb.voice_limit_group = fs::read_to_string(path.join("voice_limit_group.json"))
-        .map(|data| serde_json::from_str::<Vec<CriCsbVoiceLimitGroup>>(&data))
+        .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiVoiceLimitGroup>>(&data))
         .unwrap()
         .unwrap();
 

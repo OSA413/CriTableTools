@@ -36,10 +36,10 @@ A tool to extract audio files from a CSB file (supports related CPK files)
 
 ## Tested games
 
-* Sonic and the Black Knight (Wii) (read, extraction with metadata, creation from the extracted CSB, *need more research*)
-* Sonic 4 Episode 1 (PC) (read, extraction (**temporarily broken in latest release, use v0.1.0**))
-* Sonic 4 Episode 2 (PC) (read, extraction (**temporarily broken in latest release, use v0.1.0**))
-* Sonic Generations (PC) (read, extraction (**temporarily broken in latest release, use v0.1.0**))
+* Sonic and the Black Knight (Wii) (read, extraction with metadata, creation from the extracted CSB, *need more research and testing*)
+* Sonic 4 Episode 1 (PC) (read, extraction with metadata, creation from the extracted CSB (not from CPK yet) (*needs testing*))
+* Sonic 4 Episode 2 (PC) (read, extraction with metadata, creation from the extracted CSB (not from CPK yet) (*needs testing*))
+* Sonic Generations (PC) (read, extraction)
 * Sonic Lost World (PC) (CPK read)
 * Sonic Forces (PC) (CPK read)
 
