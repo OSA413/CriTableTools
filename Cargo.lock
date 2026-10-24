@@ -103,7 +103,7 @@ dependencies = [
 
 [[package]]
 name = "cri-rs-lib"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "chrono",
  "common_binary",
