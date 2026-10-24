@@ -531,6 +531,12 @@ impl CriCsbArchive {
                 CriTableField {
                     flags: CriFieldFlags {
                         name: true,
+                        // TODO: figure out why some fields are with default_value
+                        // and some are not depending on the file
+                        // (I've checked several CSBs and currently found no relation,
+                        // probably I need to check that the actual value is the default
+                        // one - <NULL>)
+                        // As for now I'll leave it as false
                         default_value: false,
                         row_storage: true,
                     },

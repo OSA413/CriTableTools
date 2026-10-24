@@ -1,6 +1,6 @@
 use chrono::{NaiveDateTime};
 
-use crate::{aax::archive::CriAaxArchive, sound_archive::CriSoundArchive};
+use crate::sound_archive::CriSoundArchive;
 
 #[derive(Debug)]
 pub struct CriCpkEntry {
