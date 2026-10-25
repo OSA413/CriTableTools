@@ -5,8 +5,6 @@ use crate::adpcm_wii::{entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag};
 
 #[derive(Debug)]
 pub struct CriAdpcmWiiArchiveWrapper {
-    // Currentry I found no confirmation of existance of several entries,
-    // but it crashed at the early stages of the development, so I need to check if that works on all CSBs
     pub entries: Vec<CriAdpcmWiiArchive>,
 }
 

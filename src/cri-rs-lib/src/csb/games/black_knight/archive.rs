@@ -1,9 +1,6 @@
-use std::{fs, path::Path};
-
 use common_binary::error::CommonBinaryError;
-use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableHeaderEncodingType, table::{CriTable, UTF_SIGNATURE}};
+use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableHeaderEncodingType, table::CriTable};
 use serde::{Deserialize, Serialize};
-use crate::{adpcm_wii::archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}};
 
 #[derive(Serialize, Deserialize)]
 pub struct CriCsbAdpcmWiiInfo{ 

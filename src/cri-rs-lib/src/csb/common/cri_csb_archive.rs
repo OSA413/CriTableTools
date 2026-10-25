@@ -1,9 +1,6 @@
-use std::{fs, path::Path};
+use cri_table::table::CriTable;
 
-use common_binary::error::CommonBinaryError;
-use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType, table::{CriTable, UTF_SIGNATURE}};
-
-use crate::csb::{common::cri_csb_adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElementData, games::black_knight::archive::{CriCsbAdpcmWiiCue, CriCsbAdpcmWiiInfo, CriCsbAdpcmWiiIsaac, CriCsbAdpcmWiiSynth, CriCsbAdpcmWiiVoiceLimitGroup, CriGraph}};
+use crate::csb::{common::cri_csb_adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElementData};
 
 pub struct CriCsbTablesBuilder {
     pub info: Option<CriTable>,

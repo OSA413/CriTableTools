@@ -1,8 +1,6 @@
 #[derive(PartialEq, Debug, Clone)]
 pub enum CriDspLoopFlag {
     Sound = 0,
-    // Currentry I found no confirmation of existance of several entries,
-    // but it crashed at the early stages of the development, so I need to check if that works on all CSBs
     SoundLoop = 1,
 }
 
