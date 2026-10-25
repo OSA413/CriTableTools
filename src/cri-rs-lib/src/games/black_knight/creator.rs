@@ -78,8 +78,10 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
                     nsmpl: root_entry.meta_info.nsmpl,
                     nch: root_entry.meta_info.nch,
                     loop_flag,
-                    header: data[..0x50].to_vec(),
-                    data: data[0x50..].to_vec(),
+                    // TODO: turns out there can be two headers in one header,
+                    // so this import is incorrect (as well as the extraction, probably)
+                    header: data[..0x60].to_vec(),
+                    data: data[0x60..].to_vec(),
                 },
             ],
         };

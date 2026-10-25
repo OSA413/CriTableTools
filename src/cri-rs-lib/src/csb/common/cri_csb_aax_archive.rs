@@ -1018,7 +1018,7 @@ impl CriCsbAaxArchive {
                         row_storage: false,
                     },
                     ttype: CriFieldType::Byte,
-                    default_value: Some(CriFieldValue::Byte(4)),
+                    default_value: Some(CriFieldValue::Byte(0)),
                     name: "fmt".to_string(),
                     rows: vec![],
                 },
@@ -1271,9 +1271,9 @@ impl CriCsbAaxArchive {
                     todo!("cpk stream write");
                 }
             }));
-            sound_element_table.fields[2].rows.push(CriFieldValue::Byte(entry.fmt));
+            // sound_element_table.fields[2].rows.push(CriFieldValue::Byte(entry.fmt));
             sound_element_table.fields[3].rows.push(CriFieldValue::Byte(entry.nch));
-            sound_element_table.fields[4].rows.push(CriFieldValue::Byte(entry.stmflg));
+            // sound_element_table.fields[4].rows.push(CriFieldValue::Byte(entry.stmflg));
             sound_element_table.fields[5].rows.push(CriFieldValue::UInt32(entry.sfreq));
             sound_element_table.fields[6].rows.push(CriFieldValue::UInt32(entry.nsmpl));
         }

@@ -8,6 +8,8 @@ echo "Copying new distribution files..."
 
 cp ./target/release/cri-table2json ./dist/CriTableTools/cri-table2json
 cp ./target/release/csb-rs ./dist/CriTableTools/csb-rs
+cp ./target/release/recreate-table-tester ./dist/CriTableTools/recreate-table-tester
+cp ./target/release/recreate-tester ./dist/CriTableTools/recreate-tester
 
 cp ./LICENSE.md ./dist/CriTableTools/licenses/LICENSE
 cargo install -f copydeps cargo-bundle-licenses
