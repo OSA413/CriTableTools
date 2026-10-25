@@ -364,13 +364,9 @@ impl CriCsbAaxArchive {
                 CriTableField {
                     flags: CriFieldFlags {
                         name: true,
-                        // TODO: figure out why some fields are with default_value
-                        // and some are not depending on the file
-                        // (I've checked several CSBs and currently found no relation,
-                        // probably I need to check that the actual value is the default
-                        // one - <NULL>)
-                        // As for now I'll leave it as false
-                        default_value: false,
+                        // Temporarily set as default, but this should be
+                        // calculated for each row depending on the actial default_value.is_some()
+                        default_value: true,
                         row_storage: false,
                     },
                     ttype: CriFieldType::String,
@@ -1175,7 +1171,7 @@ impl CriCsbAaxArchive {
             cue_table.fields[0].rows.push(CriFieldValue::String(entry.name.clone()));
             cue_table.fields[1].rows.push(CriFieldValue::UInt32(entry.id));
             cue_table.fields[2].rows.push(CriFieldValue::String(entry.synth.clone()));
-            cue_table.fields[3].rows.push(CriFieldValue::String(entry.udata.clone()));
+            // cue_table.fields[3].rows.push(CriFieldValue::String(entry.udata.clone()));
             cue_table.fields[4].rows.push(CriFieldValue::Byte(entry.flags));
         }
 

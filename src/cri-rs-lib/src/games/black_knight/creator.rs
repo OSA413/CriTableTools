@@ -2,7 +2,7 @@ use std::{collections::HashMap, ffi::OsStr, fs, path::{Path, PathBuf}};
 
 use common_binary::error::CommonBinaryError;
 use common_utils::walk_dir::walk_dir;
-use cri_rs_lib::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag}, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}}, games::black_knight::archive::{CriCsbAdpcmWiiCue, CriCsbAdpcmWiiInfo, CriCsbAdpcmWiiIsaac, CriCsbAdpcmWiiSynth, CriCsbAdpcmWiiVoiceLimitGroup, CriCsbSoundElementMetaInfo}}};
+use crate::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag}, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}}, games::black_knight::archive::{CriCsbAdpcmWiiCue, CriCsbAdpcmWiiInfo, CriCsbAdpcmWiiIsaac, CriCsbAdpcmWiiSynth, CriCsbAdpcmWiiVoiceLimitGroup, CriCsbSoundElementMetaInfo}}};
 
 static SOUND_DSP_LOWERCASE: &'static str = "sound.dsp";
 static SOUND_LOOP_DSP_LOWERCASE: &'static str = "soundloop.dsp";

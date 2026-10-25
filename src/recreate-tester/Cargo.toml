@@ -1,6 +1,6 @@
 [package]
-name = "recreate-diff-tester"
-description = "A temporary tool to test CriTable recreation"
+name = "recreate-tester"
+description = "A temporary tool to test CsbArchive recreation and extraction"
 version = "0.5.0"
 edition = "2024"
 authors = ["Oleg \"OSA413\" Sokolov"]
@@ -12,8 +12,10 @@ license = "MIT"
 similar = "3.2.0"
 cri-table = { path = "../cri-table" }
 cri-rs-lib = { path = "../cri-rs-lib" }
+common_utils = { path = "../../src_tools/src/common/utils" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.151" }
+sha2 = "0.11.1"
 
 [lints]
 workspace = true

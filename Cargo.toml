@@ -4,7 +4,8 @@ members = [
     "src/cri-table",
     "src/csb-rs",
     "src/cri-table2json",
-    "src/recreate-diff-tester"
+    "src/recreate-table-tester",
+    "src/recreate-tester",
 ]
 resolver = "3"
 

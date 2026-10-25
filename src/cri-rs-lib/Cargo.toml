@@ -11,6 +11,7 @@ license = "MIT"
 [dependencies]
 cri-table = { path = "../cri-table" }
 chrono = { version = "0.4.45", default-features = false }
+common_utils = { path = "../../src_tools/src/common/utils" }
 common_binary = { path = "../../src_tools/src/common/binary" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.151" }

@@ -2,7 +2,7 @@ use std::{collections::HashMap, ffi::OsStr, fs, path::{Path, PathBuf}};
 
 use common_binary::error::CommonBinaryError;
 use common_utils::walk_dir::walk_dir;
-use cri_rs_lib::{aax::{archive::CriAaxArchive, entry::CriAaxEntry, loop_flag::CriAaxLoopFlag}, csb::{common::{cri_csb_aax_archive::CriCsbAaxArchive, cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}}, games::{black_knight::archive::CriCsbSoundElementMetaInfo, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup, CriCsbSoundElement}}}};
+use crate::{aax::{archive::CriAaxArchive, entry::CriAaxEntry, loop_flag::CriAaxLoopFlag}, csb::{common::{cri_csb_aax_archive::CriCsbAaxArchive, cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}}, games::{black_knight::archive::CriCsbSoundElementMetaInfo, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup, CriCsbSoundElement}}}};
 
 static INTRO_ADX_LOWERCASE: &'static str = "intro.adx";
 static LOOP_ADX_LOWERCASE: &'static str = "loop.adx";

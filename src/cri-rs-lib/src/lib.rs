@@ -45,6 +45,17 @@ pub mod csb {
     }
 }
 
+pub mod games {
+    pub mod episodes {
+        pub mod extractor;
+        pub mod creator;
+    }
+    pub mod black_knight {
+        pub mod extractor;
+        pub mod creator;
+    }
+}
+
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn find_related_file(path_to_search: &Path, extension: &OsStr) -> Option<PathBuf> {

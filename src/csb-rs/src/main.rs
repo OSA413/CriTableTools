@@ -1,20 +1,9 @@
 use std::{env, ops, path::{Path, PathBuf}, str::FromStr};
 
-use crate::games::{black_knight::{self, creator, extractor}, episodes};
+use cri_rs_lib::games::{black_knight::{self, creator, extractor}, episodes};
 
 mod help;
 mod version;
-
-mod games {
-    pub mod episodes {
-        pub mod extractor;
-        pub mod creator;
-    }
-    pub mod black_knight {
-        pub mod extractor;
-        pub mod creator;
-    }
-}
 
 fn main() {
     let mut command = None;

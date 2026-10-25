@@ -1,6 +1,6 @@
 use std::{fs::{self, create_dir_all}, path::Path};
 
-use cri_rs_lib::{aax::archive::CriAaxArchive, csb::{common::{cri_csb_aax_archive::CriCsbAaxArchive, cri_csb_aax_sound_element::CriCsbAaxSoundElementData}, games::black_knight::archive::CriCsbSoundElementMetaInfo}, sound_archive::CriSoundArchiveEnum};
+use crate::{aax::archive::CriAaxArchive, csb::{common::{cri_csb_aax_archive::CriCsbAaxArchive, cri_csb_aax_sound_element::CriCsbAaxSoundElementData}, games::black_knight::archive::CriCsbSoundElementMetaInfo}, sound_archive::CriSoundArchiveEnum};
 
 fn extract_aax(entry_dir_name: &Path, aax: &CriAaxArchive) {
     for entry in &aax.entries {
