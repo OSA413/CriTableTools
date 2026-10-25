@@ -1,6 +1,6 @@
 use std::{fs::{self, create_dir_all}, path::Path};
 
-use crate::{adpcm_wii::archive::CriAdpcmWiiArchiveWrapper, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElementData}, games::black_knight::archive::CriCsbSoundElementMetaInfo}};
+use crate::{adpcm_wii::{archive::CriAdpcmWiiArchiveWrapper, loop_flag::CriDspLoopFlag}, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElementData}, games::black_knight::archive::CriCsbSoundElementMetaInfo}};
 
 fn extract_dps(dps: &CriAdpcmWiiArchiveWrapper, base_dir: &Path) {
     for entry in &dps.entries {
@@ -30,13 +30,19 @@ fn extract_dps(dps: &CriAdpcmWiiArchiveWrapper, base_dir: &Path) {
             let raw_root = entry_dir_name.join(Path::new(inner_entry.loop_flag.to_file_name()).parent().unwrap());
             create_dir_all(raw_root.join("raw")).unwrap();
             fs::write(
-                raw_root.join("raw/header"),
+                raw_root.join(match inner_entry.loop_flag {
+                    CriDspLoopFlag::Intro => "raw/header.intro",
+                    CriDspLoopFlag::Loop => "raw/header.loop",
+                }),
                 &inner_entry.header,
             ).unwrap();
             
             create_dir_all(entry_dir_name).unwrap();
             fs::write(
-                raw_root.join("raw/data"),
+                raw_root.join(match inner_entry.loop_flag {
+                    CriDspLoopFlag::Intro => "raw/data.intro",
+                    CriDspLoopFlag::Loop => "raw/data.loop",
+                }),
                 &inner_entry.data,
             ).unwrap();
 

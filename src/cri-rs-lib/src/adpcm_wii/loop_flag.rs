@@ -1,14 +1,14 @@
 #[derive(PartialEq, Debug, Clone)]
 pub enum CriDspLoopFlag {
-    Sound = 0,
-    SoundLoop = 1,
+    Intro = 0,
+    Loop = 1,
 }
 
 impl From<u8> for CriDspLoopFlag {
     fn from(value: u8) -> Self {
         match value {
-            0 => CriDspLoopFlag::Sound,
-            1 => CriDspLoopFlag::SoundLoop,
+            0 => CriDspLoopFlag::Intro,
+            1 => CriDspLoopFlag::Loop,
             value => panic!("Invalid value for CriDspLoopFlag: {value}"),
         }
     }
@@ -17,8 +17,8 @@ impl From<u8> for CriDspLoopFlag {
 impl From<CriDspLoopFlag> for u8 {
     fn from(value: CriDspLoopFlag) -> Self {
         match value {
-            CriDspLoopFlag::Sound => 0,
-            CriDspLoopFlag::SoundLoop => 1,
+            CriDspLoopFlag::Intro => 0,
+            CriDspLoopFlag::Loop => 1,
         }
     }
 }
@@ -26,8 +26,8 @@ impl From<CriDspLoopFlag> for u8 {
 impl CriDspLoopFlag {
     pub fn to_file_name(&self) -> &'static str {
         match self {
-            CriDspLoopFlag::Sound => "Sound.dsp",
-            CriDspLoopFlag::SoundLoop => "SoundLoop.dsp",
+            CriDspLoopFlag::Intro => "Intro.dsp",
+            CriDspLoopFlag::Loop => "Loop.dsp",
         }
     }
 }

@@ -4,8 +4,8 @@ use common_binary::error::CommonBinaryError;
 use common_utils::walk_dir::walk_dir;
 use crate::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag}, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}}, games::black_knight::archive::{CriCsbAdpcmWiiCue, CriCsbAdpcmWiiInfo, CriCsbAdpcmWiiIsaac, CriCsbAdpcmWiiSynth, CriCsbAdpcmWiiVoiceLimitGroup, CriCsbSoundElementMetaInfo}}};
 
-static SOUND_DSP_LOWERCASE: &'static str = "sound.dsp";
-static SOUND_LOOP_DSP_LOWERCASE: &'static str = "soundloop.dsp";
+static INTRO_DSP_LOWERCASE: &'static str = "intro.dsp";
+static LOOP_DSP_LOWERCASE: &'static str = "loop.dsp";
 
 pub struct ParsedDsp {
     root_path: String,
@@ -17,15 +17,15 @@ pub fn parse_entry(entry: &Path) -> Option<(ParsedDsp, CriDspLoopFlag)> {
     let entry_string = entry.to_string_lossy();
     let entry_string_lowercase = entry_string.to_lowercase();
 
-    let (root_dir, loop_flag) = if entry_string_lowercase.ends_with(SOUND_LOOP_DSP_LOWERCASE) {
+    let (root_dir, loop_flag) = if entry_string_lowercase.ends_with(LOOP_DSP_LOWERCASE) {
         (
-            entry_string.chars().take(entry_string.len() - SOUND_LOOP_DSP_LOWERCASE.len()).collect::<String>(),
-            CriDspLoopFlag::SoundLoop,
+            entry_string.chars().take(entry_string.len() - LOOP_DSP_LOWERCASE.len()).collect::<String>(),
+            CriDspLoopFlag::Loop,
         )
-    } else if entry_string_lowercase.ends_with(SOUND_DSP_LOWERCASE) {
+    } else if entry_string_lowercase.ends_with(INTRO_DSP_LOWERCASE) {
         (
-            entry_string.chars().take(entry_string.len() - SOUND_DSP_LOWERCASE.len()).collect::<String>(),
-            CriDspLoopFlag::Sound,
+            entry_string.chars().take(entry_string.len() - INTRO_DSP_LOWERCASE.len()).collect::<String>(),
+            CriDspLoopFlag::Intro,
         )
     } else {
         return None;

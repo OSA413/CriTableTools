@@ -1,5 +1,5 @@
 use common_binary::error::CommonBinaryError;
-use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType, table::CriTable};
+use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableHeaderEncodingType, table::CriTable};
 
 use crate::adpcm_wii::{entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag};
 
@@ -130,9 +130,8 @@ impl CriAdpcmWiiArchiveWrapper {
         };
 
         for entry in &self.entries {
-            let inner_table = entry.to_table()?;
             result.fields[0].rows.push(CriFieldValue::String(entry.name.clone()));
-            result.fields[1].rows.push(CriFieldValue::ProbablyTable(cri_table::field_value::TableOrData::Table(inner_table)));
+            result.fields[1].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.to_table().unwrap())));
             result.fields[2].rows.push(CriFieldValue::Byte(entry.fmt));
             result.fields[3].rows.push(CriFieldValue::Byte(entry.nch));
             result.fields[4].rows.push(CriFieldValue::Byte(entry.stmflg));
