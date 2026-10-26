@@ -92,67 +92,6 @@ impl CriFieldType {
         Ok(result)
     }
 
-    pub fn write_value(&self, value: CriFieldValue) -> Vec<u8> {
-        match self {
-            CriFieldType::Byte => match value {
-                CriFieldValue::Byte(value) => value.to_be_bytes().to_vec(),
-                _ => panic!("aboba #1"),
-            },
-            CriFieldType::SByte => match value {
-                CriFieldValue::SByte(value) => value.to_be_bytes().to_vec(),
-                _ => panic!("aboba #2"),
-            },
-            CriFieldType::Int16 => match value {
-                CriFieldValue::Int16(value) => value.to_be_bytes().to_vec(),
-                _ => panic!("aboba #3"),
-            },
-            CriFieldType::UInt16 => match value {
-                CriFieldValue::UInt16(value) => value.to_be_bytes().to_vec(),
-                _ => panic!("aboba #4"),
-            },
-            CriFieldType::Int32 => match value {
-                CriFieldValue::Int32(value) => value.to_be_bytes().to_vec(),
-                _ => panic!("aboba #5"),
-            },
-            CriFieldType::UInt32 => match value {
-                CriFieldValue::UInt32(value) => value.to_be_bytes().to_vec(),
-                _ => panic!("aboba #6"),
-            },
-            CriFieldType::Single => match value {
-                CriFieldValue::Single(value) => value.to_be_bytes().to_vec(),
-                _ => panic!("aboba #7"),
-            },
-            CriFieldType::Int64 => match value {
-                CriFieldValue::Int64(value) => value.to_be_bytes().to_vec(),
-                _ => panic!("aboba #8"),
-            },
-            CriFieldType::UInt64 => match value {
-                CriFieldValue::UInt64(value) => value.to_be_bytes().to_vec(),
-                _ => panic!("aboba #9"),
-            },
-            CriFieldType::Double => match value {
-                CriFieldValue::Double(value) => value.to_be_bytes().to_vec(),
-                _ => panic!("aboba #10"),
-            },
-            CriFieldType::String => match value {
-                CriFieldValue::String(value) => value.bytes().chain(vec![0]).collect(),
-                _ => panic!("aboba #11"),
-            },
-            CriFieldType::Data => match value {
-                CriFieldValue::Data(value) => value,
-                _ => panic!("aboba #12"),
-            },
-            CriFieldType::ProbablyTable => match value {
-                CriFieldValue::ProbablyTable(table_or_data) => match table_or_data {
-                    TableOrData::Data(value) => value,
-                    TableOrData::Table(table) => table.write().unwrap(),
-                },
-                _ => panic!("aboba #13"),
-            },
-            CriFieldType::Guid => todo!("guid"),
-        }
-    }
-
     pub fn get_null_value(&self) -> CriFieldValue {
         match self {
             CriFieldType::Byte => CriFieldValue::Byte(0),

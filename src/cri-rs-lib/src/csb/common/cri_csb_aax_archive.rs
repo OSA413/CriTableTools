@@ -70,12 +70,7 @@ impl CriCsbAaxArchive {
                 info: {
                     let mut result = Vec::new();
                     if let Some(table) = parent_fields.info {
-                        let row_count = match table.fields.first() {
-                            Some(field) => field.rows.len(),
-                            None => 0,
-                        };
-                        
-                        for row_index in 0..row_count {
+                        for row_index in 0..table.row_count() {
                             result.push(CriCsbAaxInfo {
                                 data_fmt_version: table.get_field("DataFmtVer").unwrap().to_u32(row_index).unwrap(),
                                 ext_size: table.get_field("ExtSize").unwrap().to_u32(row_index).unwrap(),
@@ -87,12 +82,7 @@ impl CriCsbAaxArchive {
                 cue: {
                     let mut result = Vec::new();
                     if let Some(table) = parent_fields.cue {
-                        let row_count = match table.fields.first() {
-                            Some(field) => field.rows.len(),
-                            None => 0,
-                        };
-                        
-                        for row_index in 0..row_count {
+                         for row_index in 0..table.row_count() {
                             result.push(CriCsbAaxCue {
                                 name: table.get_field("name").unwrap().to_string(row_index).unwrap(),
                                 id: table.get_field("id").unwrap().to_u32(row_index).unwrap(),
@@ -107,12 +97,7 @@ impl CriCsbAaxArchive {
                 synth: {
                     let mut result = Vec::new();
                     if let Some(table) = parent_fields.synth {
-                        let row_count = match table.fields.first() {
-                            Some(field) => field.rows.len(),
-                            None => 0,
-                        };
-                        
-                        for row_index in 0..row_count {
+                        for row_index in 0..table.row_count() {
                             result.push(CriCsbAaxSynth {
                                 // Special thanks to VSCode's multi-cursor feature
                                 synname: table.get_field("synname").unwrap().to_string(row_index).unwrap(),
@@ -209,12 +194,7 @@ impl CriCsbAaxArchive {
                 isaac: {
                     let mut result = Vec::new();
                     if let Some(table) = parent_fields.isaac {
-                        let row_count = match table.fields.first() {
-                            Some(field) => field.rows.len(),
-                            None => 0,
-                        };
-                        
-                        for row_index in 0..row_count {
+                        for row_index in 0..table.row_count() {
                             result.push(CriCsbAaxIsaac {
                                 name: table.get_field("name").unwrap().to_string(row_index).unwrap(), 
                                 ptname: table.get_field("ptname").unwrap().to_string(row_index).unwrap(), 
@@ -229,12 +209,7 @@ impl CriCsbAaxArchive {
                 voice_limit_group: {
                     let mut result = Vec::new();
                     if let Some(table) = parent_fields.voice_limit_group {
-                        let row_count = match table.fields.first() {
-                            Some(field) => field.rows.len(),
-                            None => 0,
-                        };
-
-                        for row_index in 0..row_count {
+                        for row_index in 0..table.row_count() {
                             // This is a known special case when fields are defined but have no rows
                             if let Ok(vlgname) = table.get_field("vlgname").unwrap().to_string(row_index)
                             && let Ok(vlgnvoice) = table.get_field("vlgnvoice").unwrap().to_u32(row_index) {

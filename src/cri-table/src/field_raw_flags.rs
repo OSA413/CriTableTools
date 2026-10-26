@@ -54,10 +54,6 @@ impl CriFieldRawFlags {
     }
 
     pub fn from_flags_and_type(flags: &CriFieldFlags, ttype: &CriFieldType) -> CriFieldRawFlags {
-        let value = match flags.default_value { true => 1, false => 0 } * CriFieldRawFlags::DefaultValue.bits()
-            + match flags.row_storage { true => 1, false => 0 } * CriFieldRawFlags::RowStorage.bits()
-            + match flags.name { true => 1, false => 0 } * CriFieldRawFlags::Name.bits()
-            + ttype.get_bits();
-        CriFieldRawFlags::from_bits(value).unwrap()
+        CriFieldRawFlags::from_bits(flags.get_bits() + ttype.get_bits()).unwrap()
     }
 }

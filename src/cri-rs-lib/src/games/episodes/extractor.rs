@@ -42,6 +42,7 @@ pub fn extract_csb(path: &Path) {
                 nsmpl: entry.nsmpl,
             }).unwrap(),
         ).unwrap();
+        
         match &entry.data {
             CriCsbAaxSoundElementData::Aax(aax) => 
                 extract_aax(

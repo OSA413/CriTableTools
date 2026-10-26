@@ -33,5 +33,5 @@ pub struct TableDataPoolBuilderEntry {
     // Maybe box?
     pub data: Vec<u8>,
     pub hash: String,
-    pub pointer: Option<u32>,
+    pub pointer: usize,
 }
