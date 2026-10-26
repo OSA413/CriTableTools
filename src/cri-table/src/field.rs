@@ -21,6 +21,10 @@ impl CriTableField {
         match &self.ttype {
             CriFieldType::Byte => match &self.rows[row_index] {
                 CriFieldValue::Byte(value) => Ok(*value),
+                CriFieldValue::Default => match self.default_value.as_ref().unwrap() {
+                    CriFieldValue::Byte(value) => Ok(*value),
+                    _ => panic!("dsadsa"),
+                },
                 value => panic!("Expected value of Byte, got {value:?}"),
             },
             ttype => panic!("Expected type of Byte, got {ttype:?}"),
@@ -31,6 +35,10 @@ impl CriTableField {
         match &self.ttype {
             CriFieldType::SByte => match &self.rows[row_index] {
                 CriFieldValue::SByte(value) => Ok(*value),
+                CriFieldValue::Default => match self.default_value.as_ref().unwrap() {
+                    CriFieldValue::SByte(value) => Ok(*value),
+                    _ => panic!("dsadsa"),
+                },
                 value => panic!("Expected value of SByte, got {value:?}"),
             },
             ttype => panic!("Expected type of SByte, got {ttype:?}"),
@@ -41,6 +49,10 @@ impl CriTableField {
         match &self.ttype {
             CriFieldType::UInt16 => match &self.rows[row_index] {
                 CriFieldValue::UInt16(value) => Ok(*value),
+                CriFieldValue::Default => match self.default_value.as_ref().unwrap() {
+                    CriFieldValue::UInt16(value) => Ok(*value),
+                    _ => panic!("dsadsa"),
+                },
                 value => panic!("Expected value of UInt16, got {value:?}"),
             },
             ttype => panic!("Expected type of UInt16, got {ttype:?}"),
@@ -51,6 +63,10 @@ impl CriTableField {
         match &self.ttype {
             CriFieldType::Int16 => match &self.rows[row_index] {
                 CriFieldValue::Int16(value) => Ok(*value),
+                CriFieldValue::Default => match self.default_value.as_ref().unwrap() {
+                    CriFieldValue::Int16(value) => Ok(*value),
+                    _ => panic!("dsadsa"),
+                },
                 value => panic!("Expected value of Int16, got {value:?}"),
             },
             ttype => panic!("Expected type of Int16, got {ttype:?}"),
@@ -62,6 +78,10 @@ impl CriTableField {
             CriFieldType::UInt32 => match &self.rows.get(row_index) {
                 Some(row) => match row {
                     CriFieldValue::UInt32(value) => Ok(*value),
+                    CriFieldValue::Default => match self.default_value.as_ref().unwrap() {
+                        CriFieldValue::UInt32(value) => Ok(*value),
+                        _ => panic!("dsadsa"),
+                    },
                     value => panic!("Expected value of UInt32, got {value:?}"),
                 },
                 None => return Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
@@ -106,6 +126,10 @@ impl CriTableField {
             CriFieldType::String => match &self.rows.get(row_index) {
                 Some(row) => match row {
                     CriFieldValue::String(value) => Ok(value.clone()),
+                    CriFieldValue::Default => match self.default_value.as_ref().unwrap() {
+                        CriFieldValue::String(value) => Ok(value.clone()),
+                        _ => panic!("dsadsa"),
+                    },
                     value => panic!("Expected value of String, got {value:?}"),
                 },
                 None => return Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {

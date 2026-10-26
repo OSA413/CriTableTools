@@ -265,8 +265,10 @@ impl CriTable {
 
         for row_index in 0..self.row_count() {
             for field in &self.fields {
-                let row = &field.rows[row_index];
-                data.push(row.to_bytes_for_field_info(&field.ttype, string_pool, data_pool));
+                if let Some(row) = &field.rows.get(row_index)
+                    && field.flags.row_storage {
+                    data.push(row.to_bytes_for_field_info(&field.ttype, string_pool, data_pool));
+                }
             }
         }
 
