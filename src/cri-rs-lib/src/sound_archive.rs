@@ -1,5 +1,5 @@
 use common_binary::error::CommonBinaryError;
-use cri_table::{header_encoding_type::CriTableEncodingType, table::CriTable};
+use cri_table::{encoding_type::CriTableEncodingType, table::CriTable};
 
 use crate::{aax::archive::CriAaxArchive, adpcm_wii::archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}};
 
