@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use common_utils::get_sha256;
-use itertools::Itertools;
+use itertools::{Itertools, ZipEq};
 
 use common_binary::{binary_reader, binary_writer, endianness::Endianness, error::CommonBinaryError};
 use serde::Serialize;
 
-use crate::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, encoding_type::CriTableEncodingType, table_write_helpers::{TableDataPoolBuilderEntry, TableFieldsInfoWriteResult, TableHeaderInfoWriteResult, TableHeaderWriteResult, TableRowsInfoWriteResult, TableStringPoolBuilderEntry}};
+use crate::{encoding_type::CriTableEncodingType, field::CriTableField, field_flags::CriFieldFlags, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, table_write_helpers::{TableDataPoolBuilderEntry, TableFieldsInfoWriteResult, TableHeaderInfoWriteResult, TableHeaderWriteResult, TableRowsInfoWriteResult, TableStringPoolBuilderEntry}};
 
 pub const UTF_SIGNATURE: [u8; 4] = *b"@UTF";
 
@@ -33,10 +33,15 @@ pub struct TableJson {
 }
 
 impl CriTable {
+    pub fn fields_and_actual_flags(&self) -> ZipEq<std::slice::Iter<'_, CriTableField>, std::vec::IntoIter<CriFieldFlags>> {
+        let actual_flags = self.actual_flag_for_fields();
+        self.fields.iter().zip_eq(actual_flags)
+    }
+
     pub fn row_length(&self) -> usize {
-        self.fields.iter()
-            .filter(|field| field.flags.row_storage)
-            .map(|field| field.ttype.get_offset())
+        self.fields_and_actual_flags()
+            .filter(|(_, actual_flag)| actual_flag.row_storage)
+            .map(|(field, _)| field.ttype.get_offset())
             .sum()
     }
 
@@ -252,9 +257,9 @@ impl CriTable {
     ) -> TableFieldsInfoWriteResult {
         let mut data: Vec<Vec<u8>> = Vec::with_capacity(self.fields.len());
 
-        for field in &self.fields {
+        for (field, actual_flag) in self.fields_and_actual_flags() {
             let mut field_data: Vec<Vec<u8>> = vec![
-                vec![CriFieldRawFlags::from_flags_and_type(&field.flags, &field.ttype).bits()],
+                vec![CriFieldRawFlags::from_flags_and_type(&actual_flag, &field.ttype).bits()],
                 string_pool.1.get(&field.name).unwrap().to_be_bytes().to_vec(),
             ];
 
@@ -280,11 +285,17 @@ impl CriTable {
     ) -> TableRowsInfoWriteResult {
         let mut data: Vec<Vec<u8>> = Vec::with_capacity(self.row_length() * self.row_count());
 
+        // This still crashes on Episode 1
         for row_index in 0..self.row_count() {
-            for field in &self.fields {
-                if let Some(row) = &field.rows.get(row_index)
-                    && field.flags.row_storage {
-                    data.push(row.to_bytes_for_field_info(&field.ttype, string_pool, data_pool));
+            for (field, actual_flag) in self.fields_and_actual_flags() {
+                if actual_flag.row_storage {
+                    let row_value = match &field.rows.get(row_index) {
+                        Some(value) => value.to_bytes_for_field_info(&field.ttype, string_pool, data_pool),
+                        None => continue,
+                    };
+                    data.push(row_value);
+                } else if actual_flag.default_value && actual_flag.row_storage {
+                    data.push(field.default_value.as_ref().unwrap().to_bytes_for_field_info(&field.ttype, string_pool, data_pool));
                 }
             }
         }
@@ -416,6 +427,35 @@ impl CriTable {
                 return (entry.hash, (entry.pointer as u32, entry.data));
             }).collect()
         )
+    }
+
+    pub fn actual_flag_for_fields(&self) -> Vec<CriFieldFlags> {
+        let mut result = Vec::with_capacity(self.fields.len());
+
+        for field in &self.fields {
+            let mut default_value_flag = false;
+            let mut row_storage_flag = false;
+
+            for row in &field.rows {
+                if let Some(default_value) = &field.default_value {
+                    if row == default_value {
+                        default_value_flag = true;
+                    } else {
+                        row_storage_flag = true;
+                    }
+                } else {
+                    row_storage_flag = true;
+                }
+            }
+
+            result.push(CriFieldFlags {
+                name: true,
+                default_value: default_value_flag,
+                row_storage: row_storage_flag
+            });
+        }
+
+        result
     }
 
     pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {

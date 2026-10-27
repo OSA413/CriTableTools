@@ -1124,7 +1124,7 @@ impl CriCsbAdpcmWiiArchive {
             cue_table.fields[0].rows.push(CriFieldValue::String(entry.name.clone()));
             cue_table.fields[1].rows.push(CriFieldValue::UInt32(entry.id));
             cue_table.fields[2].rows.push(CriFieldValue::String(entry.synth.clone()));
-            // cue_table.fields[3].rows.push(CriFieldValue::String(entry.udata.clone()));
+            cue_table.fields[3].rows.push(CriFieldValue::String(entry.udata.clone()));
             cue_table.fields[4].rows.push(CriFieldValue::Byte(entry.flags));
         }
 
