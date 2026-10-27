@@ -1,5 +1,5 @@
 use common_binary::error::CommonBinaryError;
-use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableHeaderEncodingType, table::CriTable};
+use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableEncodingType, table::CriTable};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -178,7 +178,7 @@ impl CriGraphPoints {
     pub fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
         let mut table = CriTable {
             name: "TBLIPT".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
             fields: vec![
                 CriTableField {
@@ -219,7 +219,7 @@ impl CriGraphWrapper {
     pub fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
         let mut table = CriTable {
             name: "TBLIGR".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             fields: vec![
                 CriTableField {
                     flags: CriFieldFlags {

@@ -1,18 +1,35 @@
 use std::collections::HashMap;
+use common_utils::get_sha256;
 use itertools::Itertools;
 
 use common_binary::{binary_reader, binary_writer, endianness::Endianness, error::CommonBinaryError};
+use serde::Serialize;
 
-use crate::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, get_sha256, header_encoding_type::CriTableHeaderEncodingType, table_write_helpers::{TableDataPoolBuilderEntry, TableFieldsInfoWriteResult, TableHeaderInfoWriteResult, TableHeaderWriteResult, TableRowsInfoWriteResult, TableStringPoolBuilderEntry}};
+use crate::{field::CriTableField, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableEncodingType, table_write_helpers::{TableDataPoolBuilderEntry, TableFieldsInfoWriteResult, TableHeaderInfoWriteResult, TableHeaderWriteResult, TableRowsInfoWriteResult, TableStringPoolBuilderEntry}};
 
 pub const UTF_SIGNATURE: [u8; 4] = *b"@UTF";
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CriTable {
     pub name: String,
-    pub encoding: CriTableHeaderEncodingType,
+    pub encoding: CriTableEncodingType,
     pub fields: Vec<CriTableField>,
     pub unknown_byte: u8,
+}
+
+#[derive(Serialize)]
+#[serde(tag = "type", content = "value")]
+pub enum TableJsonWrapper {
+    Table(TableJson),
+}
+
+
+#[derive(Serialize)]
+pub struct TableJson {
+    pub name: String,
+    pub encoding: CriTableEncodingType,
+    pub fields: Vec<CriTableField>,
+    pub rows: Vec<serde_json::Map<String, serde_json::Value>>,
 }
 
 impl CriTable {
@@ -153,7 +170,7 @@ impl CriTable {
         Ok(
             CriTable {
                 unknown_byte: header_unknown_byte,
-                encoding: CriTableHeaderEncodingType::from(header_encoding_type),
+                encoding: CriTableEncodingType::from(header_encoding_type),
                 name: header_table_name,
                 fields,
             },
@@ -337,7 +354,7 @@ impl CriTable {
         for field in &self.fields {
             if let Some(default_value) = &field.default_value {
                 let default_data = default_value.to_bytes_for_data(&field.ttype);
-                let hash =  get_sha256(&default_data);
+                let hash = get_sha256(&default_data);
                 if result.iter().find(|entry| entry.hash == hash).is_none() {
                     // TODO: figure out how to get the "default" value for binary
                     match default_value {
@@ -487,5 +504,33 @@ impl CriTable {
         ).unwrap();
 
         Ok(result)
+    }
+
+    pub fn to_json(&self) -> TableJson {
+        TableJson {
+            name: self.name.clone(),
+            encoding: self.encoding,
+            fields: self.fields.clone(),
+            rows: self.dump_rows_to_json(),
+        }
+    }
+
+    pub fn dump_rows_to_json(&self) -> Vec<serde_json::Map<String, serde_json::Value>> {
+        let mut rows = Vec::with_capacity(self.row_count());
+        for row_index in 0..self.row_count() {
+            let mut values = serde_json::Map::new();
+            for field in &self.fields {
+                let json_value = match &field.rows[row_index] {
+                    CriFieldValue::ProbablyTable(table_or_data) => match table_or_data {
+                        TableOrData::Table(cri_table) => serde_json::to_value(TableJsonWrapper::Table(cri_table.to_json())),
+                        value => serde_json::to_value(value),
+                    },
+                    value => serde_json::to_value(value),
+                }.unwrap();
+                values.insert(field.name.clone(), json_value);
+            }
+            rows.push(values);
+        }
+        rows
     }
 }

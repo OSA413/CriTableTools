@@ -1,5 +1,5 @@
 use common_binary::error::CommonBinaryError;
-use cri_table::{header_encoding_type::CriTableHeaderEncodingType, table::CriTable};
+use cri_table::{header_encoding_type::CriTableEncodingType, table::CriTable};
 
 use crate::{aax::archive::CriAaxArchive, adpcm_wii::archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}};
 
@@ -43,7 +43,7 @@ impl CriSoundArchive {
     pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
         let result = CriTable {
             name: "AAX".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             fields: vec![],
             unknown_byte: 0,
         };

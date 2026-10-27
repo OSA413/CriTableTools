@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use common_binary::error::CommonBinaryError;
-use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableHeaderEncodingType, table::{CriTable, UTF_SIGNATURE}};
+use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableEncodingType, table::{CriTable, UTF_SIGNATURE}};
 
 use crate::{aax::archive::CriAaxArchive, cpk::sound::archive::CriCpkArchive, csb::{common::{cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}, cri_csb_archive::get_csb_fields}, games::{black_knight::archive::CriGraph, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup}}}, find_related_cpk, sound_archive::CriSoundArchiveEnum};
 
@@ -229,7 +229,7 @@ impl CriCsbAaxArchive {
     pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
         let mut parent_table = CriTable {
             name: "TBLCSB".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
             fields: vec![
                 CriTableField {
@@ -270,7 +270,7 @@ impl CriCsbAaxArchive {
 
         let mut info_table = CriTable {
             name: "TBL_INFO".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
             fields: vec![
                 CriTableField {
@@ -300,7 +300,7 @@ impl CriCsbAaxArchive {
 
         let mut cue_table = CriTable {
             name: "TBLCUE".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
             fields: vec![
                 CriTableField {
@@ -365,7 +365,7 @@ impl CriCsbAaxArchive {
 
         let mut synth_table = CriTable {
             name: "TBLSYN".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
             fields: vec![
                 CriTableField {
@@ -961,7 +961,7 @@ impl CriCsbAaxArchive {
 
         let mut sound_element_table = CriTable {
             name: "TBLSDL".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
             fields: vec![
                 CriTableField {
@@ -1046,7 +1046,7 @@ impl CriCsbAaxArchive {
 
         let mut isaac_table = CriTable {
             name: "TBLISC".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
             fields: vec![
                 CriTableField {
@@ -1109,7 +1109,7 @@ impl CriCsbAaxArchive {
 
         let mut voice_limit_group_table = CriTable {
             name: "TBLVLG".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
             fields: vec![
                 CriTableField {

@@ -1,5 +1,5 @@
 use common_binary::error::CommonBinaryError;
-use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableHeaderEncodingType, table::CriTable};
+use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, header_encoding_type::CriTableEncodingType, table::CriTable};
 
 use crate::adpcm_wii::{entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag};
 
@@ -46,7 +46,7 @@ impl CriAdpcmWiiArchiveWrapper {
     pub fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
         let mut result = CriTable {
             name: "TBLSDL".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             fields: vec![
                 CriTableField {
                     flags: CriFieldFlags {
@@ -190,7 +190,7 @@ impl CriAdpcmWiiArchive {
     pub fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
         let mut inner_table = CriTable {
             name: "ADPCM_WII".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
             fields: vec![
                 CriTableField {

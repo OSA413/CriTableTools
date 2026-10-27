@@ -1,8 +1,9 @@
 use common_binary::{binary_reader, endianness::Endianness, error::CommonBinaryError};
+use serde::Serialize;
 
 use crate::{field_value::{CriFieldValue, TableOrData}, table::{CriTable, UTF_SIGNATURE}};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 pub enum CriFieldType {
     Byte = 0,
     SByte = 1,

@@ -1,5 +1,5 @@
 use common_binary::error::CommonBinaryError;
-use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableHeaderEncodingType, table::CriTable};
+use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::CriFieldValue, header_encoding_type::CriTableEncodingType, table::CriTable};
 
 use crate::{aax::{entry::CriAaxEntry, loop_flag::CriAaxLoopFlag}, sound_archive::{CriSoundArchive, CriSoundArchiveEnum}};
 
@@ -32,7 +32,7 @@ impl CriAaxArchive {
     pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
         let mut result = CriTable {
             name: "AAX".to_string(),
-            encoding: CriTableHeaderEncodingType::ShiftJis,
+            encoding: CriTableEncodingType::ShiftJis,
             fields: vec![
                 CriTableField {
                     flags: CriFieldFlags {

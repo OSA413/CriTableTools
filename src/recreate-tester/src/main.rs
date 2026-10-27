@@ -1,13 +1,8 @@
 use std::{env, fs, ops, path::{Path, PathBuf}, str::FromStr};
 
-use common_utils::walk_dir::walk_dir;
+use common_utils::{get_sha256, walk_dir::walk_dir};
 use cri_rs_lib::games::{black_knight, episodes};
 use serde_json::Value::{self, Array};
-use sha2::{Sha256, Digest};
-
-pub fn get_sha256(data: impl AsRef<[u8]>) -> String {
-    Sha256::digest(data).iter().map(|x| format!("{x:02x}")).collect()
-}
 
 fn handle_check(extracted_dir_path: &Path, original_extracted_dir_path: &Path) {
     println!("Gonna check {extracted_dir_path:?} against reference {original_extracted_dir_path:?}");

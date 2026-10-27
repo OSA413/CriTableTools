@@ -9,8 +9,8 @@ pub struct CriFieldFlags {
 
 impl CriFieldFlags {
     pub fn get_bits(&self) -> u8 {
-        (match self.default_value { true => 1, false => 0 }) * CriFieldRawFlags::DefaultValue.bits()
-        + (match self.row_storage { true => 1, false => 0 }) * CriFieldRawFlags::RowStorage.bits()
-        + (match self.name { true => 1, false => 0 }) * CriFieldRawFlags::Name.bits()
+        self.default_value as u8 * CriFieldRawFlags::DefaultValue.bits()
+        + self.row_storage as u8 * CriFieldRawFlags::RowStorage.bits()
+        + self.name as u8 * CriFieldRawFlags::Name.bits()
     }
 }

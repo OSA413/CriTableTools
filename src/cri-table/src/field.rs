@@ -1,17 +1,22 @@
 use common_binary::error::{CommonBinaryError, PointerOutOfBoundsDetails};
+use serde::Serialize;
 
 use crate::{field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, table::CriTable};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CriTableField
-{ 
-    pub flags: CriFieldFlags,
-    pub ttype: CriFieldType,
+{
     pub name: String,
+    #[serde(rename = "type")]
+    pub ttype: CriFieldType,
+    #[serde(skip)]
+    pub flags: CriFieldFlags,
+    #[serde(skip)]
     pub rows: Vec<CriFieldValue>,
     pub default_value: Option<CriFieldValue>,
 }
 
+// TODO properly cover all cases with matches
 impl CriTableField {
     pub fn to_bool(&self, row_index: usize) -> Result<bool, CommonBinaryError> {
         Ok(self.to_u8(row_index).unwrap() != 0)
