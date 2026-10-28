@@ -467,16 +467,7 @@ impl CriTable {
         let header_info = self.write_table_info(0x08);
         let fields_info = self.write_fields_info(0, &string_pool, &data_pool);
         let rows_info = self.write_rows_info(0, &string_pool, &data_pool);
-        let string_pool_max = string_pool.1.iter().max_by_key(|entry| entry.1).unwrap();
-        let string_pool_size = string_pool_max.0.len() + string_pool_max.1.clone() as usize + 1;
-        let mut binary_string_pool = Vec::with_capacity(string_pool_size);
-        for _ in 0..string_pool_size {
-            binary_string_pool.push(0);
-        }
-        for entry in &string_pool.1 {
-            binary_writer::string::write(&mut binary_string_pool, entry.1.clone() as usize, &entry.0, "string pool entry").unwrap();
-        }
-
+        let binary_string_pool = string_pool.1.iter().sorted_by_key(|entry| entry.1).map(|entry| [entry.0.clone().into_bytes(), vec![0]].concat()).map(|x| x.clone()).concat().iter().map(|x| x.clone()).collect::<Vec<u8>>();
         let binary_data_pool = data_pool.1.iter().sorted_by_key(|entry| entry.1.0).map(|entry| &entry.1.1).map(|x| x.clone()).concat().iter().map(|x| x.clone()).collect::<Vec<u8>>();
         
         let row_position = signature.data.len()
@@ -485,7 +476,7 @@ impl CriTable {
             - signature.data.len();
 
         let string_pool_position = row_position + rows_info.data.len();
-        let data_pool_position = CriTable::length_nice(string_pool_position + string_pool_size) as u32;
+        let data_pool_position = CriTable::length_nice(binary_string_pool.len()) as u32;
 
         let mut before_data = [
             signature.data,
