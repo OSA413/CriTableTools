@@ -91,7 +91,5 @@ fn main() {
                 panic!("Provided path is not a directory");
             }
         }
-    } else if command == "patch" {
-        todo!("patching is not yet implemented");
     }
 }

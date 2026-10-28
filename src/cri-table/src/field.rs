@@ -1,7 +1,7 @@
 use common_binary::error::{CommonBinaryError, PointerOutOfBoundsDetails};
 use serde::Serialize;
 
-use crate::{field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, table::CriTable};
+use crate::{field_flags_simple::CriFieldFlagsSimple, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, table::CriTable};
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CriTableField
@@ -10,14 +10,29 @@ pub struct CriTableField
     #[serde(rename = "type")]
     pub ttype: CriFieldType,
     #[serde(skip)]
-    pub flags: CriFieldFlags,
-    #[serde(skip)]
     pub rows: Vec<CriFieldValue>,
     pub default_value: Option<CriFieldValue>,
 }
 
 // TODO properly cover all cases with matches
 impl CriTableField {
+    pub fn actual_flags(&self) -> CriFieldFlagsSimple {
+        for row in &self.rows {
+            if let Some(default_value) = &self.default_value {
+                if row != default_value {
+                    return CriFieldFlagsSimple::RowStorage;
+                }
+            } else {
+                return CriFieldFlagsSimple::RowStorage;
+            }
+        }
+        if self.rows.len() == 0 {
+            CriFieldFlagsSimple::Null
+        } else {
+            CriFieldFlagsSimple::Default
+        }
+    }
+
     pub fn to_bool(&self, row_index: usize) -> Result<bool, CommonBinaryError> {
         Ok(self.to_u8(row_index).unwrap() != 0)
     }

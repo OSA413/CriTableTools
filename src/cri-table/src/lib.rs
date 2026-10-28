@@ -1,5 +1,6 @@
 pub mod field_type;
 pub mod field_flags;
+pub mod field_flags_simple;
 pub mod field_raw_flags;
 pub mod field_value;
 pub mod field;

@@ -139,8 +139,8 @@ fn main() {
                         None => panic!("Need file path to extract"),
                     }
                 },
-                _ => {
-                    panic!("Unknown game");
+                value => {
+                    panic!("Unknown game: {}", value);
                 }
             }
         },

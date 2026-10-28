@@ -14,38 +14,7 @@ fn extract_dps(dps: &CriAdpcmWiiArchiveWrapper, base_dir: &Path) {
                     inner_entry.data.clone(),
                 ].concat(),
             ).unwrap();
-
-            let header_divider = inner_entry.header.len() / (inner_entry.nch as usize);
-            let data_divider = inner_entry.data.len() / (inner_entry.nch as usize);
-            for i in 0..(inner_entry.nch as usize) {
-                fs::write(
-                    entry_dir_name.join(format!("{}_ch{}", inner_entry.loop_flag.to_file_name(), i)),
-                    [
-                        inner_entry.header[header_divider*i..header_divider*(i+1)].to_vec(),
-                        inner_entry.data[data_divider*i..data_divider*(i+1)].to_vec(),
-                    ].concat(),
-                ).unwrap();
-            }
-
-            let raw_root = entry_dir_name.join(Path::new(inner_entry.loop_flag.to_file_name()).parent().unwrap());
-            create_dir_all(raw_root.join("raw")).unwrap();
-            fs::write(
-                raw_root.join(match inner_entry.loop_flag {
-                    CriDspLoopFlag::Intro => "raw/header.intro",
-                    CriDspLoopFlag::Loop => "raw/header.loop",
-                }),
-                &inner_entry.header,
-            ).unwrap();
             
-            create_dir_all(entry_dir_name).unwrap();
-            fs::write(
-                raw_root.join(match inner_entry.loop_flag {
-                    CriDspLoopFlag::Intro => "raw/data.intro",
-                    CriDspLoopFlag::Loop => "raw/data.loop",
-                }),
-                &inner_entry.data,
-            ).unwrap();
-
             fs::write(
                 entry_dir_name.join("sound_element.json"),
                 serde_json::to_string(&CriCsbSoundElementMetaInfo {

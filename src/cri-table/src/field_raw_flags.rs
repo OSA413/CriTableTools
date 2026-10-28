@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 
-use crate::{field_flags::CriFieldFlags, field_type::CriFieldType};
+use crate::{field_flags::CriFieldFlags, field_flags_simple::CriFieldFlagsSimple, field_type::CriFieldType};
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq)]
@@ -53,7 +53,19 @@ impl CriFieldRawFlags {
         }
     }
 
-    pub fn from_flags_and_type(flags: &CriFieldFlags, ttype: &CriFieldType) -> CriFieldRawFlags {
-        CriFieldRawFlags::from_bits(flags.get_bits() + ttype.get_bits()).unwrap()
+    pub fn from_flags_and_type(flags: &CriFieldFlagsSimple, ttype: &CriFieldType) -> CriFieldRawFlags {
+        let (row_storage, default_value) = match flags {
+            CriFieldFlagsSimple::RowStorage => (true, false),
+            CriFieldFlagsSimple::Default => (false, true),
+            CriFieldFlagsSimple::Null => (false, false),
+        };
+
+        let flags = CriFieldFlags {
+            name: true,
+            default_value,
+            row_storage,
+        };
+
+        CriFieldRawFlags::from_bits(flags.get_bits() | ttype.get_bits()).unwrap()
     }
 }

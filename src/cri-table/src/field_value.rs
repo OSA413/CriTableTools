@@ -70,26 +70,26 @@ impl CriFieldValue {
     pub fn to_bytes_for_field_info(
         &self,
         ttype: &CriFieldType,
-        string_pool: &(&'static str, HashMap<String, u32>),
-        data_pool: &([u8;0], HashMap<String, (u32, Vec<u8>)>),
+        string_pool: &HashMap<String, u32>,
+        data_pool: &HashMap<String, (u32, Vec<u8>)>,
     ) -> Vec<u8> {
         match self {
-            CriFieldValue::String(value) => string_pool.1.get(value).unwrap().to_be_bytes().to_vec(),
-            CriFieldValue::Data(value) => {
-                [
-                    data_pool.1.get(&get_sha256(value)).unwrap().0.to_be_bytes().to_vec(),
-                    (value.len() as u32).to_be_bytes().to_vec(),
-                ].concat()
-            },
+            CriFieldValue::String(value) => string_pool.get(value).unwrap().to_be_bytes().to_vec(),
             CriFieldValue::ProbablyTable(table_or_data) => {
                 let data = match table_or_data {
                     TableOrData::Data(value) => value.clone(),
-                    TableOrData::Table(table) => table.write().unwrap()
+                    TableOrData::Table(table) => table.write().unwrap(),
                 };
 
                 [
-                    data_pool.1.get(&get_sha256(&data)).unwrap().0.to_be_bytes().to_vec(),
+                    data_pool.get(&get_sha256(&data)).unwrap().0.to_be_bytes().to_vec(),
                     (data.len() as u32).to_be_bytes().to_vec(),
+                ].concat()
+            },
+            CriFieldValue::Data(value) => {
+                [
+                    data_pool.get(&get_sha256(value)).unwrap().0.to_be_bytes().to_vec(),
+                    (value.len() as u32).to_be_bytes().to_vec(),
                 ].concat()
             },
             _ => self.to_bytes_common(ttype),

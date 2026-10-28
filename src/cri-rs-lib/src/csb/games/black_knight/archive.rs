@@ -182,22 +182,12 @@ impl CriGraphPoints {
             unknown_byte: 0,
             fields: vec![
                 CriTableField {
-                    flags: CriFieldFlags {
-                        row_storage: true,
-                        name: true,
-                        default_value: false,
-                    },
                     ttype: CriFieldType::UInt16,
                     name: "in".to_string(),
                     rows: vec![],
                     default_value: None,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        row_storage: true,
-                        name: true,
-                        default_value: false,
-                    },
                     ttype: CriFieldType::UInt16,
                     name: "out".to_string(),
                     rows: vec![],
@@ -222,66 +212,36 @@ impl CriGraphWrapper {
             encoding: CriTableEncodingType::ShiftJis,
             fields: vec![
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::Byte,
                     name: "type".to_string(),
                     rows: vec![],
                     default_value: None
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::Single,
                     name: "imax".to_string(),
                     rows: vec![],
                     default_value: None
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::Single,
                     name: "imin".to_string(),
                     rows: vec![],
                     default_value: None
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::Single,
                     name: "omax".to_string(),
                     rows: vec![],
                     default_value: None
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::Single,
                     name: "omin".to_string(),
                     rows: vec![],
                     default_value: None
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        name: true,
-                        default_value: false,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::ProbablyTable,
                     name: "points".to_string(),
                     rows: vec![],

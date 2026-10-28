@@ -17,18 +17,19 @@ pub fn parse_entry(entry: &Path) -> Option<(ParsedDsp, CriDspLoopFlag)> {
     let entry_string = entry.to_string_lossy();
     let entry_string_lowercase = entry_string.to_lowercase();
 
-    let (root_dir, loop_flag) = if entry_string_lowercase.ends_with(LOOP_DSP_LOWERCASE) {
-        (
-            entry_string.chars().take(entry_string.len() - LOOP_DSP_LOWERCASE.len()).collect::<String>(),
-            CriDspLoopFlag::Loop,
-        )
-    } else if entry_string_lowercase.ends_with(INTRO_DSP_LOWERCASE) {
+    let (root_dir, loop_flag) = if entry_string_lowercase.ends_with(INTRO_DSP_LOWERCASE) {
         (
             entry_string.chars().take(entry_string.len() - INTRO_DSP_LOWERCASE.len()).collect::<String>(),
             CriDspLoopFlag::Intro,
         )
+    }
+    else if entry_string_lowercase.ends_with(LOOP_DSP_LOWERCASE) {
+        (
+            entry_string.chars().take(entry_string.len() - LOOP_DSP_LOWERCASE.len()).collect::<String>(),
+            CriDspLoopFlag::Loop,
+        )
     } else {
-        return None;
+        return None
     };
     let root_dir_path = Path::new(&root_dir).to_path_buf();
 

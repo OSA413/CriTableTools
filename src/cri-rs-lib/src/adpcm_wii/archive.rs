@@ -49,77 +49,42 @@ impl CriAdpcmWiiArchiveWrapper {
             encoding: CriTableEncodingType::ShiftJis,
             fields: vec![
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: false,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::String,
                     name: "name".to_string(),
                     rows: vec![],
                     default_value: None,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: false,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::ProbablyTable,
                     name: "data".to_string(),
                     rows: vec![],
                     default_value: None,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: false,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::Byte,
                     name: "fmt".to_string(),
                     rows: vec![],
                     default_value: None,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: false,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::Byte,
                     name: "nch".to_string(),
                     rows: vec![],
                     default_value: None,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: true,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::Byte,
                     name: "stmflg".to_string(),
                     rows: vec![],
                     default_value: Some(CriFieldValue::Byte(0)),
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: false,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::UInt32,
                     name: "sfreq".to_string(),
                     rows: vec![],
                     default_value: None,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: false,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::UInt32,
                     name: "nsmpl".to_string(),
                     rows: vec![],
@@ -194,66 +159,36 @@ impl CriAdpcmWiiArchive {
             unknown_byte: 0,
             fields: vec![
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: false,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::UInt32,
                     name: "sfreq".to_string(),
                     rows: vec![],
                     default_value: None,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: false,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::UInt32,
                     name: "nsmpl".to_string(),
                     rows: vec![],
                     default_value: None,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: false,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::Byte,
                     name: "nch".to_string(),
                     rows: vec![],
                     default_value: None,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: false,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::Byte,
                     name: "lpflg".to_string(),
                     rows: vec![],
                     default_value: None,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: false,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::Data,
                     name: "data".to_string(),
                     rows: vec![],
                     default_value: None,
                 },
                 CriTableField {
-                    flags: CriFieldFlags {
-                        default_value: false,
-                        name: true,
-                        row_storage: true,
-                    },
                     ttype: CriFieldType::Data,
                     name: "header".to_string(),
                     rows: vec![],
