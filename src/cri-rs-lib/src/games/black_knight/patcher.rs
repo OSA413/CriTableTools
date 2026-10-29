@@ -104,5 +104,5 @@ pub fn patch(path: &Path) {
     //     .unwrap()
     //     .unwrap();
 
-    // fs::write(format!("{}.patched", path.to_string_lossy()), csb.write().unwrap()).unwrap();
+    fs::write(format!("{}.patched", path.to_string_lossy()), csb.write().unwrap()).unwrap();
 }
