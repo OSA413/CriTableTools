@@ -91,9 +91,16 @@ impl CriFieldValue {
                 ].concat()
             },
             CriFieldValue::Data(value) => {
+                let mut data = value.clone();
+                let original_length = data.len();
+
+                for _ in data.len()..CriTable::length_nice(data.len()) {
+                    data.push(0);
+                }
+
                 [
                     data_pool.get(&get_sha256(value)).unwrap().0.to_be_bytes().to_vec(),
-                    (value.len() as u32).to_be_bytes().to_vec(),
+                    (original_length as u32).to_be_bytes().to_vec(),
                 ].concat()
             },
             _ => self.to_bytes_common(),
@@ -106,11 +113,6 @@ impl CriFieldValue {
             CriFieldValue::String(value) => value.bytes().chain(vec![0]).collect(),
             CriFieldValue::Data(value) => {
                 let mut data = value.clone();
-                
-                for _ in data.len()..CriTable::length_nice(data.len()) {
-                    data.push(0);
-                }
-
                 data
             },
             CriFieldValue::ProbablyTable(table_or_data) => {
@@ -118,10 +120,6 @@ impl CriFieldValue {
                     TableOrData::Data(value) => value.clone(),
                     TableOrData::Table(table) => table.write().unwrap(),
                 };
-
-                for _ in data.len()..CriTable::length_nice(data.len()) {
-                    data.push(0);
-                }
 
                 data
             }

@@ -17,6 +17,9 @@ pub struct CriTableField
 // TODO properly cover all cases with matches
 impl CriTableField {
     pub fn actual_flags(&self) -> CriFieldFlagsSimple {
+        if self.rows.is_empty() {
+            return CriFieldFlagsSimple::Null;
+        }
         match &self.default_value {
             Some(_) => CriFieldFlagsSimple::Default,
             None => CriFieldFlagsSimple::RowStorage,

@@ -10,83 +10,8 @@ pub struct CriAdpcmWiiArchiveWrapper {
 }
 
 impl CriAdpcmWiiArchiveWrapper {
-        pub fn from_table(table: &CriTable) -> Result<CriAdpcmWiiArchiveWrapper, CommonBinaryError> {
+    pub fn from_table(table: &CriTable) -> Result<CriAdpcmWiiArchiveWrapper, CommonBinaryError> {
         CriAdpcmWiiArchive::read(table)
-    }
-
-    pub fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
-        let mut result = CriTable {
-            original_string_pool: vec![
-                "<NULL>".to_string(),
-                "TBLSDL".to_string(),
-                "name".to_string(),
-                "data".to_string(),
-                "fmt".to_string(),
-                "nch".to_string(),
-                "stmflg".to_string(),
-                "sfreq".to_string(),
-                "nsmpl".to_string(),
-            ],
-            name: "TBLSDL".to_string(),
-            encoding: CriTableEncodingType::ShiftJis,
-            fields: vec![
-                CriTableField {
-                    ttype: CriFieldType::String,
-                    name: "name".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
-                CriTableField {
-                    ttype: CriFieldType::ProbablyTable,
-                    name: "data".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
-                CriTableField {
-                    ttype: CriFieldType::Byte,
-                    name: "fmt".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
-                CriTableField {
-                    ttype: CriFieldType::Byte,
-                    name: "nch".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
-                CriTableField {
-                    ttype: CriFieldType::Byte,
-                    name: "stmflg".to_string(),
-                    rows: vec![],
-                    default_value: Some(CriFieldValue::Byte(0)),
-                },
-                CriTableField {
-                    ttype: CriFieldType::UInt32,
-                    name: "sfreq".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
-                CriTableField {
-                    ttype: CriFieldType::UInt32,
-                    name: "nsmpl".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
-            ],
-            unknown_byte: 0,
-        };
-
-        for entry in &self.entries {
-            result.fields[0].rows.push(CriFieldValue::String(entry.name.clone()));
-            result.fields[1].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.to_table().unwrap())));
-            result.fields[2].rows.push(CriFieldValue::Byte(entry.fmt));
-            result.fields[3].rows.push(CriFieldValue::Byte(entry.nch));
-            result.fields[4].rows.push(CriFieldValue::Byte(entry.stmflg));
-            result.fields[5].rows.push(CriFieldValue::UInt32(entry.sfreq));
-            result.fields[6].rows.push(CriFieldValue::UInt32(entry.nsmpl));
-        }
-
-        Ok(result)
     }
 }
 
@@ -120,7 +45,7 @@ impl CriAdpcmWiiArchive {
             }
 
             entries.push(CriAdpcmWiiArchive {
-                original_string_pool: inner_table.original_string_pool,
+                original_string_pool: inner_table.original_string_pool.clone(),
                 fmt: table.get_field("fmt").unwrap().to_u8(row_index).unwrap(),
                 name: table.get_field("name").unwrap().to_string(row_index).unwrap(),
                 nch: table.get_field("nch").unwrap().to_u8(row_index).unwrap(),
@@ -139,7 +64,7 @@ impl CriAdpcmWiiArchive {
 
     pub fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
         let mut inner_table = CriTable {
-            original_string_pool: vec![], //TODO
+            original_string_pool: self.original_string_pool.clone(),
             name: "ADPCM_WII".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,

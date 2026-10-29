@@ -57,6 +57,7 @@ impl CriFieldRawFlags {
         let (row_storage, default_value) = match flags {
             CriFieldFlagsSimple::RowStorage => (true, false),
             CriFieldFlagsSimple::Default => (false, true),
+            CriFieldFlagsSimple::Null => (false, false),
         };
 
         let flags = CriFieldFlags {

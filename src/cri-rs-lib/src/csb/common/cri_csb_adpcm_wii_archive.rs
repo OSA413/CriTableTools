@@ -178,8 +178,8 @@ impl CriCsbAdpcmWiiArchive {
         if let Some(table) = table {
             for archive in wrapper.entries {
                 result.push(CriCsbAdpcmWiiSoundElement {
-                    original_string_pool: table.original_string_pool.clone(),
-                    name: table.name.clone(),
+                    original_string_pool: archive.original_string_pool.clone(),
+                    name: archive.name.clone(),
                     data: CriCsbAdpcmWiiSoundElementData::AdpcmWii(
                         // TODO fix structure naming
                         CriAdpcmWiiArchiveWrapper {
@@ -219,7 +219,7 @@ impl CriCsbAdpcmWiiArchive {
 
     pub fn parce_voice_group_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiVoiceLimitGroup>, Vec<String>) {
         let mut result = Vec::new();
-        if let Some(table) = table {
+        if let Some(table) = table && table.row_count() != 0 {
             for row_index in 0..table.row_count() {
                 // This is a known special case when fields are defined but have no rows
                 if let Some(vlgname_field) = table.get_field("vlgname")
@@ -332,7 +332,7 @@ impl CriCsbAdpcmWiiArchive {
                 },
                 CriTableField {
                     ttype: CriFieldType::String,
-                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
+                    default_value: None,
                     name: "udata".to_string(),
                     rows: vec![],
                 },
@@ -365,7 +365,7 @@ impl CriCsbAdpcmWiiArchive {
                 },
                 CriTableField {
                     ttype: CriFieldType::Byte,
-                    default_value: Some(CriFieldValue::Byte(0)),
+                    default_value: None,
                     name: "cmplxtype".to_string(),
                     rows: vec![],
                 },
@@ -377,7 +377,7 @@ impl CriCsbAdpcmWiiArchive {
                 },
                 CriTableField {
                     ttype: CriFieldType::String,
-                    default_value: None,
+                    default_value: Some(CriFieldValue::String("<NULL>".to_string())),
                     name: "issetname".to_string(),
                     rows: vec![],
                 },
@@ -389,13 +389,13 @@ impl CriCsbAdpcmWiiArchive {
                 },
                 CriTableField {
                     ttype: CriFieldType::Int16,
-                    default_value: None,
+                    default_value: Some(CriFieldValue::Int16(0)),
                     name: "pitch".to_string(),
                     rows: vec![],
                 },
                 CriTableField {
                     ttype: CriFieldType::UInt32,
-                    default_value: None,
+                    default_value: Some(CriFieldValue::UInt32(0)),
                     name: "dlytim".to_string(),
                     rows: vec![],
                 },
@@ -425,19 +425,19 @@ impl CriCsbAdpcmWiiArchive {
                 },
                 CriTableField {
                     ttype: CriFieldType::UInt16,
-                    default_value: None,
+                    default_value: Some(CriFieldValue::UInt16(0)),
                     name: "eg_dcy".to_string(),
                     rows: vec![],
                 },
                 CriTableField {
                     ttype: CriFieldType::UInt16,
-                    default_value: None,
+                    default_value: Some(CriFieldValue::UInt16(0)),
                     name: "eg_rel".to_string(),
                     rows: vec![],
                 },
                 CriTableField {
                     ttype: CriFieldType::UInt16,
-                    default_value: None,
+                    default_value: Some(CriFieldValue::UInt16(1000)),
                     name: "eg_sus".to_string(),
                     rows: vec![],
                 },
@@ -884,7 +884,7 @@ impl CriCsbAdpcmWiiArchive {
                 },
                 CriTableField {
                     ttype: CriFieldType::Byte,
-                    default_value: None,
+                    default_value: Some(CriFieldValue::Byte(1)),
                     name: "nch".to_string(),
                     rows: vec![],
                 },

@@ -35,11 +35,14 @@ pub struct TableJson {
 
 impl CriTable {
     pub fn row_length(&self) -> usize {
+        if self.row_count() == 0 {
+            return 0;
+        }
         let mut result = 0;
         for field in &self.fields {
             if field.default_value.is_none() {
                 result += field.ttype.get_offset()
-            } 
+            }
         }
 
         result
@@ -353,12 +356,18 @@ impl CriTable {
         for field in &self.fields {
             for row in &field.rows {
                 if let CriFieldValue::Data(value) = row {
+                    let mut data = value.clone();
+
+                    for _ in data.len()..CriTable::length_nice(data.len()) {
+                        data.push(0);
+                    }
+
                     let hash = get_sha256(&value);
                     if result.iter().find(|entry| entry.hash == hash).is_none() {
                         result.push(TableDataPoolBuilderEntry {
                             data: value.clone(),
                             hash,
-                            pointer: result.last().map(|last| last.data.len() + last.pointer).unwrap_or(0),
+                            pointer: result.last().map(|last| CriTable::length_nice(last.data.len()) + last.pointer).unwrap_or(0),
                         });
                     }
                 } else if let CriFieldValue::ProbablyTable(table_or_data) = row {
@@ -367,16 +376,12 @@ impl CriTable {
                         TableOrData::Table(table) => table.write().unwrap(),
                     };
 
-                    for _ in data.len()..CriTable::length_nice(data.len()) {
-                        data.push(0);
-                    }
-
                     let hash = get_sha256(&data);
                     if result.iter().find(|entry| entry.hash == hash).is_none() {
                         result.push(TableDataPoolBuilderEntry {
                             data,
                             hash,
-                            pointer: result.last().map(|last| last.data.len() + last.pointer).unwrap_or(0),
+                            pointer: result.last().map(|last| CriTable::length_nice(last.data.len()) + last.pointer).unwrap_or(0),
                         });
                     }
                 }
@@ -385,43 +390,6 @@ impl CriTable {
 
         result.into_iter().map(|entry| {
             return (entry.hash, (entry.pointer as u32, entry.data));
-        }).collect()
-    }
-
-    fn build_simple_data_pool(&self) -> Vec<(u32, Vec<u8>)> {
-        let mut result: Vec<TableDataPoolBuilderEntry> = Vec::new();
-
-        for field in &self.fields {
-            for row in &field.rows {
-                if let CriFieldValue::Data(value) = row {
-                    let hash = get_sha256(&value);
-                    // if result.iter().find(|entry| entry.hash == hash).is_none() {
-                        result.push(TableDataPoolBuilderEntry {
-                            data: value.clone(),
-                            hash,
-                            pointer: result.last().map(|last| last.data.len() + last.pointer).unwrap_or(0),
-                        });
-                    // }
-                } else if let CriFieldValue::ProbablyTable(table_or_data) = row {
-                    let data = match table_or_data {
-                        TableOrData::Data(data) => data.clone(),
-                        TableOrData::Table(table) => table.write().unwrap(),
-                    };
-
-                    let hash = get_sha256(&data);
-                    // if result.iter().find(|entry| entry.hash == hash).is_none() {
-                        result.push(TableDataPoolBuilderEntry {
-                            data,
-                            hash,
-                            pointer: result.last().map(|last| last.data.len() + last.pointer).unwrap_or(0),
-                        });
-                    // }
-                }
-            }
-        };
-
-        result.into_iter().map(|entry| {
-            return (entry.pointer as u32, entry.data);
         }).collect()
     }
 
@@ -448,7 +416,16 @@ impl CriTable {
         let fields = self.fields_info_to_bytes(&string_pool, &data_pool);
         let rows_info = self.rows_to_bytes(&string_pool, &data_pool);
         let binary_string_pool = string_pool.iter().sorted_by_key(|entry| entry.1).map(|entry| [entry.0.clone().into_bytes(), vec![0]].concat()).map(|x| x.clone()).concat().iter().map(|x| x.clone()).collect::<Vec<u8>>();
-        let binary_data_pool = data_pool.iter().sorted_by_key(|entry| entry.1.0).map(|entry| &entry.1.1).map(|x| x.clone()).concat().iter().map(|x| x.clone()).collect::<Vec<u8>>();
+        let binary_data_iter = data_pool.iter().sorted_by_key(|entry| entry.1.0).map(|entry| &entry.1.1).map(|x| x.clone());
+
+        let mut binary_data_pool = Vec::new();
+        for entry in binary_data_iter {
+            binary_data_pool.extend_from_slice(&entry);
+
+            for _ in binary_data_pool.len()..CriTable::length_nice(binary_data_pool.len()) {
+                binary_data_pool.push(0);
+            }
+        }
         
         let row_position = signature.len()
             + header.len()
