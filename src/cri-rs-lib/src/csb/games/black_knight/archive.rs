@@ -257,7 +257,7 @@ impl CriGraphWrapper {
             table.fields[2].rows.push(CriFieldValue::Single(entry.imin));
             table.fields[3].rows.push(CriFieldValue::Single(entry.omax));
             table.fields[4].rows.push(CriFieldValue::Single(entry.omin));
-            table.fields[5].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.points.to_table().unwrap().clone())));
+            table.fields[5].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.points.to_table().unwrap().clone(), Vec::new())));
         }
 
         Ok(table)

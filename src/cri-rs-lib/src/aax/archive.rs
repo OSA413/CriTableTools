@@ -60,6 +60,6 @@ impl CriAaxArchive {
             result.fields[1].rows.push(CriFieldValue::Byte(r#loop.flag.clone() as u8));
         };
 
-        result.write()
+        result.write(&Vec::<String>::new())
     }
 }

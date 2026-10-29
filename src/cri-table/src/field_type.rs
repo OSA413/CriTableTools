@@ -79,8 +79,9 @@ impl CriFieldType {
                 let start = starting_pointer + header_data_pool_position + position;
 
                 let table_or_data = if CriTable::is_table(source, Some(start), UTF_SIGNATURE) {
+                    let table = CriTable::read(source, Some(start), UTF_SIGNATURE).unwrap();
                     TableOrData::Table(
-                        CriTable::read(source, Some(start), UTF_SIGNATURE).unwrap()
+                        table.0, table.1
                     )
                 } else {
                     TableOrData::Data(source[start..start + length].to_vec())

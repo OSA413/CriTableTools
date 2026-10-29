@@ -63,7 +63,7 @@ impl CriCsbAaxArchive {
         let cpk_data = cpk_path.map(|path| fs::read(path).unwrap());
         let cpk = cpk_data.map(|data| CriCpkArchive::read(&data, 0).unwrap());
 
-        let parent_fields = get_csb_fields(&csb_table);
+        let parent_fields = get_csb_fields(&csb_table.0);
 
         return Ok(
             CriCsbAaxArchive {
@@ -1051,7 +1051,7 @@ impl CriCsbAaxArchive {
             isaac_table.fields[0].rows.push(CriFieldValue::String(entry.name.clone()));
             isaac_table.fields[1].rows.push(CriFieldValue::String(entry.ptname.clone()));
             isaac_table.fields[2].rows.push(CriFieldValue::Byte(entry.ttype));
-            isaac_table.fields[3].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.grph.to_table().unwrap())));
+            isaac_table.fields[3].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.grph.to_table().unwrap(), Vec::new())));
             isaac_table.fields[4].rows.push(CriFieldValue::Byte(entry.rndrng));
         }
 
@@ -1062,28 +1062,28 @@ impl CriCsbAaxArchive {
 
         parent_table.fields[0].rows.push(CriFieldValue::String("INFO".to_string()));
         parent_table.fields[1].rows.push(CriFieldValue::Byte(7));
-        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(info_table)));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(info_table, Vec::new())));
 
         parent_table.fields[0].rows.push(CriFieldValue::String("CUE".to_string()));
         parent_table.fields[1].rows.push(CriFieldValue::Byte(1));
-        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(cue_table)));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(cue_table, Vec::new())));
 
         parent_table.fields[0].rows.push(CriFieldValue::String("SYNTH".to_string()));
         parent_table.fields[1].rows.push(CriFieldValue::Byte(2));
-        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(synth_table)));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(synth_table, Vec::new())));
         
         parent_table.fields[0].rows.push(CriFieldValue::String("SOUND_ELEMENT".to_string()));
         parent_table.fields[1].rows.push(CriFieldValue::Byte(4));
-        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(sound_element_table)));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(sound_element_table, Vec::new())));
         
         parent_table.fields[0].rows.push(CriFieldValue::String("ISAAC".to_string()));
         parent_table.fields[1].rows.push(CriFieldValue::Byte(5));
-        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(isaac_table)));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(isaac_table, Vec::new())));
         
         parent_table.fields[0].rows.push(CriFieldValue::String("VOICE_LIMIT_GROUP".to_string()));
         parent_table.fields[1].rows.push(CriFieldValue::Byte(6));
-        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(voice_limit_group_table)));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(voice_limit_group_table, Vec::new())));
 
-        parent_table.write()
+        parent_table.write(&Vec::<String>::new())
     }
 }

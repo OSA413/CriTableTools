@@ -14,7 +14,7 @@ pub fn dump_file(
         0
     };
     let table = CriTable::read(&source, Some(pointer), UTF_SIGNATURE)?;
-    Ok(TableJsonWrapper::Table(table.to_json()))
+    Ok(TableJsonWrapper::Table(table.0.to_json()))
 }
 
 pub fn print_file(path: &str) {

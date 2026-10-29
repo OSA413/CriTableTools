@@ -8,9 +8,9 @@ static INTRO_DSP_LOWERCASE: &'static str = "intro.dsp";
 static LOOP_DSP_LOWERCASE: &'static str = "loop.dsp";
 
 pub struct ParsedDsp {
-    root_path: String,
-    root_dir_path: PathBuf,
-    meta_info: CriCsbSoundElementMetaInfo,
+    pub root_path: String,
+    pub root_dir_path: PathBuf,
+    pub meta_info: CriCsbSoundElementMetaInfo,
 }
 
 pub fn parse_entry(entry: &Path) -> Option<(ParsedDsp, CriDspLoopFlag)> {

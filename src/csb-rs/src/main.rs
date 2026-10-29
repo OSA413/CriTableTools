@@ -16,7 +16,7 @@ fn main() {
             match &arg[ops::RangeFull] {
                 "--help" | "-h" => help::print(),
                 "--version" | "-v" => version::print(),
-                "extract" | "pack" => {
+                "extract" | "pack" | "patch" => {
                     command = Some(arg);
                     match args.next() {
                         Some(game) => {
@@ -87,6 +87,20 @@ fn main() {
         } else if game_code == "black_knight" {
             if file_or_dir.is_dir() {
                 black_knight::creator::create_from_dir(&file_or_dir.into_boxed_path()).unwrap();
+            } else {
+                panic!("Provided path is not a directory");
+            }
+        }
+    } else if command == "patch" {
+        if game_code == "episodes" {
+            // if file_or_dir.is_dir() {
+            //     episodes::creator::create_from_dir(&file_or_dir.into_boxed_path()).unwrap();
+            // } else {
+            //     panic!("Provided path is not a directory");
+            // }
+        } else if game_code == "black_knight" {
+            if file_or_dir.is_file() {
+                black_knight::patcher::patch(&file_or_dir.into_boxed_path());
             } else {
                 panic!("Provided path is not a directory");
             }

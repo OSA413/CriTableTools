@@ -48,6 +48,6 @@ impl CriSoundArchive {
             unknown_byte: 0,
         };
 
-        result.write()
+        result.write(&Vec::<String>::new())
     }
 }

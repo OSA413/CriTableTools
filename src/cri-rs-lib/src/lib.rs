@@ -53,6 +53,7 @@ pub mod games {
     pub mod black_knight {
         pub mod extractor;
         pub mod creator;
+        pub mod patcher;
     }
 }
 

@@ -17,19 +17,9 @@ pub struct CriTableField
 // TODO properly cover all cases with matches
 impl CriTableField {
     pub fn actual_flags(&self) -> CriFieldFlagsSimple {
-        for row in &self.rows {
-            if let Some(default_value) = &self.default_value {
-                if row != default_value {
-                    return CriFieldFlagsSimple::RowStorage;
-                }
-            } else {
-                return CriFieldFlagsSimple::RowStorage;
-            }
-        }
-        if self.rows.len() == 0 {
-            CriFieldFlagsSimple::Null
-        } else {
-            CriFieldFlagsSimple::Default
+        match &self.default_value {
+            Some(_) => CriFieldFlagsSimple::Default,
+            None => CriFieldFlagsSimple::RowStorage,
         }
     }
 
@@ -183,7 +173,7 @@ impl CriTableField {
         match &self.ttype {
             CriFieldType::ProbablyTable => match &self.rows[row_index] {
                 CriFieldValue::ProbablyTable(value) => match value {
-                    TableOrData::Table(table) => Ok(table),
+                    TableOrData::Table(table, _) => Ok(table),
                     value_type => panic!("Expected value of Table, got {value_type:?}"),
                 },
                 value => panic!("Expected value of ProbablyTable, got {value:?}"),

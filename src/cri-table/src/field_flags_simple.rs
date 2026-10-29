@@ -6,8 +6,6 @@ pub enum CriFieldFlagsSimple {
     // and that flags "default_value" and "row_storage" are mutually exclusive
     RowStorage,
     Default,
-    // This is the case when not row_storage and not default_value (usually when fields have no rows)
-    Null,
 }
 
 impl CriFieldFlagsSimple {
@@ -15,7 +13,6 @@ impl CriFieldFlagsSimple {
         (match self {
             CriFieldFlagsSimple::Default => CriFieldRawFlags::DefaultValue.bits(),
             CriFieldFlagsSimple::RowStorage => CriFieldRawFlags::RowStorage.bits(),
-            CriFieldFlagsSimple::Null => 0,
         })
         + CriFieldRawFlags::Name.bits()
     }

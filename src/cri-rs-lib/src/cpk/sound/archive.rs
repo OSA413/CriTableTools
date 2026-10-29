@@ -30,7 +30,7 @@ impl CriCpkArchive {
         let cpk_table = CriTable::read(source, Some(cpk_section_pointer), UTF_SIGNATURE)?;
 
         // From what I've seen, the tested games use the latest version and FileName mode
-        let (mode, is_latest_version) = match cpk_table.get_field("CpkMode") {
+        let (mode, is_latest_version) = match cpk_table.0.get_field("CpkMode") {
             Some(is_latest_version) => {
                 (CriCpkMode::from(is_latest_version.to_u32(0).unwrap()), true)
             }
@@ -45,21 +45,21 @@ impl CriCpkArchive {
             return Err(CommonBinaryError::SeeConsole());
         }
 
-        let toc_position = cpk_table.get_field("TocOffset").unwrap().to_u64(0)?;
+        let toc_position = cpk_table.0.get_field("TocOffset").unwrap().to_u64(0)?;
         // let itocPosition = table.get_field("ItocOffset").unwrap().to_u64()?;
         // let etocPosition = table.get_field("EtocOffset").unwrap().to_u64()?;
-        let content_position = cpk_table.get_field("ContentOffset").unwrap().to_u64(0)?;
+        let content_position = cpk_table.0.get_field("ContentOffset").unwrap().to_u64(0)?;
 
         let toc_section_pointer = CriCpkArchive::get_section_pointer(source, toc_position as usize, *b"TOC ")?;
         let toc_table = CriTable::read(source, Some(toc_section_pointer), UTF_SIGNATURE)?;
         // let etoc_section_pointer = CriCpkArchive::get_section_pointer(source, etocPosition as usize, *b"ETOC")?;
         // let mut etocReader = CriTableHeader::read_table(source, Some(etoc_section_pointer), UTF_SIGNATURE)?;
-        let comment = cpk_table.get_field("Comment").unwrap().to_string(0)?;
+        let comment = cpk_table.0.get_field("Comment").unwrap().to_string(0)?;
 
-        let mut entries = Vec::with_capacity(toc_table.row_count());
-        for toc_row_index in 0..toc_table.row_count() {
+        let mut entries = Vec::with_capacity(toc_table.0.row_count());
+        for toc_row_index in 0..toc_table.0.row_count() {
             let position = {
-                let relative_position = toc_table.get_field("FileOffset").unwrap().to_u64(toc_row_index)? as usize;
+                let relative_position = toc_table.0.get_field("FileOffset").unwrap().to_u64(toc_row_index)? as usize;
                 // Is this shift needed?
                 if content_position < toc_position {
                     relative_position + content_position as usize
@@ -68,21 +68,21 @@ impl CriCpkArchive {
                 }
             };
             
-            let name = toc_table.get_field("FileName").unwrap().to_string(toc_row_index)?;
+            let name = toc_table.0.get_field("FileName").unwrap().to_string(toc_row_index)?;
             let aax_table = CriTable::read(source, Some(position), UTF_SIGNATURE).unwrap();
-            let aax_archive = CriAaxArchive::read(&aax_table, &name).unwrap();
+            let aax_archive = CriAaxArchive::read(&aax_table.0, &name).unwrap();
 
             // etocReader.MoveToRow(tocReader.CurrentRow);
             // entry.UpdateDateTime = DateTimeFromCpkDateTime(etocReader.GetUInt64("UpdateDateTime"));
 
             let entry = CriCpkEntry {
-                directory_name: toc_table.get_field("DirName").unwrap().to_string(toc_row_index)?,
+                directory_name: toc_table.0.get_field("DirName").unwrap().to_string(toc_row_index)?,
                 aax_archive,
                 id: match is_latest_version {
-                    true => toc_table.get_field("ID").unwrap().to_u32(toc_row_index)?,
-                    false => toc_table.get_field("Info").unwrap().to_u32(toc_row_index)?,
+                    true => toc_table.0.get_field("ID").unwrap().to_u32(toc_row_index)?,
+                    false => toc_table.0.get_field("Info").unwrap().to_u32(toc_row_index)?,
                 },
-                comment: toc_table.get_field("UserString").unwrap().to_string(toc_row_index)?,
+                comment: toc_table.0.get_field("UserString").unwrap().to_string(toc_row_index)?,
                 update_date_time: NaiveDateTime::new(
                     NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
                     NaiveTime::from_hms_opt(0, 0, 0).unwrap()
