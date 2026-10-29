@@ -17,7 +17,8 @@ fn extract_dps(dps: &CriAdpcmWiiArchiveWrapper, base_dir: &Path) {
             
             fs::write(
                 entry_dir_name.join("sound_element.json"),
-                serde_json::to_string(&CriCsbSoundElementMetaInfo {
+                serde_json::to_string(&CriCsbSoundElementMetaInfo {                
+                    original_string_pool: entry.original_string_pool.clone(),
                     name: entry.name.clone(),
                     fmt: entry.fmt,
                     nch: entry.nch,
@@ -35,7 +36,7 @@ pub fn extract_csb(path: &Path) {
     let base_directory = path.parent().unwrap();
     let output_directory_name = base_directory.join(path.file_stem().unwrap());
 
-    for sound_entry in &csb.sound_element {
+    for sound_entry in &csb.sound_element.0 {
         match &sound_entry.data {
             CriCsbAdpcmWiiSoundElementData::AdpcmWii(dsp) =>
                 extract_dps(&dsp, &output_directory_name),
@@ -67,7 +68,7 @@ pub fn extract_csb(path: &Path) {
         serde_json::to_string(&csb.synth).unwrap(),
     ).unwrap();
 
-    for isaac in &csb.isaac {
+    for isaac in &csb.isaac.0 {
         let file_path = output_directory_name.join(&format!("{}.isaac.json", isaac.ptname));
         create_dir_all(file_path.parent().unwrap()).unwrap();
         fs::write(

@@ -4,12 +4,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct CriCsbAdpcmWiiInfo{ 
+    pub original_string_pool: Vec<String>,
     pub data_fmt_version: u32,
     pub ext_size: u32,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct CriCsbAdpcmWiiCue{ 
+pub struct CriCsbAdpcmWiiCue{
+    pub original_string_pool: Vec<String>,
     pub name: String,
     pub id: u32,
     pub synth: String,
@@ -19,6 +21,7 @@ pub struct CriCsbAdpcmWiiCue{
 
 #[derive(Serialize, Deserialize)]
 pub struct CriCsbAdpcmWiiSynth{ 
+    pub original_string_pool: Vec<String>,
     pub synname: String,
     pub syntype: u8,
     pub cmplxtype: u8,
@@ -110,12 +113,14 @@ pub struct CriCsbAdpcmWiiSynth{
 
 #[derive(Serialize, Deserialize)]
 pub struct CriCsbAdpcmWiiVoiceLimitGroup{ 
+    pub original_string_pool: Vec<String>,
     pub vlgname: String,
     pub vlgnvoice: u32,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct CriCsbSoundElementMetaInfo {
+    pub original_string_pool: Vec<String>,
     pub name: String,
     pub fmt: u8,
     pub nch: u8,
@@ -126,6 +131,7 @@ pub struct CriCsbSoundElementMetaInfo {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CriCsbAdpcmWiiIsaac {
+    pub original_string_pool: Vec<String>,
     pub name: String,
     pub ptname: String,
     pub ttype: u8,
@@ -135,11 +141,13 @@ pub struct CriCsbAdpcmWiiIsaac {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CriGraphWrapper {
-    entries: Vec<CriGraph>,
+    pub original_string_pool: Vec<String>,
+    pub entries: Vec<CriGraph>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CriGraph {
+    // pub original_string_pool: Vec<String>,
     pub ttype: u8,
     pub imax: f32,
     pub imin: f32,
@@ -150,12 +158,14 @@ pub struct CriGraph {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CriGraphPointsEntry {
+    // pub original_string_pool: Vec<String>,
     pub in_: u16,
     pub out: u16,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CriGraphPoints {
+    pub original_string_pool: Vec<String>,
     pub entries: Vec<CriGraphPointsEntry>,
 }
 
@@ -171,12 +181,14 @@ impl CriGraphPoints {
         }
 
         Ok(CriGraphPoints {
+            original_string_pool: table.original_string_pool.clone(),
             entries
         })
     }
 
     pub fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
         let mut table = CriTable {
+            original_string_pool: self.original_string_pool.clone(),
             name: "TBLIPT".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
@@ -208,6 +220,7 @@ impl CriGraphPoints {
 impl CriGraphWrapper {
     pub fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
         let mut table = CriTable {
+            original_string_pool: self.original_string_pool.clone(),
             name: "TBLIGR".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             fields: vec![
@@ -257,7 +270,7 @@ impl CriGraphWrapper {
             table.fields[2].rows.push(CriFieldValue::Single(entry.imin));
             table.fields[3].rows.push(CriFieldValue::Single(entry.omax));
             table.fields[4].rows.push(CriFieldValue::Single(entry.omin));
-            table.fields[5].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.points.to_table().unwrap().clone(), Vec::new())));
+            table.fields[5].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.points.to_table().unwrap().clone())));
         }
 
         Ok(table)
@@ -270,6 +283,7 @@ impl CriGraph {
 
         for row_index in 0..table.row_count() {
             entries.push(CriGraph {
+                // original_string_pool: table.original_string_pool,
                 ttype: table.get_field("type").unwrap().to_u8(row_index).unwrap(),
                 imax: table.get_field("imax").unwrap().to_f32(row_index).unwrap(),
                 imin: table.get_field("imin").unwrap().to_f32(row_index).unwrap(),
@@ -280,6 +294,7 @@ impl CriGraph {
         }
 
         Ok(CriGraphWrapper {
+            original_string_pool: table.original_string_pool.clone(),
             entries,
         })
     }

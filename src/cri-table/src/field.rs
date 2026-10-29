@@ -173,7 +173,7 @@ impl CriTableField {
         match &self.ttype {
             CriFieldType::ProbablyTable => match &self.rows[row_index] {
                 CriFieldValue::ProbablyTable(value) => match value {
-                    TableOrData::Table(table, _) => Ok(table),
+                    TableOrData::Table(table) => Ok(table),
                     value_type => panic!("Expected value of Table, got {value_type:?}"),
                 },
                 value => panic!("Expected value of ProbablyTable, got {value:?}"),

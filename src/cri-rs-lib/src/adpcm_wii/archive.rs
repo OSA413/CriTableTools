@@ -5,6 +5,7 @@ use crate::adpcm_wii::{entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag};
 
 #[derive(Debug)]
 pub struct CriAdpcmWiiArchiveWrapper {
+    pub original_string_pool: Vec<String>,
     pub entries: Vec<CriAdpcmWiiArchive>,
 }
 
@@ -15,6 +16,17 @@ impl CriAdpcmWiiArchiveWrapper {
 
     pub fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
         let mut result = CriTable {
+            original_string_pool: vec![
+                "<NULL>".to_string(),
+                "TBLSDL".to_string(),
+                "name".to_string(),
+                "data".to_string(),
+                "fmt".to_string(),
+                "nch".to_string(),
+                "stmflg".to_string(),
+                "sfreq".to_string(),
+                "nsmpl".to_string(),
+            ],
             name: "TBLSDL".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             fields: vec![
@@ -66,7 +78,7 @@ impl CriAdpcmWiiArchiveWrapper {
 
         for entry in &self.entries {
             result.fields[0].rows.push(CriFieldValue::String(entry.name.clone()));
-            result.fields[1].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.to_table().unwrap(), Vec::new())));
+            result.fields[1].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.to_table().unwrap())));
             result.fields[2].rows.push(CriFieldValue::Byte(entry.fmt));
             result.fields[3].rows.push(CriFieldValue::Byte(entry.nch));
             result.fields[4].rows.push(CriFieldValue::Byte(entry.stmflg));
@@ -80,6 +92,7 @@ impl CriAdpcmWiiArchiveWrapper {
 
 #[derive(Debug, Clone)]
 pub struct CriAdpcmWiiArchive {
+    pub original_string_pool: Vec<String>,
     pub fmt: u8,
     pub name: String,
     pub nch: u8,
@@ -107,6 +120,7 @@ impl CriAdpcmWiiArchive {
             }
 
             entries.push(CriAdpcmWiiArchive {
+                original_string_pool: inner_table.original_string_pool,
                 fmt: table.get_field("fmt").unwrap().to_u8(row_index).unwrap(),
                 name: table.get_field("name").unwrap().to_string(row_index).unwrap(),
                 nch: table.get_field("nch").unwrap().to_u8(row_index).unwrap(),
@@ -118,12 +132,14 @@ impl CriAdpcmWiiArchive {
         }
 
         Ok(CriAdpcmWiiArchiveWrapper {
+            original_string_pool: table.original_string_pool.clone(),
             entries,
         })
     }
 
     pub fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
         let mut inner_table = CriTable {
+            original_string_pool: vec![], //TODO
             name: "ADPCM_WII".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,

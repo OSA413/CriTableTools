@@ -27,13 +27,14 @@ pub fn extract_csb(path: &Path) {
     let csb = CriCsbAaxArchive::read(path).unwrap();
     let base_directory = path.parent().unwrap();
     let output_directory_name = base_directory.join(path.file_stem().unwrap());
-
+/*
     for entry in &csb.sound_element {
         let entry_dir_name = &output_directory_name.join(&entry.name);
         create_dir_all(entry_dir_name).unwrap();
         fs::write(
             entry_dir_name.join("sound_element.json"),
             serde_json::to_string(&CriCsbSoundElementMetaInfo {
+                original_string_pool: entry.
                 name: entry.name.clone(),
                 fmt: entry.fmt,
                 nch: entry.nch,
@@ -107,4 +108,5 @@ pub fn extract_csb(path: &Path) {
         Some(_) => println!("Extracted CSB and CPK files: \"{}\"", output_directory_name.to_string_lossy()),
         None => println!("Extracted CSB file: \"{}\"", output_directory_name.to_string_lossy()),
     }
+    */
 }

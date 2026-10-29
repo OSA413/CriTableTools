@@ -12,13 +12,13 @@ fn main() {
     let file_path = args.next().unwrap();
     let file_content = fs::read(&file_path).unwrap();
     let original_table = CriTable::read(&file_content, None, UTF_SIGNATURE).unwrap();
-    let recreated_table_content = original_table.0.write(&original_table.1).unwrap();
+    let recreated_table_content = original_table.write().unwrap();
     fs::write(format!("{}.recreated", file_path), &recreated_table_content).unwrap();
     let recreated_table = CriTable::read(&recreated_table_content, None, UTF_SIGNATURE).unwrap();
 
     let diff = TextDiff::from_lines(
-        print_table(&original_table.0),
-        print_table(&recreated_table.0),
+        print_table(&original_table),
+        print_table(&recreated_table),
     );
 
     let mut result = Vec::with_capacity(diff.iter_all_changes().count());

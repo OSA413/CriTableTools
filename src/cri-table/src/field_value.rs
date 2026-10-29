@@ -34,9 +34,9 @@ pub enum CriFieldValue {
 #[serde(tag = "type", content = "value")]
 pub enum TableOrData {
     Table(
+        // Maybe not skip?
         #[serde(skip)]
         CriTable,
-        Vec<String>,
     ),
     Data(
         #[serde(skip)]
@@ -76,7 +76,7 @@ impl CriFieldValue {
             CriFieldValue::ProbablyTable(table_or_data) => {
                 let mut data = match table_or_data {
                     TableOrData::Data(value) => value.clone(),
-                    TableOrData::Table(table, original_string_pool) => table.write(original_string_pool).unwrap(),
+                    TableOrData::Table(table) => table.write().unwrap(),
                 };
 
                 let original_length = data.len();
@@ -116,7 +116,7 @@ impl CriFieldValue {
             CriFieldValue::ProbablyTable(table_or_data) => {
                 let mut data = match table_or_data {
                     TableOrData::Data(value) => value.clone(),
-                    TableOrData::Table(table, original_string_pool) => table.write(original_string_pool).unwrap(),
+                    TableOrData::Table(table) => table.write().unwrap(),
                 };
 
                 for _ in data.len()..CriTable::length_nice(data.len()) {

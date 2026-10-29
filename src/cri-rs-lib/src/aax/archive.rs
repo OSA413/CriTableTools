@@ -31,6 +31,7 @@ impl CriAaxArchive {
 
     pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
         let mut result = CriTable {
+            original_string_pool: vec![], //TODO
             name: "AAX".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             fields: vec![
@@ -60,6 +61,6 @@ impl CriAaxArchive {
             result.fields[1].rows.push(CriFieldValue::Byte(r#loop.flag.clone() as u8));
         };
 
-        result.write(&Vec::<String>::new())
+        result.write()
     }
 }

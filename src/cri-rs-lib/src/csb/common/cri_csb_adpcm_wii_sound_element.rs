@@ -6,6 +6,7 @@ pub enum CriCsbAdpcmWiiSoundElementData {
 }
 
 pub struct CriCsbAdpcmWiiSoundElement {
+    pub original_string_pool: Vec<String>,
     pub name: String,
     pub data: CriCsbAdpcmWiiSoundElementData,
     pub fmt: u8,

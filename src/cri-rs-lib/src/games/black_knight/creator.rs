@@ -45,113 +45,115 @@ pub fn parse_entry(entry: &Path) -> Option<(ParsedDsp, CriDspLoopFlag)> {
 }
 
 pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
-    let mut csb = CriCsbAdpcmWiiArchive {
-        info: vec![],
-        cue: vec![],
-        synth: vec![],
-        sound_element: vec![],
-        isaac: vec![],
-        voice_limit_group: vec![],
-    };
+    // let mut csb = CriCsbAdpcmWiiArchive {
+    //     info: vec![],
+    //     cue: vec![],
+    //     synth: vec![],
+    //     sound_element: vec![],
+    //     isaac: vec![],
+    //     voice_limit_group: vec![],
+    // };
 
-    let files = walk_dir(path, None);
+    // let files = walk_dir(path, None);
 
-    let mut adpcm_wii_archive_pool: HashMap<String, (PathBuf, CriAdpcmWiiArchiveWrapper)> = HashMap::new();
+    // let mut adpcm_wii_archive_pool: HashMap<String, (PathBuf, CriAdpcmWiiArchiveWrapper)> = HashMap::new();
 
-    for entry in files.iter().filter(|entry| entry.to_string_lossy().to_lowercase().ends_with(".dsp")) {
-        let (root_entry, loop_flag) = match parse_entry(entry) {
-            Some(parsed_entry) => parsed_entry,
-            None => continue,
-        };
+    // for entry in files.iter().filter(|entry| entry.to_string_lossy().to_lowercase().ends_with(".dsp")) {
+    //     let (root_entry, loop_flag) = match parse_entry(entry) {
+    //         Some(parsed_entry) => parsed_entry,
+    //         None => continue,
+    //     };
 
-        let data = fs::read(entry).unwrap();
+    //     let data = fs::read(entry).unwrap();
 
-        let adpcm_wii_entry = CriAdpcmWiiArchive {
-            fmt: root_entry.meta_info.fmt,
-            name: root_entry.meta_info.name.clone(),
-            nch: root_entry.meta_info.nch,
-            nsmpl: root_entry.meta_info.nsmpl,
-            sfreq: root_entry.meta_info.sfreq,
-            stmflg: root_entry.meta_info.stmflg,
-            entries: vec![
-                CriAdpcmWiiEntry {
-                    sfreq: root_entry.meta_info.sfreq,
-                    nsmpl: root_entry.meta_info.nsmpl,
-                    nch: root_entry.meta_info.nch,
-                    loop_flag,
-                    // TODO: turns out there can be two headers in one header,
-                    // so this import is incorrect (as well as the extraction, probably)
-                    header: data[..0x60].to_vec(),
-                    data: data[0x60..].to_vec(),
-                },
-            ],
-        };
+    //     let adpcm_wii_entry = CriAdpcmWiiArchive {
+    //         original_string_pool: root_entry.meta_info.original_string_pool.clone(),
+    //         fmt: root_entry.meta_info.fmt,
+    //         name: root_entry.meta_info.name.clone(),
+    //         nch: root_entry.meta_info.nch,
+    //         nsmpl: root_entry.meta_info.nsmpl,
+    //         sfreq: root_entry.meta_info.sfreq,
+    //         stmflg: root_entry.meta_info.stmflg,
+    //         entries: vec![
+    //             CriAdpcmWiiEntry {
+    //                 sfreq: root_entry.meta_info.sfreq,
+    //                 nsmpl: root_entry.meta_info.nsmpl,
+    //                 nch: root_entry.meta_info.nch,
+    //                 loop_flag,
+    //                 // TODO: turns out there can be two headers in one header,
+    //                 // so this import is incorrect (as well as the extraction, probably)
+    //                 header: data[..0x60].to_vec(),
+    //                 data: data[0x60..].to_vec(),
+    //             },
+    //         ],
+    //     };
 
-        match adpcm_wii_archive_pool.get_mut(&root_entry.root_path) {
-            Some(archive) => archive.1.entries.push(adpcm_wii_entry),
-            None => {
-                let mut entries = Vec::new();
-                entries.push(adpcm_wii_entry);
-                adpcm_wii_archive_pool.insert(root_entry.root_path.clone(), (root_entry.root_dir_path, CriAdpcmWiiArchiveWrapper {
-                    entries,
-                }));
-            }
-        };
-    }
+    //     match adpcm_wii_archive_pool.get_mut(&root_entry.root_path) {
+    //         Some(archive) => archive.1.entries.push(adpcm_wii_entry),
+    //         None => {
+    //             let mut entries = Vec::new();
+    //             entries.push(adpcm_wii_entry);
+    //             adpcm_wii_archive_pool.insert(root_entry.root_path.clone(), (root_entry.root_dir_path, CriAdpcmWiiArchiveWrapper {
+    //                 original_string_pool: root_entry.meta_info.original_string_pool,
+    //                 entries,
+    //             }));
+    //         }
+    //     };
+    // }
 
-    for entry in adpcm_wii_archive_pool {
-        // Twice read?
-        let sound_element_meta_data = fs::read_to_string(entry.1.0.join("sound_element.json"))
-            .map(|data| serde_json::from_str::<CriCsbSoundElementMetaInfo>(&data))
-            .unwrap()
-            .unwrap();
+    // for entry in adpcm_wii_archive_pool {
+    //     // Twice read?
+    //     let sound_element_meta_data = fs::read_to_string(entry.1.0.join("sound_element.json"))
+    //         .map(|data| serde_json::from_str::<CriCsbSoundElementMetaInfo>(&data))
+    //         .unwrap()
+    //         .unwrap();
 
-        let relative_name = entry.1.0
-            .strip_prefix(path).unwrap()
-            .to_string_lossy().replace('\\', "/");
+    //     let relative_name = entry.1.0
+    //         .strip_prefix(path).unwrap()
+    //         .to_string_lossy().replace('\\', "/");
 
-        csb.sound_element.push(CriCsbAdpcmWiiSoundElement {
-            name: relative_name,
-            data: CriCsbAdpcmWiiSoundElementData::AdpcmWii(entry.1.1),
-            fmt: sound_element_meta_data.fmt,
-            nch: sound_element_meta_data.nch,
-            stmflg: sound_element_meta_data.stmflg,
-            sfreq: sound_element_meta_data.sfreq,
-            nsmpl: sound_element_meta_data.nsmpl,
-        });
-    }
+    //     // csb.sound_element.push(CriCsbAdpcmWiiSoundElement {
+    //     //     name: relative_name,
+    //     //     data: CriCsbAdpcmWiiSoundElementData::AdpcmWii(entry.1.1),
+    //     //     fmt: sound_element_meta_data.fmt,
+    //     //     nch: sound_element_meta_data.nch,
+    //     //     stmflg: sound_element_meta_data.stmflg,
+    //     //     sfreq: sound_element_meta_data.sfreq,
+    //     //     nsmpl: sound_element_meta_data.nsmpl,
+    //     // });
+    // }
 
-    csb.cue = fs::read_to_string(path.join("cue.json"))
-        .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiCue>>(&data))
-        .unwrap()
-        .unwrap();
+    // // csb.cue = fs::read_to_string(path.join("cue.json"))
+    // //     .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiCue>>(&data))
+    // //     .unwrap()
+    // //     .unwrap();
 
-    csb.synth = fs::read_to_string(path.join("synth.json"))
-        .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiSynth>>(&data))
-        .unwrap()
-        .unwrap();
+    // // csb.synth = fs::read_to_string(path.join("synth.json"))
+    // //     .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiSynth>>(&data))
+    // //     .unwrap()
+    // //     .unwrap();
 
-    csb.info = fs::read_to_string(path.join("table_info.json"))
-        .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiInfo>>(&data))
-        .unwrap()
-        .unwrap();
+    // // csb.info = fs::read_to_string(path.join("table_info.json"))
+    // //     .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiInfo>>(&data))
+    // //     .unwrap()
+    // //     .unwrap();
 
-    let isaac_entries = walk_dir(path, Some(OsStr::new("isaac.json")));
+    // let isaac_entries = walk_dir(path, Some(OsStr::new("isaac.json")));
 
-    for entry in isaac_entries {
-        let isaac_info = fs::read_to_string(entry)
-            .map(|data| serde_json::from_str::<CriCsbAdpcmWiiIsaac>(&data))
-            .unwrap()
-            .unwrap();
+    // // for entry in isaac_entries {
+    // //     let isaac_info = fs::read_to_string(entry)
+    // //         .map(|data| serde_json::from_str::<CriCsbAdpcmWiiIsaac>(&data))
+    // //         .unwrap()
+    // //         .unwrap();
     
-        csb.isaac.push(isaac_info);
-    }
+    // //     csb.isaac.push(isaac_info);
+    // // }
     
-    csb.voice_limit_group = fs::read_to_string(path.join("voice_limit_group.json"))
-        .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiVoiceLimitGroup>>(&data))
-        .unwrap()
-        .unwrap();
+    // // csb.voice_limit_group = fs::read_to_string(path.join("voice_limit_group.json"))
+    // //     .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiVoiceLimitGroup>>(&data))
+    // //     .unwrap()
+    // //     .unwrap();
 
-    fs::write(format!("{}.csb", path.to_string_lossy()), csb.write().unwrap()).unwrap();
+    // fs::write(format!("{}.csb", path.to_string_lossy()), csb.write().unwrap()).unwrap();
     Ok(())
 }

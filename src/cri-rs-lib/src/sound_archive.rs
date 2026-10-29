@@ -42,12 +42,13 @@ impl CriSoundArchive {
 
     pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
         let result = CriTable {
+            original_string_pool: vec![], //TODO
             name: "AAX".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             fields: vec![],
             unknown_byte: 0,
         };
 
-        result.write(&Vec::<String>::new())
+        result.write()
     }
 }

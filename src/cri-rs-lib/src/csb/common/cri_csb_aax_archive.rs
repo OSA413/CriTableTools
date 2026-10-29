@@ -63,7 +63,7 @@ impl CriCsbAaxArchive {
         let cpk_data = cpk_path.map(|path| fs::read(path).unwrap());
         let cpk = cpk_data.map(|data| CriCpkArchive::read(&data, 0).unwrap());
 
-        let parent_fields = get_csb_fields(&csb_table.0);
+        let parent_fields = get_csb_fields(&csb_table);
 
         return Ok(
             CriCsbAaxArchive {
@@ -228,6 +228,7 @@ impl CriCsbAaxArchive {
     
     pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
         let mut parent_table = CriTable {
+            original_string_pool: vec![], //TODO
             name: "TBLCSB".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
@@ -254,6 +255,7 @@ impl CriCsbAaxArchive {
         };
 
         let mut info_table = CriTable {
+            original_string_pool: vec![], //TODO
             name: "TBL_INFO".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
@@ -274,6 +276,15 @@ impl CriCsbAaxArchive {
         };
 
         let mut cue_table = CriTable {
+            original_string_pool: vec![
+                "<NULL>".to_string(),
+                "TBLCUE".to_string(),
+                "name".to_string(),
+                "id".to_string(),
+                "synth".to_string(),
+                "udata".to_string(),
+                "flags".to_string(),
+            ],
             name: "TBLCUE".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
@@ -312,6 +323,95 @@ impl CriCsbAaxArchive {
         };
 
         let mut synth_table = CriTable {
+            original_string_pool: vec![
+                "<NULL>".to_string(),
+                "TBLSYN".to_string(),
+                // This definitely needs optimization
+                "synname".to_string(),
+                "syntype".to_string(),
+                "cmplxtype".to_string(),
+                "lnkname".to_string(),
+                "issetname".to_string(),
+                "volume".to_string(),
+                "pitch".to_string(),
+                "dlytim".to_string(),
+                "s_cntrl".to_string(),
+                "eg_dly".to_string(),
+                "eg_atk".to_string(),
+                "eg_hld".to_string(),
+                "eg_dcy".to_string(),
+                "eg_rel".to_string(),
+                "eg_sus".to_string(),
+                "f_type".to_string(),
+                "f_cof1".to_string(),
+                "f_cof2".to_string(),
+                "f_reso".to_string(),
+                "f_roff".to_string(),
+                "dryoname".to_string(),
+                "mtxrtr".to_string(),
+                "dry0".to_string(),
+                "dry1".to_string(),
+                "dry2".to_string(),
+                "dry3".to_string(),
+                "dry4".to_string(),
+                "dry5".to_string(),
+                "dry6".to_string(),
+                "dry7".to_string(),
+                "wetoname".to_string(),
+                "wet0".to_string(),
+                "wet1".to_string(),
+                "wet2".to_string(),
+                "wet3".to_string(),
+                "wet4".to_string(),
+                "wet5".to_string(),
+                "wet6".to_string(),
+                "wet7".to_string(),
+                "wcnct0".to_string(),
+                "wcnct1".to_string(),
+                "wcnct2".to_string(),
+                "wcnct3".to_string(),
+                "wcnct4".to_string(),
+                "wcnct5".to_string(),
+                "wcnct6".to_string(),
+                "wcnct7".to_string(),
+                "vl_gname".to_string(),
+                "vl_type".to_string(),
+                "vl_prio".to_string(),
+                "vl_phtime".to_string(),
+                "vl_pcdlt".to_string(),
+                "p3d_vo".to_string(),
+                "p3d_vg".to_string(),
+                "p3d_ao".to_string(),
+                "p3d_ag".to_string(),
+                "p3d_ido".to_string(),
+                "p3d_idg".to_string(),
+                "dry0g".to_string(),
+                "dry1g".to_string(),
+                "dry2g".to_string(),
+                "dry3g".to_string(),
+                "dry4g".to_string(),
+                "dry5g".to_string(),
+                "dry6g".to_string(),
+                "dry7g".to_string(),
+                "wet0g".to_string(),
+                "wet1g".to_string(),
+                "wet2g".to_string(),
+                "wet3g".to_string(),
+                "wet4g".to_string(),
+                "wet5g".to_string(),
+                "wet6g".to_string(),
+                "wet7g".to_string(),
+                "f1_type".to_string(),
+                "f1_cofo".to_string(),
+                "f1_cofg".to_string(),
+                "f1_resoo".to_string(),
+                "f1_resog".to_string(),
+                "f2_type".to_string(),
+                "f2_coflo".to_string(),
+                "f2_coflg".to_string(),
+                "f2_cofho".to_string(),
+                "f2_cofhg".to_string(),
+            ],
             name: "TBLSYN".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
@@ -824,6 +924,7 @@ impl CriCsbAaxArchive {
         };
 
         let mut sound_element_table = CriTable {
+            original_string_pool: vec![], //TODO
             name: "TBLSDL".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
@@ -874,6 +975,7 @@ impl CriCsbAaxArchive {
         };
 
         let mut isaac_table = CriTable {
+            original_string_pool: vec![], //TODO
             name: "TBLISC".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
@@ -912,6 +1014,7 @@ impl CriCsbAaxArchive {
         };
 
         let mut voice_limit_group_table = CriTable {
+            original_string_pool: vec![], //TODO
             name: "TBLVLG".to_string(),
             encoding: CriTableEncodingType::ShiftJis,
             unknown_byte: 0,
@@ -1051,7 +1154,7 @@ impl CriCsbAaxArchive {
             isaac_table.fields[0].rows.push(CriFieldValue::String(entry.name.clone()));
             isaac_table.fields[1].rows.push(CriFieldValue::String(entry.ptname.clone()));
             isaac_table.fields[2].rows.push(CriFieldValue::Byte(entry.ttype));
-            isaac_table.fields[3].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.grph.to_table().unwrap(), Vec::new())));
+            isaac_table.fields[3].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(entry.grph.to_table().unwrap())));
             isaac_table.fields[4].rows.push(CriFieldValue::Byte(entry.rndrng));
         }
 
@@ -1062,28 +1165,28 @@ impl CriCsbAaxArchive {
 
         parent_table.fields[0].rows.push(CriFieldValue::String("INFO".to_string()));
         parent_table.fields[1].rows.push(CriFieldValue::Byte(7));
-        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(info_table, Vec::new())));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(info_table)));
 
         parent_table.fields[0].rows.push(CriFieldValue::String("CUE".to_string()));
         parent_table.fields[1].rows.push(CriFieldValue::Byte(1));
-        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(cue_table, Vec::new())));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(cue_table)));
 
         parent_table.fields[0].rows.push(CriFieldValue::String("SYNTH".to_string()));
         parent_table.fields[1].rows.push(CriFieldValue::Byte(2));
-        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(synth_table, Vec::new())));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(synth_table)));
         
         parent_table.fields[0].rows.push(CriFieldValue::String("SOUND_ELEMENT".to_string()));
         parent_table.fields[1].rows.push(CriFieldValue::Byte(4));
-        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(sound_element_table, Vec::new())));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(sound_element_table)));
         
         parent_table.fields[0].rows.push(CriFieldValue::String("ISAAC".to_string()));
         parent_table.fields[1].rows.push(CriFieldValue::Byte(5));
-        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(isaac_table, Vec::new())));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(isaac_table)));
         
         parent_table.fields[0].rows.push(CriFieldValue::String("VOICE_LIMIT_GROUP".to_string()));
         parent_table.fields[1].rows.push(CriFieldValue::Byte(6));
-        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(voice_limit_group_table, Vec::new())));
+        parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(voice_limit_group_table)));
 
-        parent_table.write(&Vec::<String>::new())
+        parent_table.write()
     }
 }
