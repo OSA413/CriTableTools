@@ -15,29 +15,29 @@ pub struct CriCsbAdpcmWiiArchive {
     pub voice_limit_group: (Vec<CriCsbAdpcmWiiVoiceLimitGroup>, Vec<String>),
 }
 
-fn get_adpcm_wii_sound_data(sdl_table: &CriTable) -> Result<Vec<CriCsbAdpcmWiiSoundElement>, CommonBinaryError> {
-    let wrapper = CriAdpcmWiiArchiveWrapper::from_table(sdl_table).unwrap();
-    let mut sound_entries = Vec::with_capacity(wrapper.entries.len());
-    for archive in wrapper.entries {
-        sound_entries.push(CriCsbAdpcmWiiSoundElement {
-            original_string_pool: wrapper.original_string_pool.clone(),
-            name: archive.name.clone(),
-            data: CriCsbAdpcmWiiSoundElementData::AdpcmWii(
-                // TODO fix structure naming
-                CriAdpcmWiiArchiveWrapper {
-                    original_string_pool: archive.original_string_pool.clone(),
-                    entries: vec![archive.clone()]
-                }
-            ),
-            fmt: archive.fmt,
-            nch: archive.nch,
-            stmflg: archive.stmflg,
-            sfreq: archive.sfreq,
-            nsmpl: archive.nsmpl,
-        });
-    }
-    Ok(sound_entries)
-}
+// fn get_adpcm_wii_sound_data(sdl_table: &CriTable) -> Result<Vec<CriCsbAdpcmWiiSoundElement>, CommonBinaryError> {
+//     let wrapper = CriAdpcmWiiArchiveWrapper::from_table(sdl_table).unwrap();
+//     let mut sound_entries = Vec::with_capacity(wrapper.entries.len());
+//     for archive in wrapper.entries {
+//         sound_entries.push(CriCsbAdpcmWiiSoundElement {
+//             original_string_pool: wrapper.original_string_pool.clone(),
+//             name: archive.name.clone(),
+//             data: CriCsbAdpcmWiiSoundElementData::AdpcmWii(
+//                 // TODO fix structure naming
+//                 CriAdpcmWiiArchiveWrapper {
+//                     original_string_pool: archive.original_string_pool.clone(),
+//                     entries: vec![archive.clone()]
+//                 }
+//             ),
+//             fmt: archive.fmt,
+//             nch: archive.nch,
+//             stmflg: archive.stmflg,
+//             sfreq: archive.sfreq,
+//             nsmpl: archive.nsmpl,
+//         });
+//     }
+//     Ok(sound_entries)
+// }
 
 impl CriCsbAdpcmWiiArchive {
     pub fn parse_info_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiInfo>, Vec<String>) {
@@ -208,7 +208,7 @@ impl CriCsbAdpcmWiiArchive {
                     name: table.get_field("name").unwrap().to_string(row_index).unwrap(), 
                     ptname: table.get_field("ptname").unwrap().to_string(row_index).unwrap(), 
                     ttype: table.get_field("type").unwrap().to_u8(row_index).unwrap(), 
-                    grph: CriGraph::from_table(&table.get_field("grph").unwrap().to_table(row_index).unwrap()).unwrap(),
+                    grph: CriGraph::from_table(table.get_field("grph").unwrap().to_table(row_index).unwrap()).unwrap(),
                     rndrng: table.get_field("rndrng").unwrap().to_u8(row_index).unwrap(), 
                 });
             }
@@ -244,7 +244,7 @@ impl CriCsbAdpcmWiiArchive {
 
         let parent_fields = get_csb_fields(&csb_table);
 
-        return Ok(
+        Ok(
             CriCsbAdpcmWiiArchive {
                 original_string_pool: csb_table.original_string_pool,
                 info: CriCsbAdpcmWiiArchive::parse_info_table(parent_fields.info.as_ref()),
@@ -254,7 +254,7 @@ impl CriCsbAdpcmWiiArchive {
                 isaac: CriCsbAdpcmWiiArchive::parse_isaac_table(parent_fields.isaac.as_ref()),
                 voice_limit_group: CriCsbAdpcmWiiArchive::parse_voice_group_table(parent_fields.sound_element.as_ref()),
             }
-        );
+        )
     }
     
     pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
@@ -1094,7 +1094,7 @@ impl CriCsbAdpcmWiiArchive {
 
         for entry in &self.voice_limit_group.0 {
             voice_limit_group_table.fields[0].rows.push(CriFieldValue::String(entry.vlgname.clone()));
-            voice_limit_group_table.fields[1].rows.push(CriFieldValue::UInt32(entry.vlgnvoice.clone()));
+            voice_limit_group_table.fields[1].rows.push(CriFieldValue::UInt32(entry.vlgnvoice));
         }
 
         parent_table.fields[0].rows.push(CriFieldValue::String("INFO".to_string()));

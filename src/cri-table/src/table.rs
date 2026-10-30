@@ -5,7 +5,7 @@ use itertools::{Itertools};
 use common_binary::{binary_reader, binary_writer, endianness::Endianness, error::CommonBinaryError};
 use serde::Serialize;
 
-use crate::{encoding_type::CriTableEncodingType, field::CriTableField, field_flags_simple::CriFieldFlagsSimple::{self, RowStorage}, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, table_write_helpers::{TableDataPoolBuilderEntry, TableStringPoolBuilderEntry}};
+use crate::{encoding_type::CriTableEncodingType, field::CriTableField, field_flags_simple::CriFieldFlagsSimple::{self}, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, table_write_helpers::{TableDataPoolBuilderEntry, TableStringPoolBuilderEntry}};
 
 pub const UTF_SIGNATURE: [u8; 4] = *b"@UTF";
 
@@ -192,7 +192,7 @@ impl CriTable {
         let mut original_string_pool = Vec::new();
         let mut pointer = starting_pointer + header_string_pool_position;
         for _ in 0..original_string_pool_set.len() {
-            let string_read = binary_reader::string::read(&source, pointer, "").unwrap();
+            let string_read = binary_reader::string::read(source, pointer, "").unwrap();
             pointer = string_read.1;
             original_string_pool.push(string_read.0);
         }
@@ -209,20 +209,13 @@ impl CriTable {
     }
 
     fn table_signature_to_bytes(&self) -> Vec<u8> {
-        let mut data = Vec::with_capacity(0x8);
-        for _ in 0..0x08 {
-            data.push(0 as u8);
-        }
+        let mut data = vec![0; 0x8];
         binary_writer::string::write(&mut data, 0, "@UTF", "table signature").unwrap();
         data
     }
 
     fn table_info_to_bytes(&self) -> Vec<u8> {
-        let mut data = Vec::with_capacity(0x18);
-        for _ in 0..0x18 {
-            data.push(0 as u8);
-        }
-
+        let mut data = vec![0; 0x18];
         binary_writer::u16::write(
             &mut data,
             0x10,
@@ -293,11 +286,8 @@ impl CriTable {
         for row_index in 0..self.row_count() {
             for field in &self.fields {
                 let actual_flag = field.actual_flags();
-                match actual_flag {
-                    CriFieldFlagsSimple::RowStorage => {
-                        data.push(field.rows[row_index].to_bytes_for_field_info(&field.ttype, string_pool, data_pool));
-                    }
-                    _ => (),
+                if actual_flag == CriFieldFlagsSimple::RowStorage {
+                    data.push(field.rows[row_index].to_bytes_for_field_info(&field.ttype, string_pool, data_pool));
                 }
             }
         }
@@ -334,19 +324,18 @@ impl CriTable {
 
         for field in &self.fields {
             for row in &field.rows {
-                if let CriFieldValue::String(value) = row {
-                    if result.iter().find(|entry| &entry.string == value).is_none() {
+                if let CriFieldValue::String(value) = row
+                    && result.iter().find(|entry| &entry.string == value).is_none() {
                         result.push(TableStringPoolBuilderEntry {
                             string: value.clone(),
                             pointer: result.last().map(|last | last.pointer + last.string.len() as u32).unwrap_or(0) + 1,
                         });
                     }
-                }
             }
         }
 
         result.into_iter().map(|entry| {
-            return (entry.string, entry.pointer);
+            (entry.string, entry.pointer)
         }).collect()
     }
 
@@ -357,12 +346,9 @@ impl CriTable {
             for row in &field.rows {
                 if let CriFieldValue::Data(value) = row {
                     let mut data = value.clone();
+                    data.extend(std::iter::repeat_n(0, CriTable::length_nice(data.len()) - data.len()));
 
-                    for _ in data.len()..CriTable::length_nice(data.len()) {
-                        data.push(0);
-                    }
-
-                    let hash = get_sha256(&value);
+                    let hash = get_sha256(value);
                     if result.iter().find(|entry| entry.hash == hash).is_none() {
                         result.push(TableDataPoolBuilderEntry {
                             data: value.clone(),
@@ -371,7 +357,7 @@ impl CriTable {
                         });
                     }
                 } else if let CriFieldValue::ProbablyTable(table_or_data) = row {
-                    let mut data = match table_or_data {
+                    let data = match table_or_data {
                         TableOrData::Data(data) => data.clone(),
                         TableOrData::Table(table) => table.write().unwrap(),
                     };
@@ -389,7 +375,7 @@ impl CriTable {
         };
 
         result.into_iter().map(|entry| {
-            return (entry.hash, (entry.pointer as u32, entry.data));
+            (entry.hash, (entry.pointer as u32, entry.data))
         }).collect()
     }
 
@@ -415,16 +401,13 @@ impl CriTable {
         let header = self.table_info_to_bytes();
         let fields = self.fields_info_to_bytes(&string_pool, &data_pool);
         let rows_info = self.rows_to_bytes(&string_pool, &data_pool);
-        let binary_string_pool = string_pool.iter().sorted_by_key(|entry| entry.1).map(|entry| [entry.0.clone().into_bytes(), vec![0]].concat()).map(|x| x.clone()).concat().iter().map(|x| x.clone()).collect::<Vec<u8>>();
-        let binary_data_iter = data_pool.iter().sorted_by_key(|entry| entry.1.0).map(|entry| &entry.1.1).map(|x| x.clone());
+        let binary_string_pool = string_pool.iter().sorted_by_key(|entry| entry.1).map(|entry| [entry.0.clone().into_bytes(), vec![0]].concat()).concat().to_vec();
+        let binary_data_iter = data_pool.iter().sorted_by_key(|entry| entry.1.0).map(|entry| &entry.1.1).cloned();
 
         let mut binary_data_pool = Vec::new();
         for entry in binary_data_iter {
             binary_data_pool.extend_from_slice(&entry);
-
-            for _ in binary_data_pool.len()..CriTable::length_nice(binary_data_pool.len()) {
-                binary_data_pool.push(0);
-            }
+            binary_data_pool.extend(std::iter::repeat_n(0, CriTable::length_nice(binary_data_pool.len()) - binary_data_pool.len()))
         }
         
         let row_position = signature.len()
@@ -442,9 +425,7 @@ impl CriTable {
             binary_string_pool,
         ].concat();
 
-        for _ in before_data.len()..CriTable::length_nice(before_data.len()) {
-            before_data.push(0);
-        }
+        before_data.extend(std::iter::repeat_n(0, CriTable::length_nice(before_data.len()) - before_data.len()));
 
         let data_pool_position = before_data.len() - signature_length;
 
@@ -490,7 +471,7 @@ impl CriTable {
         binary_writer::u32::write(
             &mut result,
             0x14,
-            string_pool.get(&self.name).unwrap().clone(),
+            *string_pool.get(&self.name).unwrap(),
             &Endianness::Big,
             ""
         ).unwrap();

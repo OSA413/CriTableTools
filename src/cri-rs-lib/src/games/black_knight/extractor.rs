@@ -1,6 +1,6 @@
 use std::{fs::{self, create_dir_all}, path::Path};
 
-use crate::{adpcm_wii::{archive::CriAdpcmWiiArchiveWrapper, loop_flag::CriDspLoopFlag}, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElementData}, games::black_knight::archive::CriCsbSoundElementMetaInfo}};
+use crate::{adpcm_wii::archive::CriAdpcmWiiArchiveWrapper, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElementData}, games::black_knight::archive::CriCsbSoundElementMetaInfo}};
 
 fn extract_dps(dps: &CriAdpcmWiiArchiveWrapper, base_dir: &Path) {
     for entry in &dps.entries {
@@ -39,7 +39,7 @@ pub fn extract_csb(path: &Path) {
     for sound_entry in &csb.sound_element.0 {
         match &sound_entry.data {
             CriCsbAdpcmWiiSoundElementData::AdpcmWii(dsp) =>
-                extract_dps(&dsp, &output_directory_name),
+                extract_dps(dsp, &output_directory_name),
         };
     }
 
@@ -79,7 +79,7 @@ pub fn extract_csb(path: &Path) {
     ).unwrap();
 
     for isaac in &csb.isaac.0 {
-        let file_path = output_directory_name.join(&format!("{}.isaac.json", isaac.ptname));
+        let file_path = output_directory_name.join(format!("{}.isaac.json", isaac.ptname));
         create_dir_all(file_path.parent().unwrap()).unwrap();
         fs::write(
             &file_path,

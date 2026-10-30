@@ -9,8 +9,8 @@ fn handle_check(extracted_dir_path: &Path, original_extracted_dir_path: &Path) {
     let extracted_files = walk_dir(extracted_dir_path, None);
     let original_extracted_files = walk_dir(original_extracted_dir_path, None);
 
-    assert!(extracted_files.len() > 0);
-    assert!(original_extracted_files.len() > 0);
+    assert!(!extracted_files.is_empty());
+    assert!(!original_extracted_files.is_empty());
 
     for file_to_check in &extracted_files {
         let relative_file_to_check = file_to_check.strip_prefix(extracted_dir_path).unwrap();
@@ -18,8 +18,8 @@ fn handle_check(extracted_dir_path: &Path, original_extracted_dir_path: &Path) {
 
         if let Some(extension) = file_to_check.extension()
         && extension == "json" {
-            let recreated_json = serde_json::from_str::<Value>(&fs::read_to_string(&file_to_check).unwrap()).unwrap();
-            let original_json = serde_json::from_str::<Value>(&fs::read_to_string(&original_file).unwrap()).unwrap();
+            let recreated_json = serde_json::from_str::<Value>(&fs::read_to_string(file_to_check).unwrap()).unwrap();
+            let original_json = serde_json::from_str::<Value>(&fs::read_to_string(original_file).unwrap()).unwrap();
 
             if let Array(recreated_array) = &recreated_json
                 && let Array(original_array) = &original_json {
@@ -55,8 +55,8 @@ fn handle_check(extracted_dir_path: &Path, original_extracted_dir_path: &Path) {
             }
         } else {
             assert_eq!(
-                get_sha256(fs::read(&file_to_check).unwrap()),
-                get_sha256(fs::read(&original_file).unwrap()),
+                get_sha256(fs::read(file_to_check).unwrap()),
+                get_sha256(fs::read(original_file).unwrap()),
                 "Files {} and {} are expected to be equal", file_to_check.to_string_lossy(), original_file.to_string_lossy()
             );
         }
@@ -68,8 +68,8 @@ fn handle_check(extracted_dir_path: &Path, original_extracted_dir_path: &Path) {
 
         if let Some(extension) = file_to_check.extension()
         && extension == "json" {
-            let recreated_json = serde_json::from_str::<Value>(&fs::read_to_string(&extracted_file).unwrap()).unwrap();
-            let original_json = serde_json::from_str::<Value>(&fs::read_to_string(&file_to_check).unwrap()).unwrap();
+            let recreated_json = serde_json::from_str::<Value>(&fs::read_to_string(extracted_file).unwrap()).unwrap();
+            let original_json = serde_json::from_str::<Value>(&fs::read_to_string(file_to_check).unwrap()).unwrap();
 
             if let Array(recreated_array) = &recreated_json
                 && let Array(original_array) = &original_json {
@@ -79,8 +79,8 @@ fn handle_check(extracted_dir_path: &Path, original_extracted_dir_path: &Path) {
             }
         } else {
             assert_eq!(
-                get_sha256(fs::read(&file_to_check).unwrap()),
-                get_sha256(fs::read(&extracted_file).unwrap()),
+                get_sha256(fs::read(file_to_check).unwrap()),
+                get_sha256(fs::read(extracted_file).unwrap()),
                 "Files {} and {} are expected to be equal", file_to_check.to_string_lossy(), extracted_file.to_string_lossy()
             );
         }
@@ -100,7 +100,7 @@ fn handle_recreation(path: &Path, game_code: &str) {
     let orig_path = Path::new(&orig_path_string);
 
     if !orig_path.exists() {
-        fs::copy(path, &orig_path).unwrap();
+        fs::copy(path, orig_path).unwrap();
     } else if orig_path.is_file() {
         fs::copy(orig_path, path).unwrap();
     }
@@ -108,14 +108,14 @@ fn handle_recreation(path: &Path, game_code: &str) {
     if game_code == "black_knight" {
         black_knight::extractor::extract_csb(orig_path);
         black_knight::extractor::extract_csb(path);
-        black_knight::creator::create_from_dir(&extracted_dir_path).unwrap();
-        fs::remove_dir_all(&extracted_dir_path).unwrap();
+        black_knight::creator::create_from_dir(extracted_dir_path).unwrap();
+        fs::remove_dir_all(extracted_dir_path).unwrap();
         black_knight::extractor::extract_csb(path);
     } else if game_code == "episodes" {
         episodes::extractor::extract_csb(orig_path);
         episodes::extractor::extract_csb(path);
-        episodes::creator::create_from_dir(&extracted_dir_path).unwrap();
-        fs::remove_dir_all(&extracted_dir_path).unwrap();
+        episodes::creator::create_from_dir(extracted_dir_path).unwrap();
+        fs::remove_dir_all(extracted_dir_path).unwrap();
         episodes::extractor::extract_csb(path);
     }
 
@@ -127,36 +127,27 @@ fn main() {
     let mut file_or_dir = None;
 
     let mut args = env::args().skip(1);
-    match args.next() {
-        Some(game) => {
-            match &game[ops::RangeFull] {
-                "black_knight" | "episodes" => {
-                    game_code = Some(game);
-                    match args.next() {
-                        Some(probably_file) => {
-                            file_or_dir = Some(PathBuf::from_str(&probably_file).unwrap());
-                        },
-                        None => panic!("Need file path to extract"),
-                    }
-                },
-                value => {
-                    panic!("Unknown game: {}", value);
+    if let Some(game) = args.next() {
+        match &game[ops::RangeFull] {
+            "black_knight" | "episodes" => {
+                game_code = Some(game);
+                match args.next() {
+                    Some(probably_file) => {
+                        file_or_dir = Some(PathBuf::from_str(&probably_file).unwrap());
+                    },
+                    None => panic!("Need file path to extract"),
                 }
+            },
+            value => {
+                panic!("Unknown game: {}", value);
             }
-        },
-        None => (),
+        }
     }
 
     let game_code = game_code.unwrap();
     let file_or_dir = file_or_dir.unwrap();
 
-    if game_code == "episodes" {
-        if file_or_dir.is_file() {
-            handle_recreation(&file_or_dir, &game_code);
-        } else {
-            panic!("Provided path is not a file");
-        }
-    } else if game_code == "black_knight" {
+    if game_code == "episodes" || game_code == "black_knight" {
         if file_or_dir.is_file() {
             handle_recreation(&file_or_dir, &game_code);
         } else {

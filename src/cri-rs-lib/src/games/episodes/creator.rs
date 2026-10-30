@@ -2,10 +2,10 @@ use std::{collections::HashMap, ffi::OsStr, fs, path::{Path, PathBuf}};
 
 use common_binary::error::CommonBinaryError;
 use common_utils::walk_dir::walk_dir;
-use crate::{aax::{archive::CriAaxArchive, entry::CriAaxEntry, loop_flag::CriAaxLoopFlag}, csb::{common::{cri_csb_aax_archive::CriCsbAaxArchive, cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}}, games::{black_knight::archive::CriCsbSoundElementMetaInfo, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup, CriCsbSoundElement}}}, sound_archive_mode::CriSoundArchiveFormat};
+use crate::{aax::{archive::CriAaxArchive, entry::CriAaxEntry, loop_flag::CriAaxLoopFlag}, csb::{common::{cri_csb_aax_archive::CriCsbAaxArchive, cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}}, games::{black_knight::archive::CriCsbSoundElementMetaInfo, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup}}}, sound_archive_mode::CriSoundArchiveFormat};
 
-static INTRO_ADX_LOWERCASE: &'static str = "intro.adx";
-static LOOP_ADX_LOWERCASE: &'static str = "loop.adx";
+static INTRO_ADX_LOWERCASE: &str = "intro.adx";
+static LOOP_ADX_LOWERCASE: &str = "loop.adx";
 
 pub struct ParsedAdx {
     root_path: String,
@@ -66,13 +66,13 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
 
         let aax_entry = CriAaxEntry {
             flag: loop_flag,
-            data: data,
+            data,
         };
 
         match aax_archive_pool.get_mut(&root_entry.root_path) {
             Some(archive) => archive.1.entries.push(aax_entry),
             None => {
-                let mut entries = Vec::new();
+                let mut entries = Vec::with_capacity(2);
                 entries.push(aax_entry);
                 aax_archive_pool.insert(root_entry.root_path.clone(), (root_entry.root_dir_path, CriAaxArchive {
                     name: root_entry.meta_info.name.clone(),

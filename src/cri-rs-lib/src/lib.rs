@@ -73,6 +73,6 @@ pub fn find_related_cpk_of_csb(csb_path: &Path) -> Option<PathBuf> {
 }
 
 pub fn find_related_csb_of_dir(dir_path: &Path) -> Option<PathBuf> {
-    find_related_file(&dir_path, OsStr::new("CSB"))
-        .or_else(|| find_related_file(&dir_path, OsStr::new("csb")))
+    find_related_file(dir_path, OsStr::new("CSB"))
+        .or_else(|| find_related_file(dir_path, OsStr::new("csb")))
 }

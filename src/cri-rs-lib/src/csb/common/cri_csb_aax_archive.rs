@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use common_binary::error::CommonBinaryError;
-use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, encoding_type::CriTableEncodingType, table::{CriTable, UTF_SIGNATURE}};
+use cri_table::{field::CriTableField, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, encoding_type::CriTableEncodingType, table::{CriTable, UTF_SIGNATURE}};
 
 use crate::{aax::archive::CriAaxArchive, cpk::sound::archive::CriCpkArchive, csb::{common::{cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}, cri_csb_archive::get_csb_fields}, games::{black_knight::archive::CriGraph, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup}}}, find_related_cpk_of_csb, sound_archive::CriSoundArchiveEnum, sound_archive_mode::CriSoundArchiveFormat};
 
@@ -30,7 +30,7 @@ pub fn get_aax_sound_data(sdl_table: &CriTable, cpk: Option<CriCpkArchive>) -> R
     match (is_streaming, cpk) {
         (true, None) => {
             eprintln!("Cannot find the external .CPK file for this .CSB file. Please ensure that the external .CPK file is stored in the directory where the .CPK file is.");
-            return Err(CommonBinaryError::SeeConsole());
+            Err(CommonBinaryError::SeeConsole())
         },
         (true, Some(_cpk)) => {
             panic!("CPK not yet implemented"); //return Ok(vec![CriCsbSoundElement::Stream(cpk)]);
@@ -56,9 +56,9 @@ pub fn get_aax_sound_data(sdl_table: &CriTable, cpk: Option<CriCpkArchive>) -> R
                     nsmpl: sdl_table.get_field("nsmpl").unwrap().to_u32(sdl_row_index).unwrap(),
                 });
             }
-            return Ok(sound_entries);
+            Ok(sound_entries)
         },
-    };
+    }
 }
 
 impl CriCsbAaxArchive {
@@ -66,13 +66,13 @@ impl CriCsbAaxArchive {
         let file_content = fs::read(path).unwrap();
         let csb_table = CriTable::read(&file_content, Some(0), UTF_SIGNATURE).unwrap();
 
-        let cpk_path = find_related_cpk_of_csb(&path);
+        let cpk_path = find_related_cpk_of_csb(path);
         let cpk_data = cpk_path.map(|path| fs::read(path).unwrap());
         let cpk = cpk_data.map(|data| CriCpkArchive::read(&data, 0).unwrap());
 
         let parent_fields = get_csb_fields(&csb_table);
 
-        return Ok(
+        Ok(
             CriCsbAaxArchive {
                 info: {
                     let mut result = Vec::new();
@@ -206,7 +206,7 @@ impl CriCsbAaxArchive {
                                 name: table.get_field("name").unwrap().to_string(row_index).unwrap(), 
                                 ptname: table.get_field("ptname").unwrap().to_string(row_index).unwrap(), 
                                 ttype: table.get_field("type").unwrap().to_u8(row_index).unwrap(), 
-                                grph: CriGraph::from_table(&table.get_field("grph").unwrap().to_table(row_index).unwrap()).unwrap(),
+                                grph: CriGraph::from_table(table.get_field("grph").unwrap().to_table(row_index).unwrap()).unwrap(),
                                 rndrng: table.get_field("rndrng").unwrap().to_u8(row_index).unwrap(), 
                             });
                         }
@@ -230,7 +230,7 @@ impl CriCsbAaxArchive {
                     result
                 },
             }
-        );
+        )
     }
     
     pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
@@ -1167,7 +1167,7 @@ impl CriCsbAaxArchive {
 
         for entry in &self.voice_limit_group {
             voice_limit_group_table.fields[0].rows.push(CriFieldValue::String(entry.vlgname.clone()));
-            voice_limit_group_table.fields[1].rows.push(CriFieldValue::UInt32(entry.vlgnvoice.clone()));
+            voice_limit_group_table.fields[1].rows.push(CriFieldValue::UInt32(entry.vlgnvoice));
         }
 
         parent_table.fields[0].rows.push(CriFieldValue::String("INFO".to_string()));

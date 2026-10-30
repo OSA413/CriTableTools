@@ -67,7 +67,7 @@ impl CriFieldValue {
 
     pub fn to_bytes_for_field_info(
         &self,
-        ttype: &CriFieldType,
+        _ttype: &CriFieldType,
         string_pool: &HashMap<String, u32>,
         data_pool: &HashMap<String, (u32, Vec<u8>)>,
     ) -> Vec<u8> {
@@ -81,9 +81,7 @@ impl CriFieldValue {
 
                 let original_length = data.len();
 
-                for _ in data.len()..CriTable::length_nice(data.len()) {
-                    data.push(0);
-                }
+                data.extend(std::iter::repeat_n(0, CriTable::length_nice(data.len()) - data.len()));
 
                 [
                     data_pool.get(&get_sha256(&data)).unwrap().0.to_be_bytes().to_vec(),
@@ -93,10 +91,7 @@ impl CriFieldValue {
             CriFieldValue::Data(value) => {
                 let mut data = value.clone();
                 let original_length = data.len();
-
-                for _ in data.len()..CriTable::length_nice(data.len()) {
-                    data.push(0);
-                }
+                data.extend(std::iter::repeat_n(0, CriTable::length_nice(data.len()) - data.len()));
 
                 [
                     data_pool.get(&get_sha256(value)).unwrap().0.to_be_bytes().to_vec(),
@@ -108,20 +103,20 @@ impl CriFieldValue {
     }
 
     
-    pub fn to_bytes_for_data(&self, ttype: &CriFieldType) -> Vec<u8> {
+    pub fn to_bytes_for_data(&self, _ttype: &CriFieldType) -> Vec<u8> {
         match self {
             CriFieldValue::String(value) => value.bytes().chain(vec![0]).collect(),
             CriFieldValue::Data(value) => {
-                let mut data = value.clone();
-                data
+                
+                value.clone()
             },
             CriFieldValue::ProbablyTable(table_or_data) => {
-                let mut data = match table_or_data {
+                
+
+                match table_or_data {
                     TableOrData::Data(value) => value.clone(),
                     TableOrData::Table(table) => table.write().unwrap(),
-                };
-
-                data
+                }
             }
             _ => self.to_bytes_common(),
         }

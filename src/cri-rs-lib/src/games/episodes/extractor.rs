@@ -1,32 +1,32 @@
-use std::{fs::{self, create_dir_all}, path::Path};
+use std::path::Path;
 
-use crate::{aax::archive::CriAaxArchive, csb::{common::{cri_csb_aax_archive::CriCsbAaxArchive, cri_csb_aax_sound_element::CriCsbAaxSoundElementData}, games::black_knight::archive::CriCsbSoundElementMetaInfo}, sound_archive::CriSoundArchiveEnum};
+use crate::csb::common::cri_csb_aax_archive::CriCsbAaxArchive;
 
-fn extract_aax(entry_dir_name: &Path, aax: &CriAaxArchive) {
-    for entry in &aax.entries {
-        fs::write(
-            entry_dir_name.join(entry.flag.to_file_name()),
-            &entry.data,
-        ).unwrap();
-    }
-}
+// fn extract_aax(entry_dir_name: &Path, aax: &CriAaxArchive) {
+//     for entry in &aax.entries {
+//         fs::write(
+//             entry_dir_name.join(entry.flag.to_file_name()),
+//             &entry.data,
+//         ).unwrap();
+//     }
+// }
 
-fn extract_cpk(entry_dir_name: &str, aax: &CriAaxArchive, base_dir: &Path) {
-    todo!("I forgot what to do here :skull:");
-    for entry in &aax.entries {
-        let entry_dir_name = &base_dir.join(&entry_dir_name);
-        create_dir_all(entry_dir_name).unwrap();
-        fs::write(
-            entry_dir_name.join(entry.flag.to_file_name()),
-            &entry.data,
-        ).unwrap();
-    }
-}
+// fn extract_cpk(entry_dir_name: &str, aax: &CriAaxArchive, base_dir: &Path) {
+//     todo!("I forgot what to do here :skull:");
+//     for entry in &aax.entries {
+//         let entry_dir_name = &base_dir.join(entry_dir_name);
+//         create_dir_all(entry_dir_name).unwrap();
+//         fs::write(
+//             entry_dir_name.join(entry.flag.to_file_name()),
+//             &entry.data,
+//         ).unwrap();
+//     }
+// }
 
 pub fn extract_csb(path: &Path) {
-    let csb = CriCsbAaxArchive::read(path).unwrap();
+    let _csb = CriCsbAaxArchive::read(path).unwrap();
     let base_directory = path.parent().unwrap();
-    let output_directory_name = base_directory.join(path.file_stem().unwrap());
+    let _output_directory_name = base_directory.join(path.file_stem().unwrap());
 /*
     for entry in &csb.sound_element {
         let entry_dir_name = &output_directory_name.join(&entry.name);

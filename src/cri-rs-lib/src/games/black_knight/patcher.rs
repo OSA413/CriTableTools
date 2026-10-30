@@ -42,17 +42,17 @@ pub fn patch(path: &Path) {
                         CriAdpcmWiiArchive {
                             format: CriSoundArchiveFormat::Dsp,
                             original_string_pool: old_entry_sound_element.original_string_pool.clone(),
-                            fmt: sound_element_meta_data.as_ref().map(|x| x.fmt).unwrap_or(old_entry_sound_element.entries[0].fmt).clone(),
+                            fmt: sound_element_meta_data.as_ref().map(|x| x.fmt).unwrap_or(old_entry_sound_element.entries[0].fmt),
                             name: sound_element_meta_data.as_ref().map(|x| x.name.clone()).unwrap_or(old_entry_sound_element.entries[0].name.clone()).clone(),
-                            nch: sound_element_meta_data.as_ref().map(|x| x.nch).unwrap_or(old_entry_sound_element.entries[0].nch).clone(),
-                            nsmpl: sound_element_meta_data.as_ref().map(|x| x.nsmpl).unwrap_or(old_entry_sound_element.entries[0].nsmpl).clone(),
-                            sfreq: sound_element_meta_data.as_ref().map(|x| x.sfreq).unwrap_or(old_entry_sound_element.entries[0].sfreq).clone(),
-                            stmflg: sound_element_meta_data.as_ref().map(|x| x.stmflg).unwrap_or(old_entry_sound_element.entries[0].stmflg).clone(),
+                            nch: sound_element_meta_data.as_ref().map(|x| x.nch).unwrap_or(old_entry_sound_element.entries[0].nch),
+                            nsmpl: sound_element_meta_data.as_ref().map(|x| x.nsmpl).unwrap_or(old_entry_sound_element.entries[0].nsmpl),
+                            sfreq: sound_element_meta_data.as_ref().map(|x| x.sfreq).unwrap_or(old_entry_sound_element.entries[0].sfreq),
+                            stmflg: sound_element_meta_data.as_ref().map(|x| x.stmflg).unwrap_or(old_entry_sound_element.entries[0].stmflg),
                             entries: vec![
                                 CriAdpcmWiiEntry {
-                                    sfreq: sound_element_meta_data.as_ref().map(|x| x.sfreq).unwrap_or(root_entry.meta_info.sfreq).clone(),
-                                    nsmpl: sound_element_meta_data.as_ref().map(|x| x.nsmpl).unwrap_or(root_entry.meta_info.nsmpl).clone(),
-                                    nch: sound_element_meta_data.as_ref().map(|x| x.nch).unwrap_or(root_entry.meta_info.nch).clone(),
+                                    sfreq: sound_element_meta_data.as_ref().map(|x| x.sfreq).unwrap_or(root_entry.meta_info.sfreq),
+                                    nsmpl: sound_element_meta_data.as_ref().map(|x| x.nsmpl).unwrap_or(root_entry.meta_info.nsmpl),
+                                    nch: sound_element_meta_data.as_ref().map(|x| x.nch).unwrap_or(root_entry.meta_info.nch),
                                     loop_flag,
                                     // TODO: turns out there can be two headers in one header,
                                     // so this import is incorrect (as well as the extraction, probably)

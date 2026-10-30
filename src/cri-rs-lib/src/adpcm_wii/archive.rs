@@ -1,5 +1,5 @@
 use common_binary::error::CommonBinaryError;
-use cri_table::{field::CriTableField, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, encoding_type::CriTableEncodingType, table::CriTable};
+use cri_table::{field::CriTableField, field_type::CriFieldType, field_value::CriFieldValue, encoding_type::CriTableEncodingType, table::CriTable};
 
 use crate::{adpcm_wii::{entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag}, sound_archive_mode::CriSoundArchiveFormat};
 

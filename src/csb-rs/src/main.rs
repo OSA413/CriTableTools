@@ -1,6 +1,6 @@
 use std::{env, fs::{self, File}, io::{BufRead, BufReader, Read}, ops, path::{Path, PathBuf}, str::FromStr};
 
-use cri_rs_lib::{find_related_csb_of_dir, games::{black_knight::{self, creator, extractor}, episodes}, sound_archive_mode::CriSoundArchiveFormat};
+use cri_rs_lib::{find_related_csb_of_dir, games::{black_knight::{self}, episodes}, sound_archive_mode::CriSoundArchiveFormat};
 use cri_table::table::UTF_SIGNATURE;
 
 mod help;

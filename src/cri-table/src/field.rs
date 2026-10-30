@@ -97,7 +97,7 @@ impl CriTableField {
                     },
                     value => panic!("Expected value of UInt32, got {value:?}"),
                 },
-                None => return Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
+                None => Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
                     pointer: row_index,
                     source_len: self.rows.len(),
                     when: "tryint to access row of field for u32".to_string(),
@@ -114,7 +114,7 @@ impl CriTableField {
                     CriFieldValue::Single(value) => Ok(*value),
                     value => panic!("Expected value of Single, got {value:?}"),
                 },
-                None => return Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
+                None => Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
                     pointer: row_index,
                     source_len: self.rows.len(),
                     when: "tryint to access row of field for f32".to_string(),
@@ -145,7 +145,7 @@ impl CriTableField {
                     },
                     value => panic!("Expected value of String, got {value:?}"),
                 },
-                None => return Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
+                None => Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
                     pointer: row_index,
                     source_len: self.rows.len(),
                     when: "trying to access row of field to for string".to_string(),
