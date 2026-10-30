@@ -2,12 +2,11 @@ use std::{fs, path::Path};
 
 use common_utils::walk_dir::walk_dir;
 
-use crate::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry}, csb::common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}}, games::black_knight::creator::parse_entry};
+use crate::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry}, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}}, games::black_knight::archive::CriCsbSoundElementMetaInfo}, games::black_knight::creator::parse_entry};
 
 pub fn patch(path: &Path) {
     let path_path = Path::new(path);
     let mut csb = CriCsbAdpcmWiiArchive::read(path).unwrap();
-    fs::write(format!("{}.recreated_csb", path.to_string_lossy()), csb.write().unwrap()).unwrap();
     let dir_path = &path_path.with_extension("");
 
     let files = walk_dir(dir_path, None);
@@ -27,13 +26,14 @@ pub fn patch(path: &Path) {
         let old_entry = &csb.sound_element.0[entry_position];
         let CriCsbAdpcmWiiSoundElementData::AdpcmWii(old_entry_sound_element) = &old_entry.data;
 
-        // let sound_element_meta_data = fs::read_to_string(root_entry.root_dir_path.join("sound_element.json"))
-        //     .map(|data| serde_json::from_str::<CriCsbSoundElementMetaInfo>(&data));
+        let sound_element_meta_data = fs::read_to_string(root_entry.root_dir_path.join("sound_element.json"))
+            .map(|data| serde_json::from_str::<CriCsbSoundElementMetaInfo>(&data))
+            .unwrap();
 
         let data = fs::read(entry).unwrap();
 
         let new_entry = CriCsbAdpcmWiiSoundElement {
-            original_string_pool: Vec::new(),//TODO
+            original_string_pool: root_entry.meta_info.original_string_pool,
             name: relative_name,
             data: CriCsbAdpcmWiiSoundElementData::AdpcmWii(
                 CriAdpcmWiiArchiveWrapper {
@@ -41,17 +41,17 @@ pub fn patch(path: &Path) {
                     entries: vec![
                         CriAdpcmWiiArchive {
                             original_string_pool: old_entry_sound_element.original_string_pool.clone(),
-                            fmt: old_entry_sound_element.entries[0].fmt,
-                            name: old_entry_sound_element.entries[0].name.clone(),
-                            nch: old_entry_sound_element.entries[0].nch,
-                            nsmpl: old_entry_sound_element.entries[0].nsmpl,
-                            sfreq: old_entry_sound_element.entries[0].sfreq,
-                            stmflg: old_entry_sound_element.entries[0].stmflg,
+                            fmt: sound_element_meta_data.as_ref().map(|x| x.fmt).unwrap_or(old_entry_sound_element.entries[0].fmt).clone(),
+                            name: sound_element_meta_data.as_ref().map(|x| x.name.clone()).unwrap_or(old_entry_sound_element.entries[0].name.clone()).clone(),
+                            nch: sound_element_meta_data.as_ref().map(|x| x.nch).unwrap_or(old_entry_sound_element.entries[0].nch).clone(),
+                            nsmpl: sound_element_meta_data.as_ref().map(|x| x.nsmpl).unwrap_or(old_entry_sound_element.entries[0].nsmpl).clone(),
+                            sfreq: sound_element_meta_data.as_ref().map(|x| x.sfreq).unwrap_or(old_entry_sound_element.entries[0].sfreq).clone(),
+                            stmflg: sound_element_meta_data.as_ref().map(|x| x.stmflg).unwrap_or(old_entry_sound_element.entries[0].stmflg).clone(),
                             entries: vec![
                                 CriAdpcmWiiEntry {
-                                    sfreq: root_entry.meta_info.sfreq,
-                                    nsmpl: root_entry.meta_info.nsmpl,
-                                    nch: root_entry.meta_info.nch,
+                                    sfreq: sound_element_meta_data.as_ref().map(|x| x.sfreq).unwrap_or(root_entry.meta_info.sfreq).clone(),
+                                    nsmpl: sound_element_meta_data.as_ref().map(|x| x.nsmpl).unwrap_or(root_entry.meta_info.nsmpl).clone(),
+                                    nch: sound_element_meta_data.as_ref().map(|x| x.nch).unwrap_or(root_entry.meta_info.nch).clone(),
                                     loop_flag,
                                     // TODO: turns out there can be two headers in one header,
                                     // so this import is incorrect (as well as the extraction, probably)

@@ -40,7 +40,7 @@ fn get_adpcm_wii_sound_data(sdl_table: &CriTable) -> Result<Vec<CriCsbAdpcmWiiSo
 }
 
 impl CriCsbAdpcmWiiArchive {
-    pub fn parce_info_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiInfo>, Vec<String>) {
+    pub fn parse_info_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiInfo>, Vec<String>) {
         let mut result = Vec::new();
         if let Some(table) = table {                        
             for row_index in 0..table.row_count() {
@@ -55,7 +55,7 @@ impl CriCsbAdpcmWiiArchive {
         (result, vec![])
     }
 
-    pub fn parce_cue_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiCue>, Vec<String>) {
+    pub fn parse_cue_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiCue>, Vec<String>) {
         let mut result = Vec::new();
         if let Some(table) = table {
             for row_index in 0..table.row_count() {
@@ -73,7 +73,7 @@ impl CriCsbAdpcmWiiArchive {
         (result, vec![])
     }
 
-    pub fn parce_synth_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiSynth>, Vec<String>) {
+    pub fn parse_synth_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiSynth>, Vec<String>) {
         let mut result = Vec::new();
         if let Some(table) = table {
             for row_index in 0..table.row_count() {
@@ -171,7 +171,7 @@ impl CriCsbAdpcmWiiArchive {
         (result, vec![])
     }
 
-    pub fn parce_sound_element_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiSoundElement>, Vec<String>) {
+    pub fn parse_sound_element_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiSoundElement>, Vec<String>) {
         let wrapper = CriAdpcmWiiArchiveWrapper::from_table(table.unwrap()).unwrap();
         let mut result = Vec::new();
 
@@ -199,7 +199,7 @@ impl CriCsbAdpcmWiiArchive {
         (result, vec![])
     }
 
-    pub fn parce_isaac_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiIsaac>, Vec<String>) {
+    pub fn parse_isaac_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiIsaac>, Vec<String>) {
         let mut result = Vec::new();
         if let Some(table) = table {
             for row_index in 0..table.row_count() {
@@ -217,7 +217,7 @@ impl CriCsbAdpcmWiiArchive {
         (result, vec![])
     }
 
-    pub fn parce_voice_group_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiVoiceLimitGroup>, Vec<String>) {
+    pub fn parse_voice_group_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiVoiceLimitGroup>, Vec<String>) {
         let mut result = Vec::new();
         if let Some(table) = table && table.row_count() != 0 {
             for row_index in 0..table.row_count() {
@@ -247,12 +247,12 @@ impl CriCsbAdpcmWiiArchive {
         return Ok(
             CriCsbAdpcmWiiArchive {
                 original_string_pool: csb_table.original_string_pool,
-                info: CriCsbAdpcmWiiArchive::parce_info_table(parent_fields.info.as_ref()),
-                cue: CriCsbAdpcmWiiArchive::parce_cue_table(parent_fields.cue.as_ref()),
-                synth: CriCsbAdpcmWiiArchive::parce_synth_table(parent_fields.synth.as_ref()),
-                sound_element: CriCsbAdpcmWiiArchive::parce_sound_element_table(parent_fields.sound_element.as_ref()),
-                isaac: CriCsbAdpcmWiiArchive::parce_isaac_table(parent_fields.isaac.as_ref()),
-                voice_limit_group: CriCsbAdpcmWiiArchive::parce_voice_group_table(parent_fields.sound_element.as_ref()),
+                info: CriCsbAdpcmWiiArchive::parse_info_table(parent_fields.info.as_ref()),
+                cue: CriCsbAdpcmWiiArchive::parse_cue_table(parent_fields.cue.as_ref()),
+                synth: CriCsbAdpcmWiiArchive::parse_synth_table(parent_fields.synth.as_ref()),
+                sound_element: CriCsbAdpcmWiiArchive::parse_sound_element_table(parent_fields.sound_element.as_ref()),
+                isaac: CriCsbAdpcmWiiArchive::parse_isaac_table(parent_fields.isaac.as_ref()),
+                voice_limit_group: CriCsbAdpcmWiiArchive::parse_voice_group_table(parent_fields.sound_element.as_ref()),
             }
         );
     }
