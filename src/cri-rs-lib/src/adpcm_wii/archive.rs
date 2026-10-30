@@ -1,7 +1,7 @@
 use common_binary::error::CommonBinaryError;
 use cri_table::{field::CriTableField, field_type::CriFieldType, field_value::CriFieldValue, encoding_type::CriTableEncodingType, table::CriTable};
 
-use crate::{adpcm_wii::{entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag}, sound_archive_mode::CriSoundArchiveFormat};
+use crate::{adpcm_wii::entry::CriAdpcmWiiEntry, loop_flag::CriLoopFlag, sound_archive_mode::CriSoundArchiveFormat};
 
 #[derive(Debug)]
 pub struct CriAdpcmWiiArchiveWrapper {
@@ -36,7 +36,7 @@ impl CriAdpcmWiiArchive {
             let mut inner_entries = Vec::new();
             for inner_row_index in 0..inner_table.row_count() {
                 inner_entries.push(CriAdpcmWiiEntry {
-                    loop_flag: CriDspLoopFlag::from(inner_table.get_field("lpflg").unwrap().to_u8(inner_row_index).unwrap()),
+                    loop_flag: CriLoopFlag::from(inner_table.get_field("lpflg").unwrap().to_u8(inner_row_index).unwrap()),
                     sfreq: inner_table.get_field("sfreq").unwrap().to_u32(inner_row_index).unwrap(),
                     nsmpl: inner_table.get_field("nsmpl").unwrap().to_u32(inner_row_index).unwrap(),
                     nch:  inner_table.get_field("nch").unwrap().to_u8(inner_row_index).unwrap(),

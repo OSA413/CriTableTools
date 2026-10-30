@@ -1,15 +1,15 @@
-use std::path::Path;
+use std::{fs, path::Path};
 
-use crate::csb::common::cri_csb_aax_archive::CriCsbAaxArchive;
+use crate::{aax::archive::CriAaxArchive, csb::common::cri_csb_aax_archive::CriCsbAaxArchive};
 
-// fn extract_aax(entry_dir_name: &Path, aax: &CriAaxArchive) {
-//     for entry in &aax.entries {
-//         fs::write(
-//             entry_dir_name.join(entry.flag.to_file_name()),
-//             &entry.data,
-//         ).unwrap();
-//     }
-// }
+fn _extract_aax(entry_dir_name: &Path, aax: &CriAaxArchive) {
+    for entry in &aax.entries {
+        fs::write(
+            entry_dir_name.join(entry.flag.to_file_name().with_added_extension("adx")),
+            &entry.data,
+        ).unwrap();
+    }
+}
 
 // fn extract_cpk(entry_dir_name: &str, aax: &CriAaxArchive, base_dir: &Path) {
 //     todo!("I forgot what to do here :skull:");

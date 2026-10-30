@@ -1,7 +1,7 @@
 use std::{fs, path::{Path, PathBuf}};
 
 use common_binary::error::CommonBinaryError;
-use crate::{adpcm_wii::{loop_flag::CriDspLoopFlag}, csb::games::black_knight::archive::CriCsbSoundElementMetaInfo};
+use crate::{csb::games::black_knight::archive::CriCsbSoundElementMetaInfo, loop_flag::CriLoopFlag};
 
 static INTRO_DSP_LOWERCASE: &str = "intro.dsp";
 static LOOP_DSP_LOWERCASE: &str = "loop.dsp";
@@ -12,20 +12,20 @@ pub struct ParsedDsp {
     pub meta_info: CriCsbSoundElementMetaInfo,
 }
 
-pub fn parse_entry(entry: &Path) -> Option<(ParsedDsp, CriDspLoopFlag)> {
+pub fn parse_entry(entry: &Path) -> Option<(ParsedDsp, CriLoopFlag)> {
     let entry_string = entry.to_string_lossy();
     let entry_string_lowercase = entry_string.to_lowercase();
 
     let (root_dir, loop_flag) = if entry_string_lowercase.ends_with(INTRO_DSP_LOWERCASE) {
         (
             entry_string.chars().take(entry_string.len() - INTRO_DSP_LOWERCASE.len()).collect::<String>(),
-            CriDspLoopFlag::Intro,
+            CriLoopFlag::Intro,
         )
     }
     else if entry_string_lowercase.ends_with(LOOP_DSP_LOWERCASE) {
         (
             entry_string.chars().take(entry_string.len() - LOOP_DSP_LOWERCASE.len()).collect::<String>(),
-            CriDspLoopFlag::Loop,
+            CriLoopFlag::Loop,
         )
     } else {
         return None

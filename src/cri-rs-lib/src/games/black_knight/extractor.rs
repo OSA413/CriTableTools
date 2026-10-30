@@ -8,7 +8,7 @@ fn extract_dps(dps: &CriAdpcmWiiArchiveWrapper, base_dir: &Path) {
             let entry_dir_name = &base_dir.join(&entry.name);
             create_dir_all(entry_dir_name).unwrap();
             fs::write(
-                entry_dir_name.join(inner_entry.loop_flag.to_file_name()),
+                entry_dir_name.join(inner_entry.loop_flag.to_file_name().with_added_extension("dsp")),
                 [
                     inner_entry.header.clone(),
                     inner_entry.data.clone(),

@@ -2,15 +2,14 @@ use std::{ffi::OsStr, path::{Path, PathBuf}};
 
 pub mod sound_archive_mode;
 pub mod sound_archive;
+pub mod loop_flag;
 pub mod aax {
     pub mod archive;
     pub mod entry;
-    pub mod loop_flag;
 }
 pub mod adpcm_wii {
     pub mod archive;
     pub mod entry;
-    pub mod loop_flag;
 }
 pub mod swlpcm {
     // pub mod archive;

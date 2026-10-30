@@ -2,7 +2,7 @@ use std::{collections::HashMap, ffi::OsStr, fs, path::{Path, PathBuf}};
 
 use common_binary::error::CommonBinaryError;
 use common_utils::walk_dir::walk_dir;
-use crate::{aax::{archive::CriAaxArchive, entry::CriAaxEntry, loop_flag::CriAaxLoopFlag}, csb::{common::{cri_csb_aax_archive::CriCsbAaxArchive, cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}}, games::{black_knight::archive::CriCsbSoundElementMetaInfo, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup}}}, sound_archive_mode::CriSoundArchiveFormat};
+use crate::{aax::{archive::CriAaxArchive, entry::CriAaxEntry}, csb::{common::{cri_csb_aax_archive::CriCsbAaxArchive, cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}}, games::{black_knight::archive::CriCsbSoundElementMetaInfo, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup}}}, loop_flag::CriLoopFlag, sound_archive_mode::CriSoundArchiveFormat};
 
 static INTRO_ADX_LOWERCASE: &str = "intro.adx";
 static LOOP_ADX_LOWERCASE: &str = "loop.adx";
@@ -13,18 +13,18 @@ pub struct ParsedAdx {
     meta_info: CriCsbSoundElementMetaInfo,
 }
 
-pub fn parse_entry(entry: &Path) -> Option<(ParsedAdx, CriAaxLoopFlag)> {
+pub fn parse_entry(entry: &Path) -> Option<(ParsedAdx, CriLoopFlag)> {
     let entry_string = entry.to_string_lossy();
     let entry_string_lowercase = entry_string.to_lowercase();
     let (root_dir, loop_flag) = if entry_string_lowercase.ends_with(INTRO_ADX_LOWERCASE) {
         (
             entry_string.chars().take(entry_string.len() - INTRO_ADX_LOWERCASE.len()).collect::<String>(),
-            CriAaxLoopFlag::Intro,
+            CriLoopFlag::Intro,
         )
     } else if entry_string_lowercase.ends_with(LOOP_ADX_LOWERCASE) {
         (
             entry_string.chars().take(entry_string.len() - LOOP_ADX_LOWERCASE.len()).collect::<String>(),
-            CriAaxLoopFlag::Loop,
+            CriLoopFlag::Loop,
         )
     } else {
         return None;
