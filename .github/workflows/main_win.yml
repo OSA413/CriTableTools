@@ -55,7 +55,7 @@ jobs:
           path: dist/SHA256SUMS_win
           archive: false
 
-      # - run: cargo test --no-fail-fast
+      - run: cargo test --no-fail-fast
 
 
   publish-win64:
