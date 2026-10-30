@@ -60,15 +60,19 @@ pub mod games {
 pub static VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn find_related_file(path_to_search: &Path, extension: &OsStr) -> Option<PathBuf> {
-    let path = &format!("{}.{}", &path_to_search.to_string_lossy(), extension.to_string_lossy());
-    let path = Path::new(path);
+    let path = path_to_search.with_added_extension(extension);
     path.exists().then(|| path.to_path_buf())
 }
 
-pub fn find_related_cpk(csb_path: &Path) -> Option<PathBuf> {
+pub fn find_related_cpk_of_csb(csb_path: &Path) -> Option<PathBuf> {
     let base_directory = csb_path.parent().unwrap();
     let path_to_search = base_directory.join(csb_path.file_stem().unwrap());
 
     find_related_file(&path_to_search, OsStr::new("CPK"))
         .or_else(|| find_related_file(&path_to_search, OsStr::new("cpk")))
+}
+
+pub fn find_related_csb_of_dir(dir_path: &Path) -> Option<PathBuf> {
+    find_related_file(&dir_path, OsStr::new("CSB"))
+        .or_else(|| find_related_file(&dir_path, OsStr::new("csb")))
 }

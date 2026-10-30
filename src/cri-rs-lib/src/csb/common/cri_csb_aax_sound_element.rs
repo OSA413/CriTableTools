@@ -1,4 +1,4 @@
-use crate::{aax::archive::CriAaxArchive, cpk::sound::archive::CriCpkArchive};
+use crate::{aax::archive::CriAaxArchive, cpk::sound::archive::CriCpkArchive, sound_archive_mode::CriSoundArchiveFormat};
 
 #[derive(Debug)]
 pub enum CriCsbAaxSoundElementData {
@@ -7,6 +7,7 @@ pub enum CriCsbAaxSoundElementData {
 }
 
 pub struct CriCsbAaxSoundElement {
+    pub format: CriSoundArchiveFormat,
     pub name: String,
     pub data: CriCsbAaxSoundElementData,
     pub fmt: u8,

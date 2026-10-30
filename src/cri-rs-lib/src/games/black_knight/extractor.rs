@@ -43,6 +43,16 @@ pub fn extract_csb(path: &Path) {
         };
     }
 
+    if let Some(first) = &csb.sound_element.0.first() {
+        let format = match &first.data {
+            CriCsbAdpcmWiiSoundElementData::AdpcmWii(archive_wrapper) => &archive_wrapper.entries[0].format,
+        };
+        fs::write(
+            output_directory_name.join("format.json"),
+            serde_json::to_string(format).unwrap(),
+        ).unwrap();
+    }
+
     fs::write(
         output_directory_name.join("cue.json"),
         serde_json::to_string(&csb.cue).unwrap(),

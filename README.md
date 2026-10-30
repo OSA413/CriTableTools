@@ -22,7 +22,7 @@ Please note that most of the CLI tools support the `--help` flag to show help.
 * file alignment since it wasn't implemented in the original code.
 * also the masking seems to be unused (always `false`)
 * ahead-of-time values loading was implemented instead of lazy-loading (I mean the file is read fully in one iteration instead of jumping on the stream in the memory between the pointers and values)
-* Only "latest" version of CSB and CPK and FileName mode are supported
+* Only the "latest" version of CSB and CPK are supported
 
 ## List of tools
 
@@ -32,16 +32,18 @@ A tool for a convenient examination of arbitrary CriTable files (CSB, CPK...)
 
 ### csb-rs (wip)
 
-A tool to extract audio files from a CSB file (supports related CPK files)
+A tool to fully extract, re-create and patch CSB files (supports related CPK files)
 
 ## Tested games
 
-* Sonic and the Black Knight (Wii) (read, extraction with metadata, creation from the extracted CSB, *need more research and testing*)
-* Sonic 4 Episode 1 (PC) (read, extraction with metadata (not from CPK yet, or use v0.1.0), creation from the extracted CSB)
-* Sonic 4 Episode 2 (PC) (read, extraction with metadata (not from CPK yet, or use v0.1.0), creation from the extracted CSB)
-* Sonic Generations (PC) (read, extraction (in v0.1.0))
-* Sonic Lost World (PC) (CPK read)
-* Sonic Forces (PC) (CPK read)
+* Sonic and the Black Knight (Wii) (table and structure read, extraction with metadata, creation from the extracted CSB¹, correct patching)
+* Sonic 4 Episode 1 (PC) (table read, extraction with metadata (not from CPK yet, or use v0.1.0), creation from the extracted CSB)
+* Sonic 4 Episode 2 (PC) (table read, extraction with metadata (not from CPK yet, or use v0.1.0), creation from the extracted CSB)
+* Sonic Generations (PC) (table read, extraction (in v0.1.0))
+* Sonic Lost World (PC) (CPK table read)
+* Sonic Forces (PC) (CPK table read)
+
+¹ - Please note that this game **heavily** expects the file to be almost exactly byte-to-byte correct, so that's why you should try patching the CSB file first instead of trying to recreate it from the extrated directory.
 
 ## Want to contribute?
 

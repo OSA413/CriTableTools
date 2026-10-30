@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use common_utils::walk_dir::walk_dir;
 
-use crate::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry}, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}}, games::black_knight::archive::CriCsbSoundElementMetaInfo}, games::black_knight::creator::parse_entry};
+use crate::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry}, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}}, games::black_knight::archive::CriCsbSoundElementMetaInfo}, games::black_knight::creator::parse_entry, sound_archive_mode::CriSoundArchiveFormat};
 
 pub fn patch(path: &Path) {
     let path_path = Path::new(path);
@@ -40,6 +40,7 @@ pub fn patch(path: &Path) {
                     original_string_pool: old_entry.original_string_pool.clone(),
                     entries: vec![
                         CriAdpcmWiiArchive {
+                            format: CriSoundArchiveFormat::Dsp,
                             original_string_pool: old_entry_sound_element.original_string_pool.clone(),
                             fmt: sound_element_meta_data.as_ref().map(|x| x.fmt).unwrap_or(old_entry_sound_element.entries[0].fmt).clone(),
                             name: sound_element_meta_data.as_ref().map(|x| x.name.clone()).unwrap_or(old_entry_sound_element.entries[0].name.clone()).clone(),

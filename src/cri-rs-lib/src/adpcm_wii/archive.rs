@@ -1,7 +1,7 @@
 use common_binary::error::CommonBinaryError;
 use cri_table::{field::CriTableField, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, encoding_type::CriTableEncodingType, table::CriTable};
 
-use crate::adpcm_wii::{entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag};
+use crate::{adpcm_wii::{entry::CriAdpcmWiiEntry, loop_flag::CriDspLoopFlag}, sound_archive_mode::CriSoundArchiveFormat};
 
 #[derive(Debug)]
 pub struct CriAdpcmWiiArchiveWrapper {
@@ -17,6 +17,7 @@ impl CriAdpcmWiiArchiveWrapper {
 
 #[derive(Debug, Clone)]
 pub struct CriAdpcmWiiArchive {
+    pub format: CriSoundArchiveFormat,
     pub original_string_pool: Vec<String>,
     pub fmt: u8,
     pub name: String,
@@ -45,6 +46,7 @@ impl CriAdpcmWiiArchive {
             }
 
             entries.push(CriAdpcmWiiArchive {
+                format: CriSoundArchiveFormat::Dsp,
                 original_string_pool: inner_table.original_string_pool.clone(),
                 fmt: table.get_field("fmt").unwrap().to_u8(row_index).unwrap(),
                 name: table.get_field("name").unwrap().to_string(row_index).unwrap(),

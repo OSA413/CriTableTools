@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use common_binary::error::CommonBinaryError;
 use cri_table::{field::CriTableField, field_flags::CriFieldFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, encoding_type::CriTableEncodingType, table::{CriTable, UTF_SIGNATURE}};
 
-use crate::{aax::archive::CriAaxArchive, cpk::sound::archive::CriCpkArchive, csb::{common::{cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}, cri_csb_archive::get_csb_fields}, games::{black_knight::archive::CriGraph, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup}}}, find_related_cpk, sound_archive::CriSoundArchiveEnum};
+use crate::{aax::archive::CriAaxArchive, cpk::sound::archive::CriCpkArchive, csb::{common::{cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}, cri_csb_archive::get_csb_fields}, games::{black_knight::archive::CriGraph, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup}}}, find_related_cpk_of_csb, sound_archive::CriSoundArchiveEnum, sound_archive_mode::CriSoundArchiveFormat};
 
 pub struct CriCsbAaxArchive {
     pub info: Vec<CriCsbAaxInfo>,
@@ -16,10 +16,16 @@ pub struct CriCsbAaxArchive {
 
 pub fn get_aax_sound_data(sdl_table: &CriTable, cpk: Option<CriCpkArchive>) -> Result<Vec<CriCsbAaxSoundElement>, CommonBinaryError> {
     let is_streaming = sdl_table.get_field("stmflg").unwrap().to_bool(0).unwrap();
-    // if sdl_table.get_field("fmt").unwrap().to_bool(0).unwrap() {
-    //     eprintln!("The given CSB file contains an audio file which is not an ADX. Only CSB files with ADXs are supported.");
-    //     return Err(CommonBinaryError::SeeConsole());
-    // }
+    let format = sdl_table.get_field("fmt").unwrap().to_u8(0).unwrap();
+    let format = match format {
+        0 => CriSoundArchiveFormat::Adx,
+        4 => CriSoundArchiveFormat::Dsp,
+        5 => CriSoundArchiveFormat::Wav,
+        _ => {
+            eprintln!("The given CSB file contains an audio file which is not an ADX. Only CSB files with ADXs are supported.");
+            return Err(CommonBinaryError::SeeConsole());
+        }
+    };
 
     match (is_streaming, cpk) {
         (true, None) => {
@@ -35,6 +41,7 @@ pub fn get_aax_sound_data(sdl_table: &CriTable, cpk: Option<CriCpkArchive>) -> R
                 let sdl_name = sdl_table.get_field("name").unwrap().to_string(sdl_row_index).unwrap();                
                 let aax_table = sdl_table.get_field("data").unwrap().to_table(sdl_row_index).unwrap();
                 sound_entries.push(CriCsbAaxSoundElement {
+                    format: format.clone(),
                     name: sdl_name.clone(),
                     data: CriCsbAaxSoundElementData::Aax(
                         match CriAaxArchive::read(aax_table, &sdl_name).unwrap().data {
@@ -59,7 +66,7 @@ impl CriCsbAaxArchive {
         let file_content = fs::read(path).unwrap();
         let csb_table = CriTable::read(&file_content, Some(0), UTF_SIGNATURE).unwrap();
 
-        let cpk_path = find_related_cpk(&path);
+        let cpk_path = find_related_cpk_of_csb(&path);
         let cpk_data = cpk_path.map(|path| fs::read(path).unwrap());
         let cpk = cpk_data.map(|data| CriCpkArchive::read(&data, 0).unwrap());
 
