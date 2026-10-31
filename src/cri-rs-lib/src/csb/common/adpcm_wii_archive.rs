@@ -3,16 +3,16 @@ use std::{fs, path::Path};
 use common_binary::error::CommonBinaryError;
 use cri_table::{field::CriTableField, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, encoding_type::CriTableEncodingType, table::{CriTable, UTF_SIGNATURE}};
 
-use crate::{adpcm_wii::archive::CriAdpcmWiiArchiveWrapper, csb::{common::{cri_csb_adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}, cri_csb_archive::get_csb_fields}, games::black_knight::archive::{CriCsbAdpcmWiiCue, CriCsbAdpcmWiiInfo, CriCsbAdpcmWiiIsaac, CriCsbAdpcmWiiSynth, CriCsbAdpcmWiiVoiceLimitGroup, CriGraph}}};
+use crate::{adpcm_wii::archive::CriAdpcmWiiArchiveWrapper, csb::common::{adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}, archive::get_csb_fields, cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, graph::CriGraphWrapper, traits::{FromCriTable, ToCriTable}};
 
 pub struct CriCsbAdpcmWiiArchive {
     pub original_string_pool: Vec<String>,
-    pub info: (Vec<CriCsbAdpcmWiiInfo>, Vec<String>),
-    pub cue: (Vec<CriCsbAdpcmWiiCue>, Vec<String>),
-    pub synth: (Vec<CriCsbAdpcmWiiSynth>, Vec<String>),
+    pub info: (Vec<CriCsbInfo>, Vec<String>),
+    pub cue: (Vec<CriCsbCue>, Vec<String>),
+    pub synth: (Vec<CriCsbSynth>, Vec<String>),
     pub sound_element: (Vec<CriCsbAdpcmWiiSoundElement>, Vec<String>),
-    pub isaac: (Vec<CriCsbAdpcmWiiIsaac>, Vec<String>),
-    pub voice_limit_group: (Vec<CriCsbAdpcmWiiVoiceLimitGroup>, Vec<String>),
+    pub isaac: (Vec<CriCsbIsaac>, Vec<String>),
+    pub voice_limit_group: (Vec<CriCsbVoiceLimitGroup>, Vec<String>),
 }
 
 // fn get_adpcm_wii_sound_data(sdl_table: &CriTable) -> Result<Vec<CriCsbAdpcmWiiSoundElement>, CommonBinaryError> {
@@ -40,11 +40,11 @@ pub struct CriCsbAdpcmWiiArchive {
 // }
 
 impl CriCsbAdpcmWiiArchive {
-    pub fn parse_info_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiInfo>, Vec<String>) {
+    pub fn parse_info_table(table: Option<&CriTable>) -> (Vec<CriCsbInfo>, Vec<String>) {
         let mut result = Vec::new();
         if let Some(table) = table {                        
             for row_index in 0..table.row_count() {
-                result.push(CriCsbAdpcmWiiInfo {
+                result.push(CriCsbInfo {
                     original_string_pool: table.original_string_pool.clone(),
                     data_fmt_version: table.get_field("DataFmtVer").unwrap().to_u32(row_index).unwrap(),
                     ext_size: table.get_field("ExtSize").unwrap().to_u32(row_index).unwrap(),
@@ -55,11 +55,11 @@ impl CriCsbAdpcmWiiArchive {
         (result, vec![])
     }
 
-    pub fn parse_cue_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiCue>, Vec<String>) {
+    pub fn parse_cue_table(table: Option<&CriTable>) -> (Vec<CriCsbCue>, Vec<String>) {
         let mut result = Vec::new();
         if let Some(table) = table {
             for row_index in 0..table.row_count() {
-                result.push(CriCsbAdpcmWiiCue {
+                result.push(CriCsbCue {
                     original_string_pool: table.original_string_pool.clone(),
                     name: table.get_field("name").unwrap().to_string(row_index).unwrap(),
                     id: table.get_field("id").unwrap().to_u32(row_index).unwrap(),
@@ -73,11 +73,11 @@ impl CriCsbAdpcmWiiArchive {
         (result, vec![])
     }
 
-    pub fn parse_synth_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiSynth>, Vec<String>) {
+    pub fn parse_synth_table(table: Option<&CriTable>) -> (Vec<CriCsbSynth>, Vec<String>) {
         let mut result = Vec::new();
         if let Some(table) = table {
             for row_index in 0..table.row_count() {
-                result.push(CriCsbAdpcmWiiSynth {
+                result.push(CriCsbSynth {
                     original_string_pool: table.original_string_pool.clone(),
                     // Special thanks to VSCode's multi-cursor feature
                     synname: table.get_field("synname").unwrap().to_string(row_index).unwrap(),
@@ -199,16 +199,16 @@ impl CriCsbAdpcmWiiArchive {
         (result, vec![])
     }
 
-    pub fn parse_isaac_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiIsaac>, Vec<String>) {
+    pub fn parse_isaac_table(table: Option<&CriTable>) -> (Vec<CriCsbIsaac>, Vec<String>) {
         let mut result = Vec::new();
         if let Some(table) = table {
             for row_index in 0..table.row_count() {
-                result.push(CriCsbAdpcmWiiIsaac {
+                result.push(CriCsbIsaac {
                     original_string_pool: table.original_string_pool.clone(),
                     name: table.get_field("name").unwrap().to_string(row_index).unwrap(), 
                     ptname: table.get_field("ptname").unwrap().to_string(row_index).unwrap(), 
                     ttype: table.get_field("type").unwrap().to_u8(row_index).unwrap(), 
-                    grph: CriGraph::from_table(table.get_field("grph").unwrap().to_table(row_index).unwrap()).unwrap(),
+                    grph: CriGraphWrapper::from_table(table.get_field("grph").unwrap().to_table(row_index).unwrap()).unwrap(),
                     rndrng: table.get_field("rndrng").unwrap().to_u8(row_index).unwrap(), 
                 });
             }
@@ -217,7 +217,7 @@ impl CriCsbAdpcmWiiArchive {
         (result, vec![])
     }
 
-    pub fn parse_voice_group_table(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiVoiceLimitGroup>, Vec<String>) {
+    pub fn parse_voice_group_table(table: Option<&CriTable>) -> (Vec<CriCsbVoiceLimitGroup>, Vec<String>) {
         let mut result = Vec::new();
         if let Some(table) = table && table.row_count() != 0 {
             for row_index in 0..table.row_count() {
@@ -226,7 +226,7 @@ impl CriCsbAdpcmWiiArchive {
                 && let Ok(vlgname) = vlgname_field.to_string(row_index)
                 && let Some(vlgnvoice_field) = table.get_field("vlgnvoice")
                 && let Ok(vlgnvoice) = vlgnvoice_field.to_u32(row_index) {
-                    result.push(CriCsbAdpcmWiiVoiceLimitGroup {
+                    result.push(CriCsbVoiceLimitGroup {
                         original_string_pool: table.original_string_pool.clone(),
                         vlgname,
                         vlgnvoice,

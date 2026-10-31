@@ -1,6 +1,6 @@
 use std::{fs::{self, create_dir_all}, path::Path};
 
-use crate::{adpcm_wii::archive::CriAdpcmWiiArchiveWrapper, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElementData}, games::black_knight::archive::CriCsbSoundElementMetaInfo}};
+use crate::{adpcm_wii::archive::CriAdpcmWiiArchiveWrapper, csb::common::{adpcm_wii_archive::CriCsbAdpcmWiiArchive, adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElementData, sound_element_metainfo::CriCsbSoundElementMetaInfo}};
 
 fn extract_dps(dps: &CriAdpcmWiiArchiveWrapper, base_dir: &Path) {
     for entry in &dps.entries {

@@ -1,6 +1,6 @@
 use cri_table::table::CriTable;
 
-use crate::csb::{common::cri_csb_adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElementData};
+use crate::csb::{common::adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElementData};
 
 pub struct CriCsbTablesBuilder {
     pub info: Option<CriTable>,

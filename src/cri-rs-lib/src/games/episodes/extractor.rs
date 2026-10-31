@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use crate::{aax::archive::CriAaxArchive, csb::common::cri_csb_aax_archive::CriCsbAaxArchive};
+use crate::{aax::archive::CriAaxArchive, csb::common::aax_archive::CriCsbAaxArchive};
 
 fn _extract_aax(entry_dir_name: &Path, aax: &CriAaxArchive) {
     for entry in &aax.entries {

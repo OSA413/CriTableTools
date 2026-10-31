@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use common_utils::walk_dir::walk_dir;
 
-use crate::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry}, csb::{common::{cri_csb_adpcm_wii_archive::CriCsbAdpcmWiiArchive, cri_csb_adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}}, games::black_knight::archive::CriCsbSoundElementMetaInfo}, games::black_knight::creator::parse_entry, sound_archive_mode::CriSoundArchiveFormat};
+use crate::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry}, csb::common::{adpcm_wii_archive::CriCsbAdpcmWiiArchive, adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}, sound_element_metainfo::CriCsbSoundElementMetaInfo}, games::black_knight::creator::parse_entry, sound_archive_mode::CriSoundArchiveFormat};
 
 pub fn patch(path: &Path) {
     let path_path = Path::new(path);
@@ -105,5 +105,5 @@ pub fn patch(path: &Path) {
     //     .unwrap()
     //     .unwrap();
 
-    fs::write(format!("{}.patched", path.to_string_lossy()), csb.write().unwrap()).unwrap();
+    fs::write(path.with_added_extension("patched"), csb.write().unwrap()).unwrap();
 }

@@ -3,15 +3,15 @@ use std::{fs, path::Path};
 use common_binary::error::CommonBinaryError;
 use cri_table::{field::CriTableField, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, encoding_type::CriTableEncodingType, table::{CriTable, UTF_SIGNATURE}};
 
-use crate::{aax::archive::CriAaxArchive, cpk::sound::archive::CriCpkArchive, csb::{common::{cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}, cri_csb_archive::get_csb_fields}, games::{black_knight::archive::CriGraph, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup}}}, find_related_cpk_of_csb, sound_archive::CriSoundArchiveEnum, sound_archive_mode::CriSoundArchiveFormat};
+use crate::{aax::archive::CriAaxArchive, cpk::sound::archive::CriCpkArchive, csb::common::{aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}, archive::get_csb_fields, cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, find_related_cpk_of_csb, graph::CriGraphWrapper, sound_archive::CriSoundArchiveEnum, sound_archive_mode::CriSoundArchiveFormat, traits::{FromCriTable, ToCriTable}};
 
 pub struct CriCsbAaxArchive {
-    pub info: Vec<CriCsbAaxInfo>,
-    pub cue: Vec<CriCsbAaxCue>,
-    pub synth: Vec<CriCsbAaxSynth>,
+    pub info: Vec<CriCsbInfo>,
+    pub cue: Vec<CriCsbCue>,
+    pub synth: Vec<CriCsbSynth>,
     pub sound_element: Vec<CriCsbAaxSoundElement>,
-    pub isaac: Vec<CriCsbAaxIsaac>,
-    pub voice_limit_group: Vec<CriCsbAaxVoiceLimitGroup>,
+    pub isaac: Vec<CriCsbIsaac>,
+    pub voice_limit_group: Vec<CriCsbVoiceLimitGroup>,
 }
 
 pub fn get_aax_sound_data(sdl_table: &CriTable, cpk: Option<CriCpkArchive>) -> Result<Vec<CriCsbAaxSoundElement>, CommonBinaryError> {
@@ -78,7 +78,8 @@ impl CriCsbAaxArchive {
                     let mut result = Vec::new();
                     if let Some(table) = parent_fields.info {
                         for row_index in 0..table.row_count() {
-                            result.push(CriCsbAaxInfo {
+                            result.push(CriCsbInfo {
+                                original_string_pool: table.original_string_pool.clone(),
                                 data_fmt_version: table.get_field("DataFmtVer").unwrap().to_u32(row_index).unwrap(),
                                 ext_size: table.get_field("ExtSize").unwrap().to_u32(row_index).unwrap(),
                             });
@@ -90,7 +91,8 @@ impl CriCsbAaxArchive {
                     let mut result = Vec::new();
                     if let Some(table) = parent_fields.cue {
                          for row_index in 0..table.row_count() {
-                            result.push(CriCsbAaxCue {
+                            result.push(CriCsbCue {
+                                original_string_pool: table.original_string_pool.clone(),
                                 name: table.get_field("name").unwrap().to_string(row_index).unwrap(),
                                 id: table.get_field("id").unwrap().to_u32(row_index).unwrap(),
                                 synth: table.get_field("synth").unwrap().to_string(row_index).unwrap(),
@@ -105,7 +107,8 @@ impl CriCsbAaxArchive {
                     let mut result = Vec::new();
                     if let Some(table) = parent_fields.synth {
                         for row_index in 0..table.row_count() {
-                            result.push(CriCsbAaxSynth {
+                            result.push(CriCsbSynth {
+                                original_string_pool: table.original_string_pool.clone(),
                                 // Special thanks to VSCode's multi-cursor feature
                                 synname: table.get_field("synname").unwrap().to_string(row_index).unwrap(),
                                 syntype: table.get_field("syntype").unwrap().to_u8(row_index).unwrap(), 
@@ -202,11 +205,12 @@ impl CriCsbAaxArchive {
                     let mut result = Vec::new();
                     if let Some(table) = parent_fields.isaac {
                         for row_index in 0..table.row_count() {
-                            result.push(CriCsbAaxIsaac {
+                            result.push(CriCsbIsaac {
+                                original_string_pool: table.original_string_pool.clone(),
                                 name: table.get_field("name").unwrap().to_string(row_index).unwrap(), 
                                 ptname: table.get_field("ptname").unwrap().to_string(row_index).unwrap(), 
                                 ttype: table.get_field("type").unwrap().to_u8(row_index).unwrap(), 
-                                grph: CriGraph::from_table(table.get_field("grph").unwrap().to_table(row_index).unwrap()).unwrap(),
+                                grph: CriGraphWrapper::from_table(table.get_field("grph").unwrap().to_table(row_index).unwrap()).unwrap(),
                                 rndrng: table.get_field("rndrng").unwrap().to_u8(row_index).unwrap(), 
                             });
                         }
@@ -220,7 +224,8 @@ impl CriCsbAaxArchive {
                             // This is a known special case when fields are defined but have no rows
                             if let Ok(vlgname) = table.get_field("vlgname").unwrap().to_string(row_index)
                             && let Ok(vlgnvoice) = table.get_field("vlgnvoice").unwrap().to_u32(row_index) {
-                                result.push(CriCsbAaxVoiceLimitGroup {
+                                result.push(CriCsbVoiceLimitGroup {
+                                    original_string_pool: table.original_string_pool.clone(),
                                     vlgname,
                                     vlgnvoice,
                                 });

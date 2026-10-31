@@ -3,6 +3,8 @@ use std::{ffi::OsStr, path::{Path, PathBuf}};
 pub mod sound_archive_mode;
 pub mod sound_archive;
 pub mod loop_flag;
+pub mod traits;
+pub mod graph;
 pub mod aax {
     pub mod archive;
     pub mod entry;
@@ -28,19 +30,17 @@ pub mod cpk {
 }
 pub mod csb {
     pub mod common {
-        pub mod cri_csb_aax_archive;
-        pub mod cri_csb_aax_sound_element;
-        pub mod cri_csb_adpcm_wii_archive;
-        pub mod cri_csb_adpcm_wii_sound_element;
-        pub mod cri_csb_archive;
-    }
-    pub mod games {
-        pub mod black_knight {
-            pub mod archive;
-        }
-        pub mod episodes {
-            pub mod archive;
-        }
+        pub mod aax_archive;
+        pub mod aax_sound_element;
+        pub mod adpcm_wii_archive;
+        pub mod adpcm_wii_sound_element;
+        pub mod synth;
+        pub mod voice_limit_group;
+        pub mod sound_element_metainfo;
+        pub mod isaac;
+        pub mod info;
+        pub mod cue;
+        pub mod archive;
     }
 }
 

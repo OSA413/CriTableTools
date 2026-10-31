@@ -2,10 +2,11 @@ use std::collections::{HashMap, HashSet};
 use common_utils::get_sha256;
 use itertools::{Itertools};
 
+use crate::{encoding_type::CriTableEncodingType, field::CriTableField, field_dto::CriFieldDto, field_type::CriFieldType};
 use common_binary::{binary_reader, binary_writer, endianness::Endianness, error::CommonBinaryError};
 use serde::Serialize;
 
-use crate::{encoding_type::CriTableEncodingType, field::CriTableField, field_flags_simple::CriFieldFlagsSimple::{self}, field_raw_flags::CriFieldRawFlags, field_type::CriFieldType, field_value::{CriFieldValue, TableOrData}, table_write_helpers::{TableDataPoolBuilderEntry, TableStringPoolBuilderEntry}};
+use crate::{field_flags_simple::CriFieldFlagsSimple::{self}, field_raw_flags::CriFieldRawFlags, field_value::{CriFieldValue, TableOrData}, table_write_helpers::{TableDataPoolBuilderEntry, TableStringPoolBuilderEntry}};
 
 pub const UTF_SIGNATURE: [u8; 4] = *b"@UTF";
 
@@ -34,6 +35,23 @@ pub struct TableJson {
 }
 
 impl CriTable {
+    pub fn new(table_name: &'static str, original_string_pool: &Vec<String>, fields: &[CriFieldDto], row_capacity: usize) -> CriTable {
+        CriTable {
+            original_string_pool: original_string_pool.clone(),
+            name: table_name.to_string(),
+                encoding: CriTableEncodingType::ShiftJis,
+                fields: fields.iter().map(|dto| {
+                    CriTableField {
+                        ttype: dto.ttype,
+                        name: dto.name.to_string(),
+                        rows: Vec::with_capacity(row_capacity),
+                        default_value: dto.default_value.clone(),
+                    }
+                }).collect::<Vec<CriTableField>>(),
+            unknown_byte: 0,
+        }
+    }
+    
     pub fn row_length(&self) -> usize {
         if self.row_count() == 0 {
             return 0;

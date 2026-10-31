@@ -1,7 +1,7 @@
 use std::{fs, path::{Path, PathBuf}};
 
 use common_binary::error::CommonBinaryError;
-use crate::{csb::games::black_knight::archive::CriCsbSoundElementMetaInfo, loop_flag::CriLoopFlag};
+use crate::{csb::common::sound_element_metainfo::CriCsbSoundElementMetaInfo, loop_flag::CriLoopFlag};
 
 static INTRO_DSP_LOWERCASE: &str = "intro.dsp";
 static LOOP_DSP_LOWERCASE: &str = "loop.dsp";

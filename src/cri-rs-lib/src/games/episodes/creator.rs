@@ -2,7 +2,7 @@ use std::{collections::HashMap, ffi::OsStr, fs, path::{Path, PathBuf}};
 
 use common_binary::error::CommonBinaryError;
 use common_utils::walk_dir::walk_dir;
-use crate::{aax::{archive::CriAaxArchive, entry::CriAaxEntry}, csb::{common::{cri_csb_aax_archive::CriCsbAaxArchive, cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}}, games::{black_knight::archive::CriCsbSoundElementMetaInfo, episodes::archive::{CriCsbAaxCue, CriCsbAaxInfo, CriCsbAaxIsaac, CriCsbAaxSynth, CriCsbAaxVoiceLimitGroup}}}, loop_flag::CriLoopFlag, sound_archive_mode::CriSoundArchiveFormat};
+use crate::{aax::{archive::CriAaxArchive, entry::CriAaxEntry}, csb::common::{aax_archive::CriCsbAaxArchive, aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}, cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, sound_element_metainfo::CriCsbSoundElementMetaInfo, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, loop_flag::CriLoopFlag, sound_archive_mode::CriSoundArchiveFormat};
 
 static INTRO_ADX_LOWERCASE: &str = "intro.adx";
 static LOOP_ADX_LOWERCASE: &str = "loop.adx";
@@ -105,17 +105,17 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
     }
 
     csb.cue = fs::read_to_string(path.join("cue.json"))
-        .map(|data| serde_json::from_str::<Vec<CriCsbAaxCue>>(&data))
+        .map(|data| serde_json::from_str::<Vec<CriCsbCue>>(&data))
         .unwrap()
         .unwrap();
 
     csb.synth = fs::read_to_string(path.join("synth.json"))
-        .map(|data| serde_json::from_str::<Vec<CriCsbAaxSynth>>(&data))
+        .map(|data| serde_json::from_str::<Vec<CriCsbSynth>>(&data))
         .unwrap()
         .unwrap();
 
     csb.info = fs::read_to_string(path.join("table_info.json"))
-        .map(|data| serde_json::from_str::<Vec<CriCsbAaxInfo>>(&data))
+        .map(|data| serde_json::from_str::<Vec<CriCsbInfo>>(&data))
         .unwrap()
         .unwrap();
 
@@ -123,7 +123,7 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
 
     for entry in isaac_entries {
         let isaac_info = fs::read_to_string(entry)
-            .map(|data| serde_json::from_str::<CriCsbAaxIsaac>(&data))
+            .map(|data| serde_json::from_str::<CriCsbIsaac>(&data))
             .unwrap()
             .unwrap();
     
@@ -131,10 +131,10 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
     }
     
     csb.voice_limit_group = fs::read_to_string(path.join("voice_limit_group.json"))
-        .map(|data| serde_json::from_str::<Vec<CriCsbAaxVoiceLimitGroup>>(&data))
+        .map(|data| serde_json::from_str::<Vec<CriCsbVoiceLimitGroup>>(&data))
         .unwrap()
         .unwrap();
 
-    fs::write(format!("{}.CSB", path.to_string_lossy()), csb.write().unwrap()).unwrap();
+    fs::write(path.with_added_extension("CSB"), csb.write().unwrap()).unwrap();
     Ok(())
 }

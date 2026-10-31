@@ -1,23 +1,8 @@
 use serde::{Deserialize, Serialize};
-use crate::{aax::archive::CriAaxArchive, cpk::sound::archive::CriCpkArchive, csb::{common::{cri_csb_aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}}, games::black_knight::archive::CriGraphWrapper}};
-
-#[derive(Deserialize, Serialize)]
-pub struct CriCsbAaxInfo{ 
-    pub data_fmt_version: u32,
-    pub ext_size: u32,
-}
 
 #[derive(Serialize, Deserialize)]
-pub struct CriCsbAaxCue{ 
-    pub name: String,
-    pub id: u32,
-    pub synth: String,
-    pub udata: String,
-    pub flags: u8,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct CriCsbAaxSynth{ 
+pub struct CriCsbSynth{ 
+    pub original_string_pool: Vec<String>,
     pub synname: String,
     pub syntype: u8,
     pub cmplxtype: u8,
@@ -104,44 +89,4 @@ pub struct CriCsbAaxSynth{
     pub f2_coflg: u16,
     pub f2_cofho: u16,
     pub f2_cofhg: u16,
-}
-
-pub struct CriCsbAaxArchive {
-    pub info: Vec<CriCsbAaxInfo>,
-    pub cue: Vec<CriCsbAaxCue>,
-    pub synth: Vec<CriCsbAaxSynth>,
-    pub sound_element: Vec<CriCsbAaxSoundElement>,
-    pub isaac: Vec<CriCsbAaxIsaac>,
-    pub voice_limit_group: Vec<CriCsbAaxVoiceLimitGroup>,
-}
-
-pub struct CriCsbSoundElement {
-    pub name: String,
-    pub data: CriCsbAaxSoundElementData,
-    pub fmt: u8,
-    pub nch: u8,
-    pub stmflg: u8,
-    pub sfreq: u32,
-    pub nsmpl: u32,
-}
-
-#[derive(Debug)]
-pub enum CriCsbSoundElementData {
-    Aax(CriAaxArchive),
-    Stream(CriCpkArchive),
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct CriCsbAaxIsaac {
-    pub name: String,
-    pub ptname: String,
-    pub ttype: u8,
-    pub grph: CriGraphWrapper,
-    pub rndrng: u8,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct CriCsbAaxVoiceLimitGroup{ 
-    pub vlgname: String,
-    pub vlgnvoice: u32,
 }
