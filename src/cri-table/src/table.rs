@@ -68,8 +68,8 @@ impl CriTable {
                 CriFieldDto::new("name", CriFieldType::String, None),
                 CriFieldDto::new("id", CriFieldType::UInt32, None),
                 CriFieldDto::new("synth", CriFieldType::String, None),
-                CriFieldDto::new("udata", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
-                CriFieldDto::new("flags", CriFieldType::Byte, None),
+                CriFieldDto::new("udata", CriFieldType::String, None),
+                CriFieldDto::new("flags", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
             ],
             row_capacity,
         )
@@ -83,19 +83,19 @@ impl CriTable {
                 // Magic tricks were done here, thanks to VSCode's multi-cursor features
                 CriFieldDto::new("synname", CriFieldType::String, None),
                 CriFieldDto::new("syntype", CriFieldType::Byte, None),
-                CriFieldDto::new("cmplxtype", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
+                CriFieldDto::new("cmplxtype", CriFieldType::Byte, None),
                 CriFieldDto::new("lnkname", CriFieldType::String, None),
-                CriFieldDto::new("issetname", CriFieldType::String, None),
+                CriFieldDto::new("issetname", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
                 CriFieldDto::new("volume", CriFieldType::Int16, None),
-                CriFieldDto::new("pitch", CriFieldType::Int16, None),
-                CriFieldDto::new("dlytim", CriFieldType::UInt32, None),
+                CriFieldDto::new("pitch", CriFieldType::Int16, Some(CriFieldValue::Int16(0))),
+                CriFieldDto::new("dlytim", CriFieldType::UInt32, Some(CriFieldValue::UInt32(0))),
                 CriFieldDto::new("s_cntrl", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
                 CriFieldDto::new("eg_dly", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
                 CriFieldDto::new("eg_atk", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
                 CriFieldDto::new("eg_hld", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
-                CriFieldDto::new("eg_dcy", CriFieldType::UInt16, None),
-                CriFieldDto::new("eg_rel", CriFieldType::UInt16, None),
-                CriFieldDto::new("eg_sus", CriFieldType::UInt16, None),
+                CriFieldDto::new("eg_dcy", CriFieldType::UInt16,  Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("eg_rel", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("eg_sus", CriFieldType::UInt16, Some(CriFieldValue::UInt16(1000))),
                 CriFieldDto::new("f_type", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
                 CriFieldDto::new("f_cof1", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
                 CriFieldDto::new("f_cof2", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
@@ -177,7 +177,8 @@ impl CriTable {
             &[
                 CriFieldDto::new("name", CriFieldType::String, None),
                 CriFieldDto::new("data", CriFieldType::Data, None),
-                CriFieldDto::new("fmt", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
+                CriFieldDto::new("fmt", CriFieldType::Byte, Some(CriFieldValue::Byte(4))),
+                CriFieldDto::new("nch", CriFieldType::Byte, Some(CriFieldValue::Byte(1))),
                 CriFieldDto::new("stmflg", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
                 CriFieldDto::new("sfreq", CriFieldType::UInt32, None),
                 CriFieldDto::new("nsmpl", CriFieldType::UInt32, None),
@@ -550,10 +551,11 @@ impl CriTable {
                         });
                     }
                 } else if let CriFieldValue::ProbablyTable(table_or_data) = row {
-                    let data = match table_or_data {
+                    let mut data = match table_or_data {
                         TableOrData::Data(data) => data.clone(),
                         TableOrData::Table(table) => table.write().unwrap(),
                     };
+                    data.extend(std::iter::repeat_n(0, CriTable::length_nice(data.len()) - data.len()));
 
                     let hash = get_sha256(&data);
                     if result.iter().find(|entry| entry.hash == hash).is_none() {

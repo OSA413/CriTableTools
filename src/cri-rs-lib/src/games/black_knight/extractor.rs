@@ -42,27 +42,27 @@ pub fn extract_csb(path: &Path) {
 
     fs::write(
         output_directory_name.join("cue.json"),
-        serde_json::to_string(&csb.cue).unwrap(),
+        serde_json::to_string(&csb.cue.0).unwrap(),
     ).unwrap();
 
     fs::write(
         output_directory_name.join("synth.json"),
-        serde_json::to_string(&csb.synth).unwrap(),
+        serde_json::to_string(&csb.synth.0).unwrap(),
     ).unwrap();
 
     fs::write(
         output_directory_name.join("table_info.json"),
-        serde_json::to_string(&csb.info).unwrap(),
+        serde_json::to_string(&csb.info.0).unwrap(),
     ).unwrap();
 
     fs::write(
         output_directory_name.join("cue.json"),
-        serde_json::to_string(&csb.cue).unwrap(),
+        serde_json::to_string(&csb.cue.0).unwrap(),
     ).unwrap();
 
     fs::write(
         output_directory_name.join("synth.json"),
-        serde_json::to_string(&csb.synth).unwrap(),
+        serde_json::to_string(&csb.synth.0).unwrap(),
     ).unwrap();
 
     for isaac in &csb.isaac.0 {
@@ -77,7 +77,7 @@ pub fn extract_csb(path: &Path) {
     let file_path = output_directory_name.join("voice_limit_group.json");
     fs::write(
         &file_path,
-        serde_json::to_string(&csb.voice_limit_group).unwrap(),
+        serde_json::to_string(&csb.voice_limit_group.0).unwrap(),
     ).unwrap();
 
     println!("Extracted CSB file: \"{}\"", output_directory_name.to_string_lossy());
