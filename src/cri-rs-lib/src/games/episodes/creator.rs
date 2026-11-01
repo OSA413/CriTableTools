@@ -2,7 +2,7 @@ use std::{collections::HashMap, ffi::OsStr, fs, path::{Path, PathBuf}};
 
 use common_binary::error::CommonBinaryError;
 use common_utils::walk_dir::walk_dir;
-use crate::{aax::{archive::CriAaxArchive, entry::CriAaxEntry}, csb::common::{aax_archive::CriCsbAaxArchive, aax_sound_element::CriCsbAaxSoundElement, cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, sound_element_metainfo::CriCsbSoundElementMetaInfo, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, loop_flag::CriLoopFlag, sound_archive_mode::CriSoundArchiveFormat};
+use crate::{aax::{archive::CriAaxArchive, entry::CriAaxEntry}, csb::common::{aax_archive::CriCsbArchive, aax_sound_element::CriCsbAaxSoundElement, cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, sound_element_metainfo::CriCsbSoundElementMetaInfo, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, loop_flag::CriLoopFlag, sound_archive_mode::CriSoundArchiveFormat, traits::ToCriTable};
 
 static INTRO_ADX_LOWERCASE: &str = "intro.adx";
 static LOOP_ADX_LOWERCASE: &str = "loop.adx";
@@ -43,7 +43,8 @@ pub fn parse_entry(entry: &Path) -> Option<(ParsedAdx, CriLoopFlag)> {
 }
 
 pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
-    let mut csb = CriCsbAaxArchive {
+    todo!();
+    let mut csb = CriCsbArchive {
         original_string_pool: vec![],
         info: (vec![],vec![]),
         cue: (vec![],vec![]),
@@ -136,6 +137,6 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
         .unwrap()
         .unwrap();
 
-    fs::write(path.with_added_extension("CSB"), csb.write().unwrap()).unwrap();
+    fs::write(path.with_added_extension("CSB"), csb.to_bytes().unwrap()).unwrap();
     Ok(())
 }

@@ -1,6 +1,5 @@
 use chrono::{NaiveDateTime};
 
-use crate::sound_archive::CriSoundArchive;
 
 #[derive(Debug)]
 pub struct CriCpkEntry {
@@ -8,5 +7,5 @@ pub struct CriCpkEntry {
     pub directory_name: String,
     pub id: u32,
     pub comment: String,
-    pub aax_archive: CriSoundArchive,
+    // pub aax_archive: CriSoundArchive,
 }

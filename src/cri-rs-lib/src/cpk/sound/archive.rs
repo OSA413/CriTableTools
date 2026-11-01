@@ -70,14 +70,14 @@ impl CriCpkArchive {
             
             let name = toc_table.get_field("FileName").unwrap().to_string(toc_row_index)?;
             let aax_table = CriTable::read(source, Some(position), UTF_SIGNATURE).unwrap();
-            let aax_archive = CriAaxArchive::read(&aax_table, &name).unwrap();
+            let aax_archive = CriAaxArchive::from_table(&aax_table, &name).unwrap();
 
             // etocReader.MoveToRow(tocReader.CurrentRow);
             // entry.UpdateDateTime = DateTimeFromCpkDateTime(etocReader.GetUInt64("UpdateDateTime"));
 
             let entry = CriCpkEntry {
                 directory_name: toc_table.get_field("DirName").unwrap().to_string(toc_row_index)?,
-                aax_archive,
+                // aax_archive,
                 id: match is_latest_version {
                     true => toc_table.get_field("ID").unwrap().to_u32(toc_row_index)?,
                     false => toc_table.get_field("Info").unwrap().to_u32(toc_row_index)?,

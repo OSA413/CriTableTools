@@ -1,7 +1,7 @@
 use common_binary::error::CommonBinaryError;
 use cri_table::{field_dto::CriFieldDto, field_type::CriFieldType, field_value::CriFieldValue, table::CriTable};
 
-use crate::{aax::entry::CriAaxEntry, loop_flag::CriLoopFlag, sound_archive::{CriSoundArchive, CriSoundArchiveEnum}};
+use crate::{aax::entry::CriAaxEntry, loop_flag::CriLoopFlag};
 
 #[derive(Debug, Clone)]
 pub struct CriAaxArchive {
@@ -10,7 +10,7 @@ pub struct CriAaxArchive {
 }
 
 impl CriAaxArchive {
-    pub fn read(table: &CriTable, name: &str) -> Result<CriSoundArchive, CommonBinaryError> {
+    pub fn from_table(table: &CriTable, name: &str) -> Result<CriAaxArchive, CommonBinaryError> {
         let mut entries = Vec::with_capacity(table.row_count());
         for row_index in 0..table.row_count() {
             let flag = CriLoopFlag::from(table.get_field("lpflg").unwrap().to_u8(row_index).unwrap());
@@ -18,18 +18,13 @@ impl CriAaxArchive {
             entries.push(CriAaxEntry { flag, data });
         }
 
-        Ok(CriSoundArchive {
+        Ok(CriAaxArchive {
             name: name.to_string(),
-            data: CriSoundArchiveEnum::Aax(
-                CriAaxArchive {
-                    name: name.to_string(),
-                    entries,
-                }
-            ),
+            entries,
         })
     }
 
-    pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
+    pub fn to_table(&self) -> CriTable {
         let mut result = CriTable::new(
             "AAX",
             &vec![], //TODO
@@ -50,6 +45,6 @@ impl CriAaxArchive {
             result.fields[1].rows.push(CriFieldValue::Byte(r#loop.flag.clone() as u8));
         };
 
-        result.write()
+        result
     }
 }

@@ -1,46 +1,38 @@
-use std::{fs, path::Path};
-
 use common_binary::error::CommonBinaryError;
-use cri_table::{field_value::{CriFieldValue, TableOrData}, table::{CriTable, UTF_SIGNATURE}};
+use cri_table::{field_value::{CriFieldValue, TableOrData}, table::CriTable};
 
-use crate::{cpk::sound::archive::CriCpkArchive, csb::common::{aax_sound_element::{CriCsbAaxSoundElement}, archive::CriCsbTablesBuilder, cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, find_related_cpk_of_csb, traits::ToCriTable};
+use crate::{csb::{common::{archive::CriCsbTablesBuilder, cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, sound_element::CriCsbSoundElement}, traits::{FromCriTable, ToCriTable}};
 
-pub struct CriCsbAaxArchive {
+pub struct CriCsbArchive {
     pub original_string_pool: Vec<String>,
     pub info: (Vec<CriCsbInfo>, Vec<String>),
     pub cue: (Vec<CriCsbCue>, Vec<String>),
     pub synth: (Vec<CriCsbSynth>, Vec<String>),
-    pub sound_element: (Vec<CriCsbAaxSoundElement>, Vec<String>),
+    pub sound_element: (Vec<CriCsbSoundElement>, Vec<String>),
     pub isaac: (Vec<CriCsbIsaac>, Vec<String>),
     pub voice_limit_group: (Vec<CriCsbVoiceLimitGroup>, Vec<String>),
 }
 
-impl CriCsbAaxArchive {
-    pub fn read(path: &Path) -> Result<CriCsbAaxArchive, CommonBinaryError> {
-        let file_content = fs::read(path).unwrap();
-        let csb_table = CriTable::read(&file_content, Some(0), UTF_SIGNATURE).unwrap();
-
-        let cpk_path = find_related_cpk_of_csb(path);
-        let cpk_data = cpk_path.map(|path| fs::read(path).unwrap());
-        // We no longer read CPK when reading CSB
-        let _cpk = cpk_data.map(|data| CriCpkArchive::read(&data, 0).unwrap());
-
-        let parent_fields = CriCsbTablesBuilder::from_table(&csb_table);
+impl FromCriTable for CriCsbArchive {
+    fn from_table(table: &CriTable) -> Result<CriCsbArchive, CommonBinaryError> {
+        let parent_fields = CriCsbTablesBuilder::from_table(&table);
 
         Ok(
-            CriCsbAaxArchive {
-                original_string_pool: csb_table.original_string_pool,
+            CriCsbArchive {
+                original_string_pool: table.original_string_pool.clone(),
                 info: CriCsbTablesBuilder::parse_info_table(parent_fields.info.as_ref()),
                 cue: CriCsbTablesBuilder::parse_cue_table(parent_fields.cue.as_ref()),
                 synth: CriCsbTablesBuilder::parse_synth_table(parent_fields.synth.as_ref()),
-                sound_element: CriCsbTablesBuilder::parse_sound_element_table_aax(parent_fields.sound_element.as_ref()),
+                sound_element: CriCsbTablesBuilder::parse_sound_element_table(parent_fields.sound_element.as_ref()),
                 isaac: CriCsbTablesBuilder::parse_isaac_table(parent_fields.isaac.as_ref()),
                 voice_limit_group: CriCsbTablesBuilder::parse_voice_group_table(parent_fields.sound_element.as_ref()),
             }
         )
     }
-    
-    pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
+}
+
+impl ToCriTable for CriCsbArchive {
+    fn to_table(&self) -> Result<CriTable,  CommonBinaryError> {
         let mut parent_table = CriTable::new_csb(&self.original_string_pool, 6);
         let mut info_table = CriTable::new_info(&self.info.1, self.info.0.len());
         let mut cue_table = CriTable::new_cue(&self.cue.1, self.cue.0.len());
@@ -151,8 +143,7 @@ impl CriCsbAaxArchive {
 
         for entry in &self.sound_element.0 {
             sound_element_table.fields[0].rows.push(CriFieldValue::String(entry.name.clone()));
-            // TODO REDO NOTE THIS IS WRONG
-            sound_element_table.fields[1].rows.push(CriFieldValue::Data(entry.data.entries.first().unwrap().data.clone()));
+            sound_element_table.fields[1].rows.push(CriFieldValue::Data(entry.data.to_bytes().unwrap()));
             sound_element_table.fields[2].rows.push(CriFieldValue::Byte(entry.fmt));
             sound_element_table.fields[3].rows.push(CriFieldValue::Byte(entry.nch));
             sound_element_table.fields[4].rows.push(CriFieldValue::Byte(entry.stmflg));
@@ -197,6 +188,6 @@ impl CriCsbAaxArchive {
         parent_table.fields[1].rows.push(CriFieldValue::Byte(6));
         parent_table.fields[2].rows.push(CriFieldValue::ProbablyTable(TableOrData::Table(voice_limit_group_table)));
 
-        parent_table.write()
+        Ok(parent_table)
     }
 }

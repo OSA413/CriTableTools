@@ -29,6 +29,8 @@ pub mod cpk {
     }
 }
 pub mod csb {
+    pub mod extractor;
+    pub mod sound_element;
     pub mod common {
         pub mod aax_archive;
         pub mod aax_sound_element;

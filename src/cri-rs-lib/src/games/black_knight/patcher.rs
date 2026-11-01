@@ -1,12 +1,16 @@
 use std::{fs, path::Path};
 
 use common_utils::walk_dir::walk_dir;
+use cri_table::table::{CriTable, UTF_SIGNATURE};
 
-use crate::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry}, csb::common::{adpcm_wii_archive::CriCsbAdpcmWiiArchive, adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElement, sound_element_metainfo::CriCsbSoundElementMetaInfo}, games::black_knight::creator::parse_entry, sound_archive_mode::CriSoundArchiveFormat};
+use crate::{adpcm_wii::{archive::{CriArchive, CriArchiveWrapper}, entry::CriAdpcmWiiEntry}, csb::common::{adpcm_wii_archive::CriCsbAdpcmWiiArchive, adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElement, sound_element_metainfo::CriCsbSoundElementMetaInfo}, games::black_knight::creator::parse_entry, sound_archive_mode::CriSoundArchiveFormat};
 
 pub fn patch(path: &Path) {
+    todo!();
     let path_path = Path::new(path);
-    let mut csb = CriCsbAdpcmWiiArchive::read(path).unwrap();
+    let content = fs::read(path).unwrap();
+    let table = CriTable::read(&content, None, UTF_SIGNATURE).unwrap();
+    let mut csb = CriCsbAdpcmWiiArchive::from_table(&table).unwrap();
     let dir_path = &path_path.with_extension("");
 
     let files = walk_dir(dir_path, None);
@@ -35,10 +39,10 @@ pub fn patch(path: &Path) {
         let new_entry = CriCsbAdpcmWiiSoundElement {
             original_string_pool: root_entry.meta_info.original_string_pool,
             name: relative_name,
-            data: CriAdpcmWiiArchiveWrapper {
+            data: CriArchiveWrapper {
                 original_string_pool: old_entry.original_string_pool.clone(),
                 entries: vec![
-                    CriAdpcmWiiArchive {
+                    CriArchive {
                         format: CriSoundArchiveFormat::Dsp,
                         original_string_pool: old_entry_sound_element.original_string_pool.clone(),
                         fmt: sound_element_meta_data.as_ref().map(|x| x.fmt).unwrap_or(old_entry_sound_element.entries[0].fmt),
@@ -103,5 +107,5 @@ pub fn patch(path: &Path) {
     //     .unwrap()
     //     .unwrap();
 
-    fs::write(path.with_added_extension("patched"), csb.write().unwrap()).unwrap();
+    fs::write(path.with_added_extension("patched"), csb.to_table().unwrap().write().unwrap()).unwrap();
 }

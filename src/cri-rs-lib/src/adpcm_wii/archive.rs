@@ -1,26 +1,13 @@
 use common_binary::error::CommonBinaryError;
 use cri_table::{field_dto::CriFieldDto, field_type::CriFieldType, field_value::CriFieldValue, table::CriTable};
 
-use crate::{adpcm_wii::entry::CriAdpcmWiiEntry, loop_flag::CriLoopFlag, sound_archive_mode::CriSoundArchiveFormat};
-
-#[derive(Debug)]
-pub struct CriAdpcmWiiArchiveWrapper {
-    pub original_string_pool: Vec<String>,
-    pub entries: Vec<CriAdpcmWiiArchive>,
-}
-
-impl CriAdpcmWiiArchiveWrapper {
-    pub fn from_table(table: &CriTable) -> Result<CriAdpcmWiiArchiveWrapper, CommonBinaryError> {
-        CriAdpcmWiiArchive::read(table)
-    }
-}
+use crate::{adpcm_wii::entry::CriAdpcmWiiEntry, loop_flag::CriLoopFlag};
 
 #[derive(Debug, Clone)]
 pub struct CriAdpcmWiiArchive {
-    pub format: CriSoundArchiveFormat,
     pub original_string_pool: Vec<String>,
-    pub fmt: u8,
     pub name: String,
+    pub fmt: u8,
     pub nch: u8,
     pub nsmpl: u32,
     pub sfreq: u32,
@@ -29,38 +16,31 @@ pub struct CriAdpcmWiiArchive {
 }
 
 impl CriAdpcmWiiArchive {
-    pub fn read(table: &CriTable) -> Result<CriAdpcmWiiArchiveWrapper, CommonBinaryError> {
-        let mut entries = Vec::with_capacity(table.row_count());
-        for row_index in 0..table.row_count() {
-            let inner_table = table.get_field("data").unwrap().to_table(row_index).unwrap().to_owned();
-            let mut inner_entries = Vec::new();
-            for inner_row_index in 0..inner_table.row_count() {
-                inner_entries.push(CriAdpcmWiiEntry {
-                    loop_flag: CriLoopFlag::from(inner_table.get_field("lpflg").unwrap().to_u8(inner_row_index).unwrap()),
-                    sfreq: inner_table.get_field("sfreq").unwrap().to_u32(inner_row_index).unwrap(),
-                    nsmpl: inner_table.get_field("nsmpl").unwrap().to_u32(inner_row_index).unwrap(),
-                    nch:  inner_table.get_field("nch").unwrap().to_u8(inner_row_index).unwrap(),
-                    data: inner_table.get_field("data").unwrap().to_data(inner_row_index).unwrap().clone(),
-                    header: inner_table.get_field("header").unwrap().to_data(inner_row_index).unwrap().clone(),
-                });
-            }
-
-            entries.push(CriAdpcmWiiArchive {
-                format: CriSoundArchiveFormat::Dsp,
-                original_string_pool: inner_table.original_string_pool.clone(),
-                fmt: table.get_field("fmt").unwrap().to_u8(row_index).unwrap(),
-                name: table.get_field("name").unwrap().to_string(row_index).unwrap(),
-                nch: table.get_field("nch").unwrap().to_u8(row_index).unwrap(),
-                nsmpl: table.get_field("nsmpl").unwrap().to_u32(row_index).unwrap(),
-                sfreq: table.get_field("sfreq").unwrap().to_u32(row_index).unwrap(),
-                stmflg: table.get_field("stmflg").unwrap().to_u8(row_index).unwrap(),
-                entries: inner_entries,
+    pub fn read(table: &CriTable) -> Result<CriAdpcmWiiArchive, CommonBinaryError> {
+        let inner_table = table.get_field("data").unwrap().to_table(0).unwrap().to_owned();
+        let mut inner_entries = Vec::new();
+        for inner_row_index in 0..inner_table.row_count() {
+            inner_entries.push(CriAdpcmWiiEntry {
+                loop_flag: CriLoopFlag::from(inner_table.get_field("lpflg").unwrap().to_u8(inner_row_index).unwrap()),
+                sfreq: inner_table.get_field("sfreq").unwrap().to_u32(inner_row_index).unwrap(),
+                nsmpl: inner_table.get_field("nsmpl").unwrap().to_u32(inner_row_index).unwrap(),
+                nch:  inner_table.get_field("nch").unwrap().to_u8(inner_row_index).unwrap(),
+                data: inner_table.get_field("data").unwrap().to_data(inner_row_index).unwrap().clone(),
+                header: inner_table.get_field("header").unwrap().to_data(inner_row_index).unwrap().clone(),
             });
         }
 
-        Ok(CriAdpcmWiiArchiveWrapper {
-            original_string_pool: table.original_string_pool.clone(),
-            entries,
+        assert_eq!(inner_table.row_count(), 1, "It is expected for ADPCM_WII table to have exactly one row");
+
+        Ok(CriAdpcmWiiArchive {
+            original_string_pool: inner_table.original_string_pool.clone(),
+            fmt: table.get_field("fmt").unwrap().to_u8(0).unwrap(),
+            name: table.get_field("name").unwrap().to_string(0).unwrap(),
+            nch: table.get_field("nch").unwrap().to_u8(0).unwrap(),
+            nsmpl: table.get_field("nsmpl").unwrap().to_u32(0).unwrap(),
+            sfreq: table.get_field("sfreq").unwrap().to_u32(0).unwrap(),
+            stmflg: table.get_field("stmflg").unwrap().to_u8(0).unwrap(),
+            entries: inner_entries,
         })
     }
 

@@ -1,6 +1,6 @@
 use cri_table::table::CriTable;
 
-use crate::{aax::archive::CriAaxArchive, adpcm_wii::archive::CriAdpcmWiiArchiveWrapper, csb::common::{aax_sound_element::CriCsbAaxSoundElement, adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElement, cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, graph::CriGraphWrapper, sound_archive::CriSoundArchiveEnum, sound_archive_mode::CriSoundArchiveFormat, traits::FromCriTable};
+use crate::{csb::{common::{cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, sound_element::CriCsbSoundElement}, graph::CriGraphWrapper, sound_archive::CriCsbSoundArchiveEnum, sound_archive_mode::CriSoundArchiveFormat, traits::FromCriTable};
 
 pub struct CriCsbTablesBuilder {
     pub info: Option<CriTable>,
@@ -142,52 +142,34 @@ impl CriCsbTablesBuilder {
         }
         (vec![], vec![])
     }
-
-    pub fn parse_sound_element_table_adpcm_wii(table: Option<&CriTable>) -> (Vec<CriCsbAdpcmWiiSoundElement>, Vec<String>) {
-        if let Some(table) = table {
-            let wrapper = CriAdpcmWiiArchiveWrapper::from_table(table).unwrap();
-            let mut result = Vec::with_capacity(wrapper.entries.len());
-            for archive in wrapper.entries {
-                result.push(CriCsbAdpcmWiiSoundElement {
-                    original_string_pool: archive.original_string_pool.clone(),
-                    name: archive.name.clone(),
-                    data: CriAdpcmWiiArchiveWrapper {
-                        original_string_pool: archive.original_string_pool.clone(),
-                        entries: vec![archive.clone()]
-                    },
-                    fmt: archive.fmt,
-                    nch: archive.nch,
-                    stmflg: archive.stmflg,
-                    sfreq: archive.sfreq,
-                    nsmpl: archive.nsmpl,
-                });
-            }
-            return (result, table.original_string_pool.clone());
-        }
-        (vec![], vec![])
-    }
     
-    pub fn parse_sound_element_table_aax(table: Option<&CriTable>) -> (Vec<CriCsbAaxSoundElement>, Vec<String>) {
+    pub fn parse_sound_element_table(table: Option<&CriTable>) -> (Vec<CriCsbSoundElement>, Vec<String>) {
         if let Some(table) = table {
             let format = table.get_field("fmt").unwrap().to_u8(0).unwrap();
             let format = match format {
                 0 => CriSoundArchiveFormat::Adx,
                 4 => CriSoundArchiveFormat::Dsp,
-                5 => CriSoundArchiveFormat::Wav,
-                _ => panic!("The given CSB file contains an audio file which is not an ADX. Only CSB files with ADXs are supported."),
+                // 5 => CriSoundArchiveFormat::Wav,
+                _ => panic!("The given CSB file contains an audio file which is not of supported format. Only CSB files with ADX or DSP files are supported."),
             };
 
             let mut result = Vec::with_capacity(table.row_count());
             for sdl_row_index in 0..table.row_count() {
                 let sdl_name = table.get_field("name").unwrap().to_string(sdl_row_index).unwrap();                
-                let aax_table = table.get_field("data").unwrap().to_table(sdl_row_index).unwrap();
-                result.push(CriCsbAaxSoundElement {
-                    format: format.clone(),
+                let sound_element_table = table.get_field("data").unwrap().to_table(sdl_row_index).unwrap();
+                let data = CriCsbSoundArchiveEnum::from_table(sound_element_table).unwrap();
+
+                match (&format, &data) {
+                    (CriSoundArchiveFormat::Adx, CriCsbSoundArchiveEnum::Aax(_)) => (),
+                    (CriSoundArchiveFormat::Dsp, CriCsbSoundArchiveEnum::AdpcmWii(_)) => (),
+                    (format, data) =>
+                        panic!("Incorret combination of foemat and data: {format:?}, {data:?}"),
+                }
+
+                result.push(CriCsbSoundElement {
+                    original_string_pool: sound_element_table.original_string_pool.clone(),
                     name: sdl_name.clone(),
-                    data: match CriAaxArchive::read(aax_table, &sdl_name).unwrap().data {
-                        CriSoundArchiveEnum::Aax(cri_aax_archive) => cri_aax_archive,
-                        _ => panic!("unknown data crash"),
-                    },
+                    data,
                     fmt: table.get_field("fmt").unwrap().to_u8(sdl_row_index).unwrap(),
                     nch: table.get_field("nch").unwrap().to_u8(sdl_row_index).unwrap(),
                     stmflg: table.get_field("stmflg").unwrap().to_u8(sdl_row_index).unwrap(),

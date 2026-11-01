@@ -2,30 +2,42 @@ use std::{collections::HashMap, ffi::OsStr, fs, path::{Path, PathBuf}};
 
 use common_binary::error::CommonBinaryError;
 use common_utils::walk_dir::walk_dir;
-use crate::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry}, csb::common::{adpcm_wii_archive::CriCsbAdpcmWiiArchive, adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElement, cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, sound_element_metainfo::CriCsbSoundElementMetaInfo, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, loop_flag::CriLoopFlag, sound_archive_mode::CriSoundArchiveFormat};
+use crate::{adpcm_wii::{entry::CriAdpcmWiiEntry}, csb::{common::{aax_archive::CriCsbArchive, adpcm_wii_archive::CriCsbAdpcmWiiArchive, cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, sound_element_metainfo::CriCsbSoundElementMetaInfo, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, sound_element::CriCsbSoundElement}, loop_flag::CriLoopFlag, sound_archive::CriCsbSoundArchiveEnum, sound_archive_mode::CriSoundArchiveFormat, traits::ToCriTable};
 
-static INTRO_DSP_LOWERCASE: &str = "intro.dsp";
-static LOOP_DSP_LOWERCASE: &str = "loop.dsp";
+static INTRO_LOWERCASE: &str = "intro";
+static LOOP_LOWERCASE: &str = "loop";
 
-pub struct ParsedDsp {
+pub struct ParsedMatadata {
     pub root_path: String,
     pub root_dir_path: PathBuf,
     pub meta_info: CriCsbSoundElementMetaInfo,
 }
 
-pub fn parse_entry(entry: &Path) -> Option<(ParsedDsp, CriLoopFlag)> {
+pub fn parse_entry(entry: &Path, expected_format: &CriSoundArchiveFormat) -> Option<(ParsedMatadata, CriLoopFlag)> {
     let entry_string = entry.to_string_lossy();
     let entry_string_lowercase = entry_string.to_lowercase();
 
-    let (root_dir, loop_flag) = if entry_string_lowercase.ends_with(INTRO_DSP_LOWERCASE) {
+    let intro_name_ending = Path::new(INTRO_LOWERCASE).with_added_extension(match expected_format {
+        CriSoundArchiveFormat::Adx => "adx",
+        CriSoundArchiveFormat::Dsp => "dsp",
+        CriSoundArchiveFormat::Wav => "wav",
+    }).to_string_lossy().into_owned();
+    
+    let loop_name_ending = Path::new(LOOP_LOWERCASE).with_added_extension(match expected_format {
+        CriSoundArchiveFormat::Adx => "adx",
+        CriSoundArchiveFormat::Dsp => "dsp",
+        CriSoundArchiveFormat::Wav => "wav",
+    }).to_string_lossy().into_owned();
+
+    let (root_dir, loop_flag) = if entry_string_lowercase.ends_with(&intro_name_ending) {
         (
-            entry_string.chars().take(entry_string.len() - INTRO_DSP_LOWERCASE.len()).collect::<String>(),
+            entry_string.chars().take(entry_string.len() - intro_name_ending.len()).collect::<String>(),
             CriLoopFlag::Intro,
         )
     }
-    else if entry_string_lowercase.ends_with(LOOP_DSP_LOWERCASE) {
+    else if entry_string_lowercase.ends_with(&loop_name_ending) {
         (
-            entry_string.chars().take(entry_string.len() - LOOP_DSP_LOWERCASE.len()).collect::<String>(),
+            entry_string.chars().take(entry_string.len() - loop_name_ending.len()).collect::<String>(),
             CriLoopFlag::Loop,
         )
     } else {
@@ -37,15 +49,18 @@ pub fn parse_entry(entry: &Path) -> Option<(ParsedDsp, CriLoopFlag)> {
         .map(|data| serde_json::from_str::<CriCsbSoundElementMetaInfo>(&data).unwrap())
         .unwrap();
 
-    Some((ParsedDsp {
+    let parsed_entry = ParsedMatadata {
         root_path: root_dir,
         root_dir_path,
         meta_info,
-    }, loop_flag))
+    };
+
+    Some((parsed_entry, loop_flag))
 }
 
 pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
-    let mut csb = CriCsbAdpcmWiiArchive {
+    todo!();
+    let mut csb = CriCsbArchive {
         original_string_pool: vec![],
         info: (vec![],vec![]),
         cue: (vec![],vec![]),
@@ -56,19 +71,65 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
     };
 
     let files = walk_dir(path, None);
+    let adx_files = files.iter().filter(|x | x.to_string_lossy().to_lowercase().ends_with(".adx")).count();
+    let dsp_files = files.iter().filter(|x | x.to_string_lossy().to_lowercase().ends_with(".dsp")).count();
+    let expected_format = if adx_files >= dsp_files {
+        CriSoundArchiveFormat::Adx
+    } else {
+        CriSoundArchiveFormat::Dsp
+    };
 
-    let mut adpcm_wii_archive_pool: HashMap<String, (PathBuf, CriAdpcmWiiArchiveWrapper)> = HashMap::new();
+    let files = files.iter().filter(|x| match &expected_format {
+        CriSoundArchiveFormat::Adx => x.to_string_lossy().ends_with(".adx"),
+        CriSoundArchiveFormat::Dsp => x.to_string_lossy().ends_with(".dsp"),
+        CriSoundArchiveFormat::Wav => x.to_string_lossy().ends_with(".wav"),
+    });
 
-    for entry in files.iter().filter(|entry| entry.to_string_lossy().to_lowercase().ends_with(".dsp")) {
-        let (root_entry, loop_flag) = match parse_entry(entry) {
+    let mut archive_pool: HashMap<String, (PathBuf, CriArchiveWrapper)> = HashMap::new();
+
+    for entry in files {
+        let (root_entry, loop_flag) = match parse_entry(entry, &expected_format) {
             Some(parsed_entry) => parsed_entry,
             None => continue,
         };
 
         let data = fs::read(entry).unwrap();
 
-        let adpcm_wii_entry = CriAdpcmWiiArchive {
-            format: CriSoundArchiveFormat::Dsp,
+        let data = match expected_format {
+            CriSoundArchiveFormat::Adx => todo!(),
+            CriSoundArchiveFormat::Dsp =>  CriCsbSoundArchiveEnum::AdpcmWii(CriArchiveWrapper {
+                original_string_pool: root_entry.meta_info.original_string_pool.clone(),
+                entries:  vec![
+                    CriCsbSoundElement {
+                        name: root_entry.meta_info.name,
+                        stmflg: 0,
+                        fmt: 4,
+                        original_string_pool: root_entry.meta_info.original_string_pool.clone(),
+                        sfreq: root_entry.meta_info.sfreq,
+                        nsmpl: root_entry.meta_info.nsmpl,
+                        nch: root_entry.meta_info.nch,
+                        data: CriCsbSoundArchiveEnum::AdpcmWii(CriArchiveWrapper {
+                            original_string_pool: root_entry.meta_info.original_string_pool.clone(),
+                            entries: vec![
+                                CriAdpcmWiiEntry {
+                                    loop_flag: loop_flag,
+                                    sfreq: root_entry.meta_info.sfreq,
+                                    nsmpl: root_entry.meta_info.nsmpl,
+                                    nch: root_entry.meta_info.nch,
+                                    // TODO: turns out there can be two headers in one header,
+                                    // so this import is incorrect (as well as the extraction, probably)
+                                    header: data[..0x60].to_vec(),
+                                    data: data[0x60..].to_vec(),
+                                }
+                            ],
+                        })
+                    },
+                ],
+            }),
+            CriSoundArchiveFormat::Wav => todo!(),
+        };
+
+        let archive_entry = CriCsbSoundElement {
             original_string_pool: root_entry.meta_info.original_string_pool.clone(),
             fmt: root_entry.meta_info.fmt,
             name: root_entry.meta_info.name.clone(),
@@ -76,26 +137,15 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
             nsmpl: root_entry.meta_info.nsmpl,
             sfreq: root_entry.meta_info.sfreq,
             stmflg: root_entry.meta_info.stmflg,
-            entries: vec![
-                CriAdpcmWiiEntry {
-                    sfreq: root_entry.meta_info.sfreq,
-                    nsmpl: root_entry.meta_info.nsmpl,
-                    nch: root_entry.meta_info.nch,
-                    loop_flag,
-                    // TODO: turns out there can be two headers in one header,
-                    // so this import is incorrect (as well as the extraction, probably)
-                    header: data[..0x60].to_vec(),
-                    data: data[0x60..].to_vec(),
-                },
-            ],
+            data,
         };
 
-        match adpcm_wii_archive_pool.get_mut(&root_entry.root_path) {
-            Some(archive) => archive.1.entries.push(adpcm_wii_entry),
+        match archive_pool.get_mut(&root_entry.root_path) {
+            Some(archive) => archive.1.entries.push(archive_entry),
             None => {
                 let mut entries = Vec::new();
-                entries.push(adpcm_wii_entry);
-                adpcm_wii_archive_pool.insert(root_entry.root_path.clone(), (root_entry.root_dir_path, CriAdpcmWiiArchiveWrapper {
+                entries.push(archive_entry);
+                archive_pool.insert(root_entry.root_path.clone(), (root_entry.root_dir_path, CriArchiveWrapper {
                     original_string_pool: root_entry.meta_info.original_string_pool,
                     entries,
                 }));
@@ -104,7 +154,7 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
     }
 
 
-    for entry in adpcm_wii_archive_pool {
+    for entry in archive_pool {
         let sound_element_meta_data = fs::read_to_string(entry.1.0.join("sound_element.json"))
             .map(|data| serde_json::from_str::<CriCsbSoundElementMetaInfo>(&data))
             .unwrap()
@@ -114,11 +164,10 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
             .strip_prefix(path).unwrap()
             .to_string_lossy().replace('\\', "/");
 
-        csb.sound_element.0.push(CriCsbAdpcmWiiSoundElement {
-            // format: CriSoundArchiveFormat::Adx,
+        csb.sound_element.0.push(CriCsbSoundElement {
             original_string_pool: vec![],
             name: relative_name,
-            data: entry.1.1,
+            data: CriCsbSoundArchiveEnum::AdpcmWii(entry.1.1),
             fmt: sound_element_meta_data.fmt,
             nch: sound_element_meta_data.nch,
             stmflg: sound_element_meta_data.stmflg,
@@ -158,7 +207,7 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
         .unwrap()
         .unwrap();
 
-    fs::write(path.with_added_extension("CSB"), csb.write().unwrap()).unwrap();
+    fs::write(path.with_added_extension("CSB"), csb.to_bytes().unwrap()).unwrap();
 
     Ok(())
 }
