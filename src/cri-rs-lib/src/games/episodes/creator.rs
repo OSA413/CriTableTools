@@ -2,7 +2,7 @@ use std::{collections::HashMap, ffi::OsStr, fs, path::{Path, PathBuf}};
 
 use common_binary::error::CommonBinaryError;
 use common_utils::walk_dir::walk_dir;
-use crate::{aax::{archive::CriAaxArchive, entry::CriAaxEntry}, csb::common::{aax_archive::CriCsbAaxArchive, aax_sound_element::{CriCsbAaxSoundElement, CriCsbAaxSoundElementData}, cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, sound_element_metainfo::CriCsbSoundElementMetaInfo, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, loop_flag::CriLoopFlag, sound_archive_mode::CriSoundArchiveFormat};
+use crate::{aax::{archive::CriAaxArchive, entry::CriAaxEntry}, csb::common::{aax_archive::CriCsbAaxArchive, aax_sound_element::CriCsbAaxSoundElement, cue::CriCsbCue, info::CriCsbInfo, isaac::CriCsbIsaac, sound_element_metainfo::CriCsbSoundElementMetaInfo, synth::CriCsbSynth, voice_limit_group::CriCsbVoiceLimitGroup}, loop_flag::CriLoopFlag, sound_archive_mode::CriSoundArchiveFormat};
 
 static INTRO_ADX_LOWERCASE: &str = "intro.adx";
 static LOOP_ADX_LOWERCASE: &str = "loop.adx";
@@ -44,12 +44,13 @@ pub fn parse_entry(entry: &Path) -> Option<(ParsedAdx, CriLoopFlag)> {
 
 pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
     let mut csb = CriCsbAaxArchive {
-        info: vec![],
-        cue: vec![],
-        synth: vec![],
-        sound_element: vec![],
-        isaac: vec![],
-        voice_limit_group: vec![],
+        original_string_pool: vec![],
+        info: (vec![],vec![]),
+        cue: (vec![],vec![]),
+        synth: (vec![],vec![]),
+        sound_element: (vec![],vec![]),
+        isaac: (vec![],vec![]),
+        voice_limit_group: (vec![],vec![]),
     };
 
     let files = walk_dir(path, None);
@@ -92,10 +93,10 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
             .strip_prefix(path).unwrap()
             .to_string_lossy().replace('\\', "/");
 
-        csb.sound_element.push(CriCsbAaxSoundElement {
+        csb.sound_element.0.push(CriCsbAaxSoundElement {
             format: CriSoundArchiveFormat::Adx,
             name: relative_name,
-            data: CriCsbAaxSoundElementData::Aax(entry.1.1),
+            data: entry.1.1,
             fmt: sound_element_meta_data.fmt,
             nch: sound_element_meta_data.nch,
             stmflg: sound_element_meta_data.stmflg,
@@ -104,17 +105,17 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
         });
     }
 
-    csb.cue = fs::read_to_string(path.join("cue.json"))
+    csb.cue.0 = fs::read_to_string(path.join("cue.json"))
         .map(|data| serde_json::from_str::<Vec<CriCsbCue>>(&data))
         .unwrap()
         .unwrap();
 
-    csb.synth = fs::read_to_string(path.join("synth.json"))
+    csb.synth.0 = fs::read_to_string(path.join("synth.json"))
         .map(|data| serde_json::from_str::<Vec<CriCsbSynth>>(&data))
         .unwrap()
         .unwrap();
 
-    csb.info = fs::read_to_string(path.join("table_info.json"))
+    csb.info.0 = fs::read_to_string(path.join("table_info.json"))
         .map(|data| serde_json::from_str::<Vec<CriCsbInfo>>(&data))
         .unwrap()
         .unwrap();
@@ -127,10 +128,10 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
             .unwrap()
             .unwrap();
     
-        csb.isaac.push(isaac_info);
+        csb.isaac.0.push(isaac_info);
     }
     
-    csb.voice_limit_group = fs::read_to_string(path.join("voice_limit_group.json"))
+    csb.voice_limit_group.0 = fs::read_to_string(path.join("voice_limit_group.json"))
         .map(|data| serde_json::from_str::<Vec<CriCsbVoiceLimitGroup>>(&data))
         .unwrap()
         .unwrap();

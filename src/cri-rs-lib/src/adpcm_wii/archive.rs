@@ -1,5 +1,5 @@
 use common_binary::error::CommonBinaryError;
-use cri_table::{field::CriTableField, field_type::CriFieldType, field_value::CriFieldValue, encoding_type::CriTableEncodingType, table::CriTable};
+use cri_table::{field_dto::CriFieldDto, field_type::CriFieldType, field_value::CriFieldValue, table::CriTable};
 
 use crate::{adpcm_wii::entry::CriAdpcmWiiEntry, loop_flag::CriLoopFlag, sound_archive_mode::CriSoundArchiveFormat};
 
@@ -65,50 +65,19 @@ impl CriAdpcmWiiArchive {
     }
 
     pub fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
-        let mut inner_table = CriTable {
-            original_string_pool: self.original_string_pool.clone(),
-            name: "ADPCM_WII".to_string(),
-            encoding: CriTableEncodingType::ShiftJis,
-            unknown_byte: 0,
-            fields: vec![
-                CriTableField {
-                    ttype: CriFieldType::UInt32,
-                    name: "sfreq".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
-                CriTableField {
-                    ttype: CriFieldType::UInt32,
-                    name: "nsmpl".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
-                CriTableField {
-                    ttype: CriFieldType::Byte,
-                    name: "nch".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
-                CriTableField {
-                    ttype: CriFieldType::Byte,
-                    name: "lpflg".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
-                CriTableField {
-                    ttype: CriFieldType::Data,
-                    name: "data".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
-                CriTableField {
-                    ttype: CriFieldType::Data,
-                    name: "header".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
+        let mut inner_table = CriTable::new(
+            "ADPCM_WII",
+            &self.original_string_pool,
+            &[
+                CriFieldDto::new("sfreq", CriFieldType::UInt32, None),
+                CriFieldDto::new("nsmpl", CriFieldType::UInt32, None),
+                CriFieldDto::new("nch", CriFieldType::Byte, None),
+                CriFieldDto::new("lpflg", CriFieldType::Byte, None),
+                CriFieldDto::new("data", CriFieldType::Data, None),
+                CriFieldDto::new("header", CriFieldType::Data, None),
             ],
-        };
+            self.entries.len(),
+        );
 
         for inner_entry in &self.entries {
             inner_table.fields[0].rows.push(CriFieldValue::UInt32(inner_entry.sfreq));

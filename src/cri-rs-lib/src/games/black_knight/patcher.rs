@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use common_utils::walk_dir::walk_dir;
 
-use crate::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry}, csb::common::{adpcm_wii_archive::CriCsbAdpcmWiiArchive, adpcm_wii_sound_element::{CriCsbAdpcmWiiSoundElement, CriCsbAdpcmWiiSoundElementData}, sound_element_metainfo::CriCsbSoundElementMetaInfo}, games::black_knight::creator::parse_entry, sound_archive_mode::CriSoundArchiveFormat};
+use crate::{adpcm_wii::{archive::{CriAdpcmWiiArchive, CriAdpcmWiiArchiveWrapper}, entry::CriAdpcmWiiEntry}, csb::common::{adpcm_wii_archive::CriCsbAdpcmWiiArchive, adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElement, sound_element_metainfo::CriCsbSoundElementMetaInfo}, games::black_knight::creator::parse_entry, sound_archive_mode::CriSoundArchiveFormat};
 
 pub fn patch(path: &Path) {
     let path_path = Path::new(path);
@@ -24,7 +24,7 @@ pub fn patch(path: &Path) {
         let entry_position = csb.sound_element.0.iter().position(|x| x.name == relative_name).unwrap();
 
         let old_entry = &csb.sound_element.0[entry_position];
-        let CriCsbAdpcmWiiSoundElementData::AdpcmWii(old_entry_sound_element) = &old_entry.data;
+        let old_entry_sound_element = &old_entry.data;
 
         let sound_element_meta_data = fs::read_to_string(root_entry.root_dir_path.join("sound_element.json"))
             .map(|data| serde_json::from_str::<CriCsbSoundElementMetaInfo>(&data))
@@ -35,35 +35,33 @@ pub fn patch(path: &Path) {
         let new_entry = CriCsbAdpcmWiiSoundElement {
             original_string_pool: root_entry.meta_info.original_string_pool,
             name: relative_name,
-            data: CriCsbAdpcmWiiSoundElementData::AdpcmWii(
-                CriAdpcmWiiArchiveWrapper {
-                    original_string_pool: old_entry.original_string_pool.clone(),
-                    entries: vec![
-                        CriAdpcmWiiArchive {
-                            format: CriSoundArchiveFormat::Dsp,
-                            original_string_pool: old_entry_sound_element.original_string_pool.clone(),
-                            fmt: sound_element_meta_data.as_ref().map(|x| x.fmt).unwrap_or(old_entry_sound_element.entries[0].fmt),
-                            name: sound_element_meta_data.as_ref().map(|x| x.name.clone()).unwrap_or(old_entry_sound_element.entries[0].name.clone()).clone(),
-                            nch: sound_element_meta_data.as_ref().map(|x| x.nch).unwrap_or(old_entry_sound_element.entries[0].nch),
-                            nsmpl: sound_element_meta_data.as_ref().map(|x| x.nsmpl).unwrap_or(old_entry_sound_element.entries[0].nsmpl),
-                            sfreq: sound_element_meta_data.as_ref().map(|x| x.sfreq).unwrap_or(old_entry_sound_element.entries[0].sfreq),
-                            stmflg: sound_element_meta_data.as_ref().map(|x| x.stmflg).unwrap_or(old_entry_sound_element.entries[0].stmflg),
-                            entries: vec![
-                                CriAdpcmWiiEntry {
-                                    sfreq: sound_element_meta_data.as_ref().map(|x| x.sfreq).unwrap_or(root_entry.meta_info.sfreq),
-                                    nsmpl: sound_element_meta_data.as_ref().map(|x| x.nsmpl).unwrap_or(root_entry.meta_info.nsmpl),
-                                    nch: sound_element_meta_data.as_ref().map(|x| x.nch).unwrap_or(root_entry.meta_info.nch),
-                                    loop_flag,
-                                    // TODO: turns out there can be two headers in one header,
-                                    // so this import is incorrect (as well as the extraction, probably)
-                                    header: data[..0x60].to_vec(),
-                                    data: data[0x60..].to_vec(),
-                                },
-                            ],
-                        }
-                    ]
-                },
-            ),
+            data: CriAdpcmWiiArchiveWrapper {
+                original_string_pool: old_entry.original_string_pool.clone(),
+                entries: vec![
+                    CriAdpcmWiiArchive {
+                        format: CriSoundArchiveFormat::Dsp,
+                        original_string_pool: old_entry_sound_element.original_string_pool.clone(),
+                        fmt: sound_element_meta_data.as_ref().map(|x| x.fmt).unwrap_or(old_entry_sound_element.entries[0].fmt),
+                        name: sound_element_meta_data.as_ref().map(|x| x.name.clone()).unwrap_or(old_entry_sound_element.entries[0].name.clone()).clone(),
+                        nch: sound_element_meta_data.as_ref().map(|x| x.nch).unwrap_or(old_entry_sound_element.entries[0].nch),
+                        nsmpl: sound_element_meta_data.as_ref().map(|x| x.nsmpl).unwrap_or(old_entry_sound_element.entries[0].nsmpl),
+                        sfreq: sound_element_meta_data.as_ref().map(|x| x.sfreq).unwrap_or(old_entry_sound_element.entries[0].sfreq),
+                        stmflg: sound_element_meta_data.as_ref().map(|x| x.stmflg).unwrap_or(old_entry_sound_element.entries[0].stmflg),
+                        entries: vec![
+                            CriAdpcmWiiEntry {
+                                sfreq: sound_element_meta_data.as_ref().map(|x| x.sfreq).unwrap_or(root_entry.meta_info.sfreq),
+                                nsmpl: sound_element_meta_data.as_ref().map(|x| x.nsmpl).unwrap_or(root_entry.meta_info.nsmpl),
+                                nch: sound_element_meta_data.as_ref().map(|x| x.nch).unwrap_or(root_entry.meta_info.nch),
+                                loop_flag,
+                                // TODO: turns out there can be two headers in one header,
+                                // so this import is incorrect (as well as the extraction, probably)
+                                header: data[..0x60].to_vec(),
+                                data: data[0x60..].to_vec(),
+                            },
+                        ],
+                    }
+                ]
+            },
             fmt: old_entry.fmt,
             nch: old_entry.nch,
             stmflg: old_entry.stmflg,

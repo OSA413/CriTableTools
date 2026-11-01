@@ -35,6 +35,184 @@ pub struct TableJson {
 }
 
 impl CriTable {
+    pub fn new_csb(original_string_pool: &Vec<String>, row_capacity: usize) -> CriTable {
+        CriTable::new(
+            "TBLCSB",
+            original_string_pool,
+            &[
+                CriFieldDto::new("name", CriFieldType::String, None),
+                CriFieldDto::new("ttype", CriFieldType::Byte, None),
+                CriFieldDto::new("utf", CriFieldType::ProbablyTable, None),
+            ],
+            row_capacity,
+        )
+    }
+
+    pub fn new_info(original_string_pool: &Vec<String>, row_capacity: usize) -> CriTable {
+        CriTable::new(
+            "TBL_INFO",
+            original_string_pool,
+            &[
+                CriFieldDto::new("DataFmtVer", CriFieldType::UInt32, None),
+                CriFieldDto::new("ExtSize", CriFieldType::UInt32, None),
+            ],
+            row_capacity,
+        )
+    }
+
+    pub fn new_cue(original_string_pool: &Vec<String>, row_capacity: usize) -> CriTable {
+        CriTable::new(
+            "TBLCUE",
+            original_string_pool,
+            &[
+                CriFieldDto::new("name", CriFieldType::String, None),
+                CriFieldDto::new("id", CriFieldType::UInt32, None),
+                CriFieldDto::new("synth", CriFieldType::String, None),
+                CriFieldDto::new("udata", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("flags", CriFieldType::Byte, None),
+            ],
+            row_capacity,
+        )
+    }
+
+    pub fn new_synth(original_string_pool: &Vec<String>, row_capacity: usize) -> CriTable {
+        CriTable::new(
+            "TBLSYN",
+            original_string_pool,
+            &[
+                // Magic tricks were done here, thanks to VSCode's multi-cursor features
+                CriFieldDto::new("synname", CriFieldType::String, None),
+                CriFieldDto::new("syntype", CriFieldType::Byte, None),
+                CriFieldDto::new("cmplxtype", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
+                CriFieldDto::new("lnkname", CriFieldType::String, None),
+                CriFieldDto::new("issetname", CriFieldType::String, None),
+                CriFieldDto::new("volume", CriFieldType::Int16, None),
+                CriFieldDto::new("pitch", CriFieldType::Int16, None),
+                CriFieldDto::new("dlytim", CriFieldType::UInt32, None),
+                CriFieldDto::new("s_cntrl", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
+                CriFieldDto::new("eg_dly", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("eg_atk", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("eg_hld", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("eg_dcy", CriFieldType::UInt16, None),
+                CriFieldDto::new("eg_rel", CriFieldType::UInt16, None),
+                CriFieldDto::new("eg_sus", CriFieldType::UInt16, None),
+                CriFieldDto::new("f_type", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
+                CriFieldDto::new("f_cof1", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("f_cof2", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("f_reso", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("f_roff", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
+                CriFieldDto::new("dryoname", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("mtxrtr", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("dry0", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("dry1", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("dry2", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("dry3", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("dry4", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("dry5", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("dry6", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("dry7", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("wetoname", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("wet0", CriFieldType::UInt16, None),
+                CriFieldDto::new("wet1", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("wet2", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("wet3", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("wet4", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("wet5", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("wet6", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("wet7", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("wcnct0", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("wcnct1", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("wcnct2", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("wcnct3", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("wcnct4", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("wcnct5", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("wcnct6", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("wcnct7", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("vl_gname", CriFieldType::String, Some(CriFieldValue::String("<NULL>".to_string()))),
+                CriFieldDto::new("vl_type", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
+                CriFieldDto::new("vl_prio", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
+                CriFieldDto::new("vl_phtime", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("vl_pcdlt", CriFieldType::SByte, Some(CriFieldValue::SByte(0))),
+                CriFieldDto::new("p3d_vo", CriFieldType::Int16, None),
+                CriFieldDto::new("p3d_vg", CriFieldType::Int16, Some(CriFieldValue::Int16(1000))),
+                CriFieldDto::new("p3d_ao", CriFieldType::Int16, Some(CriFieldValue::Int16(0))),
+                CriFieldDto::new("p3d_ag", CriFieldType::Int16, Some(CriFieldValue::Int16(1000))),
+                CriFieldDto::new("p3d_ido", CriFieldType::Int16, None),
+                CriFieldDto::new("p3d_idg", CriFieldType::Int16, Some(CriFieldValue::Int16(1000))),
+                CriFieldDto::new("dry0g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("dry1g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("dry2g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("dry3g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("dry4g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("dry5g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("dry6g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("dry7g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("wet0g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("wet1g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("wet2g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("wet3g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("wet4g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("wet5g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("wet6g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("wet7g", CriFieldType::Byte, Some(CriFieldValue::Byte(255))),
+                CriFieldDto::new("f1_type", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
+                CriFieldDto::new("f1_cofo", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("f1_cofg", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("f1_resoo", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("f1_resog", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("f2_type", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
+                CriFieldDto::new("f2_coflo", CriFieldType::UInt16, Some(CriFieldValue::UInt16(0))),
+                CriFieldDto::new("f2_coflg", CriFieldType::UInt16, Some(CriFieldValue::UInt16(1000))),
+                CriFieldDto::new("f2_cofho", CriFieldType::UInt16, None),
+                CriFieldDto::new("f2_cofhg", CriFieldType::UInt16, Some(CriFieldValue::UInt16(1000))),
+            ],
+            row_capacity,
+        )
+    }
+
+    pub fn new_sound_element(original_string_pool: &Vec<String>, row_capacity: usize) -> CriTable {
+        CriTable::new(
+            "TBLSDL",
+            original_string_pool,
+            &[
+                CriFieldDto::new("name", CriFieldType::String, None),
+                CriFieldDto::new("data", CriFieldType::Data, None),
+                CriFieldDto::new("fmt", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
+                CriFieldDto::new("stmflg", CriFieldType::Byte, Some(CriFieldValue::Byte(0))),
+                CriFieldDto::new("sfreq", CriFieldType::UInt32, None),
+                CriFieldDto::new("nsmpl", CriFieldType::UInt32, None),
+            ],
+            row_capacity
+        )
+    }
+
+    pub fn new_voice_limit_group(original_string_pool: &Vec<String>, row_capacity: usize) -> CriTable {
+        CriTable::new(
+            "TBLVLG",
+            original_string_pool,
+            &[
+                CriFieldDto::new("vlgname", CriFieldType::String, None),
+                CriFieldDto::new("vlgnvoice", CriFieldType::UInt32, None),
+            ],
+            row_capacity,
+        )
+    }
+
+    pub fn new_isaac(original_string_pool: &Vec<String>, row_capacity: usize) -> CriTable {
+        CriTable::new(
+            "TBLISC",
+            original_string_pool,
+            &[
+                CriFieldDto::new("name", CriFieldType::String, None),
+                CriFieldDto::new("ptname", CriFieldType::String, None),
+                CriFieldDto::new("type", CriFieldType::Byte, None),
+                CriFieldDto::new("grph", CriFieldType::Data, None),
+                CriFieldDto::new("rndrng", CriFieldType::Byte, None),
+            ],
+            row_capacity,
+        )
+    }
+
     pub fn new(table_name: &'static str, original_string_pool: &Vec<String>, fields: &[CriFieldDto], row_capacity: usize) -> CriTable {
         CriTable {
             original_string_pool: original_string_pool.clone(),
@@ -53,12 +231,9 @@ impl CriTable {
     }
     
     pub fn row_length(&self) -> usize {
-        if self.row_count() == 0 {
-            return 0;
-        }
         let mut result = 0;
         for field in &self.fields {
-            if field.default_value.is_none() {
+            if field.default_value.is_none() && !field.rows.is_empty() {
                 result += field.ttype.get_offset()
             }
         }

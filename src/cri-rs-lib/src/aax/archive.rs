@@ -1,5 +1,5 @@
 use common_binary::error::CommonBinaryError;
-use cri_table::{field::CriTableField, field_type::CriFieldType, field_value::CriFieldValue, encoding_type::CriTableEncodingType, table::CriTable};
+use cri_table::{field_dto::CriFieldDto, field_type::CriFieldType, field_value::CriFieldValue, table::CriTable};
 
 use crate::{aax::entry::CriAaxEntry, loop_flag::CriLoopFlag, sound_archive::{CriSoundArchive, CriSoundArchiveEnum}};
 
@@ -30,26 +30,15 @@ impl CriAaxArchive {
     }
 
     pub fn write(&self) -> Result<Vec<u8>, CommonBinaryError> {
-        let mut result = CriTable {
-            original_string_pool: vec![], //TODO
-            name: "AAX".to_string(),
-            encoding: CriTableEncodingType::ShiftJis,
-            fields: vec![
-                CriTableField {
-                    ttype: CriFieldType::Data,
-                    name: "data".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                },
-                CriTableField {
-                    ttype: CriFieldType::Byte,
-                    name: "lpflg".to_string(),
-                    rows: vec![],
-                    default_value: None,
-                }
+        let mut result = CriTable::new(
+            "AAX",
+            &vec![], //TODO
+            &[
+                CriFieldDto::new("data", CriFieldType::Data, None),
+                CriFieldDto::new("lpflg", CriFieldType::Byte, None),
             ],
-            unknown_byte: 0,
-        };
+            self.entries.len(),
+        );
 
         if let Some(intro) = self.entries.iter().find(|entry| entry.flag == CriLoopFlag::Intro) {
             result.fields[0].rows.push(CriFieldValue::Data(intro.data.clone()));

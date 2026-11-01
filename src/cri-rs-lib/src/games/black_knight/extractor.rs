@@ -1,6 +1,6 @@
 use std::{fs::{self, create_dir_all}, path::Path};
 
-use crate::{adpcm_wii::archive::CriAdpcmWiiArchiveWrapper, csb::common::{adpcm_wii_archive::CriCsbAdpcmWiiArchive, adpcm_wii_sound_element::CriCsbAdpcmWiiSoundElementData, sound_element_metainfo::CriCsbSoundElementMetaInfo}};
+use crate::{adpcm_wii::archive::CriAdpcmWiiArchiveWrapper, csb::common::{adpcm_wii_archive::CriCsbAdpcmWiiArchive, sound_element_metainfo::CriCsbSoundElementMetaInfo}};
 
 fn extract_dps(dps: &CriAdpcmWiiArchiveWrapper, base_dir: &Path) {
     for entry in &dps.entries {
@@ -37,20 +37,7 @@ pub fn extract_csb(path: &Path) {
     let output_directory_name = base_directory.join(path.file_stem().unwrap());
 
     for sound_entry in &csb.sound_element.0 {
-        match &sound_entry.data {
-            CriCsbAdpcmWiiSoundElementData::AdpcmWii(dsp) =>
-                extract_dps(dsp, &output_directory_name),
-        };
-    }
-
-    if let Some(first) = &csb.sound_element.0.first() {
-        let format = match &first.data {
-            CriCsbAdpcmWiiSoundElementData::AdpcmWii(archive_wrapper) => &archive_wrapper.entries[0].format,
-        };
-        fs::write(
-            output_directory_name.join("format.json"),
-            serde_json::to_string(format).unwrap(),
-        ).unwrap();
+        extract_dps(&sound_entry.data, &output_directory_name);
     }
 
     fs::write(
