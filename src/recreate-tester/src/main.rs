@@ -1,7 +1,7 @@
-use std::{env, fs, ops, path::{Path, PathBuf}, str::FromStr};
+use std::{env, fs, path::{Path, PathBuf}, str::FromStr};
 
 use common_utils::{get_sha256, walk_dir::walk_dir};
-use cri_rs_lib::games::{black_knight, episodes};
+use cri_rs_lib::csb;
 use serde_json::Value::{self, Array};
 
 fn handle_check(extracted_dir_path: &Path, original_extracted_dir_path: &Path) {
@@ -87,7 +87,7 @@ fn handle_check(extracted_dir_path: &Path, original_extracted_dir_path: &Path) {
     }
 }
 
-fn handle_recreation(path: &Path, game_code: &str) {
+fn handle_recreation(path: &Path) {
     let path_string = path.to_string_lossy();
     let extracted_dir_path = path_string.chars().take(path_string.len() - path.extension().unwrap().len() - 1).collect::<String>();
     let extracted_dir_path = Path::new(&extracted_dir_path);
@@ -105,54 +105,28 @@ fn handle_recreation(path: &Path, game_code: &str) {
         fs::copy(orig_path, path).unwrap();
     }
 
-    if game_code == "black_knight" {
-        black_knight::extractor::extract_csb(orig_path);
-        black_knight::extractor::extract_csb(path);
-        black_knight::creator::create_from_dir(extracted_dir_path).unwrap();
-        fs::remove_dir_all(extracted_dir_path).unwrap();
-        black_knight::extractor::extract_csb(path);
-    } else if game_code == "episodes" {
-        episodes::extractor::extract_csb(orig_path);
-        episodes::extractor::extract_csb(path);
-        episodes::creator::create_from_dir(extracted_dir_path).unwrap();
-        fs::remove_dir_all(extracted_dir_path).unwrap();
-        episodes::extractor::extract_csb(path);
-    }
+    csb::extractor::extract(orig_path);
+    csb::extractor::extract(path);
+    csb::creator::create_from_dir(extracted_dir_path).unwrap();
+    fs::remove_dir_all(extracted_dir_path).unwrap();
+    csb::extractor::extract(path);
 
     handle_check(extracted_dir_path, original_extracted_dir_path);
 }
 
 fn main() {
-    let mut game_code = None;
-    let mut file_or_dir = None;
-
     let mut args = env::args().skip(1);
-    if let Some(game) = args.next() {
-        match &game[ops::RangeFull] {
-            "black_knight" | "episodes" => {
-                game_code = Some(game);
-                match args.next() {
-                    Some(probably_file) => {
-                        file_or_dir = Some(PathBuf::from_str(&probably_file).unwrap());
-                    },
-                    None => panic!("Need file path to extract"),
-                }
-            },
-            value => {
-                panic!("Unknown game: {}", value);
-            }
-        }
-    }
+    let file_or_dir = match args.next() {
+        Some(probably_file) => {
+            Some(PathBuf::from_str(&probably_file).unwrap()).unwrap()
+        },
+        None => panic!("Need file path to extract"),
+    };
 
-    let game_code = game_code.unwrap();
-    let file_or_dir = file_or_dir.unwrap();
-
-    if game_code == "episodes" || game_code == "black_knight" {
-        if file_or_dir.is_file() {
-            handle_recreation(&file_or_dir, &game_code);
-        } else {
-            panic!("Provided path is not a file");
-        }
+    if file_or_dir.is_file() {
+        handle_recreation(&file_or_dir);
+    } else {
+        panic!("Provided path is not a file");
     }
 
     println!("Check passed");

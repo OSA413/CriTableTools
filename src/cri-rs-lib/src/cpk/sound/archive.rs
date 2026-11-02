@@ -2,7 +2,7 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use common_binary::error::CommonBinaryError;
 use cri_table::table::{CriTable, UTF_SIGNATURE};
 
-use crate::{aax::archive::CriAaxArchive, cpk::sound::{entry::CriCpkEntry, mode::CriCpkMode}};
+use crate::{aax::archive::CriCsbAaxArchive, cpk::sound::{entry::CriCpkEntry, mode::CriCpkMode}};
 
 #[derive(Debug)]
 pub struct CriCpkArchive
@@ -70,7 +70,7 @@ impl CriCpkArchive {
             
             let name = toc_table.get_field("FileName").unwrap().to_string(toc_row_index)?;
             let aax_table = CriTable::read(source, Some(position), UTF_SIGNATURE).unwrap();
-            let aax_archive = CriAaxArchive::from_table(&aax_table, &name).unwrap();
+            let aax_archive = CriCsbAaxArchive::from_table(&aax_table, &name).unwrap();
 
             // etocReader.MoveToRow(tocReader.CurrentRow);
             // entry.UpdateDateTime = DateTimeFromCpkDateTime(etocReader.GetUInt64("UpdateDateTime"));

@@ -1,9 +1,9 @@
-use crate::adpcm_wii::archive::CriAdpcmWiiArchive;
+use crate::aax::archive::CriCsbAaxArchive;
 
-pub struct CriCsbAdpcmWiiSoundElement {
+pub struct CriCsbAaxSoundElement {
     pub original_string_pool: Vec<String>,
     pub name: String,
-    pub data: CriAdpcmWiiArchive,
+    pub data: CriCsbAaxArchive,
     pub fmt: u8,
     pub nch: u8,
     pub stmflg: u8,

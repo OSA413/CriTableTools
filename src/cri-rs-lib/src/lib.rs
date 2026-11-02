@@ -31,30 +31,15 @@ pub mod cpk {
 pub mod csb {
     pub mod extractor;
     pub mod sound_element;
+    pub mod creator;
+    pub mod patcher;
     pub mod common {
-        pub mod aax_archive;
-        pub mod aax_sound_element;
-        pub mod adpcm_wii_archive;
-        pub mod adpcm_wii_sound_element;
         pub mod synth;
         pub mod voice_limit_group;
-        pub mod sound_element_metainfo;
         pub mod isaac;
         pub mod info;
         pub mod cue;
         pub mod archive;
-    }
-}
-
-pub mod games {
-    pub mod episodes {
-        pub mod extractor;
-        pub mod creator;
-    }
-    pub mod black_knight {
-        pub mod extractor;
-        pub mod creator;
-        pub mod patcher;
     }
 }
 

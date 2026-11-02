@@ -1,21 +1,21 @@
 use common_binary::error::CommonBinaryError;
 use cri_table::{encoding_type::CriTableEncodingType, table::CriTable};
 
-use crate::{aax::archive::CriAaxArchive, adpcm_wii::archive::{CriArchive}, traits::{FromCriTable, ToCriTable}};
+use crate::{aax::archive::CriCsbAaxArchive, adpcm_wii::archive::CriCsbAdpcmWiiArchive, traits::{FromCriTable, ToCriTable}};
 
 #[derive(Debug)]
 pub enum CriCsbSoundArchiveEnum {
-    Aax(CriAaxArchive),
-    AdpcmWii(CriArchiveWrapper),
+    Aax(CriCsbAaxArchive),
+    AdpcmWii(CriCsbAdpcmWiiArchive),
 }
 
 impl FromCriTable for CriCsbSoundArchiveEnum {
     fn from_table(root_table: &CriTable) -> Result<CriCsbSoundArchiveEnum, CommonBinaryError> {
         let data = match root_table.name.as_str() {
-            "AAX" => CriCsbSoundArchiveEnum::Aax(CriAaxArchive::from_table(root_table, &root_table.name.to_string()).unwrap()),
+            "AAX" => CriCsbSoundArchiveEnum::Aax(CriCsbAaxArchive::from_table(root_table, &root_table.name.to_string()).unwrap()),
             // "SWLPCM" => CriSoundArchiveEnum::Wav,
             "ADPCM_WII" => CriCsbSoundArchiveEnum::AdpcmWii(
-                CriArchive::read(root_table).unwrap(),
+                CriCsbAdpcmWiiArchive::read(root_table).unwrap(),
             ),
             value => {
                 eprintln!("Unknown Sound type [{value}]");

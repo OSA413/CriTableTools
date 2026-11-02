@@ -2,9 +2,9 @@ use std::{fs::{self, create_dir_all}, path::Path};
 
 use cri_table::table::{CriTable, UTF_SIGNATURE};
 
-use crate::{aax::archive::CriAaxArchive, adpcm_wii::archive::CriAdpcmWiiArchive, csb::common::{adpcm_wii_archive::CriCsbAdpcmWiiArchive, sound_element_metainfo::CriCsbSoundElementMetaInfo}};
+use crate::{aax::archive::CriCsbAaxArchive, adpcm_wii::archive::CriCsbAdpcmWiiArchive, csb::{common::archive::CriCsbArchive, sound_element::sound_element_metainfo::CriCsbSoundElementMetaInfo}, sound_archive::CriCsbSoundArchiveEnum, traits::FromCriTable};
 
-fn extract_aax(entry_dir_name: &Path, aax: &CriAaxArchive) {
+fn extract_aax(entry_dir_name: &Path, aax: &CriCsbAaxArchive) {
     for entry in &aax.entries {
         fs::write(
             entry_dir_name.join(entry.flag.to_file_name().with_added_extension("adx")),
@@ -13,7 +13,7 @@ fn extract_aax(entry_dir_name: &Path, aax: &CriAaxArchive) {
     }
 }
 
-fn extract_dps(dsp: &CriAdpcmWiiArchive, base_dir: &Path) {
+fn extract_dps(dsp: &CriCsbAdpcmWiiArchive, base_dir: &Path) {
     for entry in &dsp.entries {
         let entry_dir_name = &base_dir.join(&dsp.name);
         create_dir_all(entry_dir_name).unwrap();
@@ -43,12 +43,17 @@ fn extract_dps(dsp: &CriAdpcmWiiArchive, base_dir: &Path) {
 pub fn extract(path: &Path) {
     let content = fs::read(path).unwrap();
     let table = CriTable::read(&content, None, UTF_SIGNATURE).unwrap();
-    let csb = CriCsbAdpcmWiiArchive::from_table(&table).unwrap();
+    let csb = CriCsbArchive::from_table(&table).unwrap();
     let base_directory = path.parent().unwrap();
     let output_directory_name = base_directory.join(path.file_stem().unwrap());
 
     for sound_entry in &csb.sound_element.0 {
-        extract_dps(&sound_entry.data, &output_directory_name);
+        match &sound_entry.data {
+            CriCsbSoundArchiveEnum::Aax(archive)
+                => extract_aax(&output_directory_name, archive),
+            CriCsbSoundArchiveEnum::AdpcmWii(archive)
+                => extract_dps(&archive, &output_directory_name),
+        }
     }
 
     fs::write(

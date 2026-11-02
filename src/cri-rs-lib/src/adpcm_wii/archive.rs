@@ -4,7 +4,7 @@ use cri_table::{field_dto::CriFieldDto, field_type::CriFieldType, field_value::C
 use crate::{adpcm_wii::entry::CriAdpcmWiiEntry, loop_flag::CriLoopFlag};
 
 #[derive(Debug, Clone)]
-pub struct CriAdpcmWiiArchive {
+pub struct CriCsbAdpcmWiiArchive {
     pub original_string_pool: Vec<String>,
     pub name: String,
     pub fmt: u8,
@@ -15,8 +15,8 @@ pub struct CriAdpcmWiiArchive {
     pub entries: Vec<CriAdpcmWiiEntry>,
 }
 
-impl CriAdpcmWiiArchive {
-    pub fn read(table: &CriTable) -> Result<CriAdpcmWiiArchive, CommonBinaryError> {
+impl CriCsbAdpcmWiiArchive {
+    pub fn read(table: &CriTable) -> Result<CriCsbAdpcmWiiArchive, CommonBinaryError> {
         let inner_table = table.get_field("data").unwrap().to_table(0).unwrap().to_owned();
         let mut inner_entries = Vec::new();
         for inner_row_index in 0..inner_table.row_count() {
@@ -32,7 +32,7 @@ impl CriAdpcmWiiArchive {
 
         assert_eq!(inner_table.row_count(), 1, "It is expected for ADPCM_WII table to have exactly one row");
 
-        Ok(CriAdpcmWiiArchive {
+        Ok(CriCsbAdpcmWiiArchive {
             original_string_pool: inner_table.original_string_pool.clone(),
             fmt: table.get_field("fmt").unwrap().to_u8(0).unwrap(),
             name: table.get_field("name").unwrap().to_string(0).unwrap(),

@@ -31,5 +31,10 @@ fn main() {
         };
     }
 
-    fs::write(format!("{}.diff", file_path), result.join("")).unwrap();
+    if result.is_empty() {
+        println!("Check passed");
+    } else {
+        fs::write(format!("{}.diff", file_path), result.join("")).unwrap();
+        println!("Detected differences, diff file created");
+    }
 }
