@@ -28,8 +28,6 @@ pub fn patch(path: &Path) {
 
     let files = walk_dir(dir_path, None);
 
-
-
     for entry in files.iter().filter(|entry| entry.to_string_lossy().to_lowercase().ends_with(expected_extension)) {
         let (root_entry, loop_flag) = match parse_entry(entry, &expected_format) {
             Some(parsed_entry) => parsed_entry,
@@ -54,26 +52,15 @@ pub fn patch(path: &Path) {
         let data = match expected_format {
             CriSoundArchiveFormat::Adx => todo!(),
             CriSoundArchiveFormat::Dsp => CriCsbSoundArchiveEnum::AdpcmWii(
-                CriCsbAdpcmWiiArchive {
-                    original_string_pool: root_entry.meta_info.original_string_pool.clone(),
-                    name: relative_name.clone(),
+                CriAdpcmWiiEntry {
+                    loop_flag: loop_flag,
                     sfreq: root_entry.meta_info.sfreq,
-                    fmt: 4,
-                    stmflg: 0,
                     nsmpl: root_entry.meta_info.nsmpl,
-                    nch: root_entry.meta_info.nch,        
-                    entries: vec![
-                        CriAdpcmWiiEntry {
-                            loop_flag: loop_flag,
-                            sfreq: root_entry.meta_info.sfreq,
-                            nsmpl: root_entry.meta_info.nsmpl,
-                            nch: root_entry.meta_info.nch,
-                            // TODO: turns out there can be two headers in one header,
-                            // so this import is incorrect (as well as the extraction, probably)
-                            header: data[..0x60].to_vec(),
-                            data: data[0x60..].to_vec(),
-                        }
-                    ],
+                    nch: root_entry.meta_info.nch,
+                    // TODO: turns out there can be two headers in one header,
+                    // so this import is incorrect (as well as the extraction, probably)
+                    header: data[..0x60].to_vec(),
+                    data: data[0x60..].to_vec(),
                 }
             ),
             CriSoundArchiveFormat::Wav => todo!(),
@@ -124,5 +111,5 @@ pub fn patch(path: &Path) {
     //     .unwrap()
     //     .unwrap();
 
-    fs::write(path.with_added_extension("patched"), csb.to_table().unwrap().write().unwrap()).unwrap();
+    fs::write(path.with_added_extension("patched"), csb.to_bytes().unwrap()).unwrap();
 }

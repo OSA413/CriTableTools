@@ -1,12 +1,12 @@
 use common_binary::error::CommonBinaryError;
 use cri_table::{encoding_type::CriTableEncodingType, table::CriTable};
 
-use crate::{aax::archive::CriCsbAaxArchive, adpcm_wii::archive::CriCsbAdpcmWiiArchive, traits::{FromCriTable, ToCriTable}};
+use crate::{aax::archive::CriCsbAaxArchive, adpcm_wii::{archive::CriCsbAdpcmWiiArchive, entry::CriAdpcmWiiEntry}, traits::{FromCriTable, ToCriTable}};
 
 #[derive(Debug)]
 pub enum CriCsbSoundArchiveEnum {
     Aax(CriCsbAaxArchive),
-    AdpcmWii(CriCsbAdpcmWiiArchive),
+    AdpcmWii(CriAdpcmWiiEntry),
 }
 
 impl FromCriTable for CriCsbSoundArchiveEnum {
@@ -29,12 +29,11 @@ impl FromCriTable for CriCsbSoundArchiveEnum {
 
 impl ToCriTable for CriCsbSoundArchiveEnum {
     fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
-        let result = CriTable {
-            original_string_pool: vec![], //TODO
-            name: "AAX".to_string(),
-            encoding: CriTableEncodingType::ShiftJis,
-            fields: vec![],
-            unknown_byte: 0,
+        let result = match self {
+            CriCsbSoundArchiveEnum::Aax(cri_csb_aax_archive) => todo!(),
+            CriCsbSoundArchiveEnum::AdpcmWii(entry) => {
+                entry.to_table().unwrap()               
+            },
         };
 
         Ok(result)

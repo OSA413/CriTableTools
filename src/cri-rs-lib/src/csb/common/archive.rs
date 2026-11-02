@@ -174,7 +174,7 @@ impl CriCsbArchiveBuilder {
                     (CriSoundArchiveFormat::Adx, CriCsbSoundArchiveEnum::Aax(_)) => (),
                     (CriSoundArchiveFormat::Dsp, CriCsbSoundArchiveEnum::AdpcmWii(_)) => (),
                     (format, data) =>
-                        panic!("Incorret combination of foemat and data: {format:?}, {data:?}"),
+                        panic!("Incorret combination of format and data: {format:?}, {data:?}"),
                 }
 
                 result.push(CriCsbSoundElement {
@@ -275,7 +275,7 @@ impl FromCriTable for CriCsbArchive {
                 synth: CriCsbArchiveBuilder::parse_synth_table(parent_fields.synth.as_ref()),
                 sound_element: CriCsbArchiveBuilder::parse_sound_element_table(parent_fields.sound_element.as_ref()),
                 isaac: CriCsbArchiveBuilder::parse_isaac_table(parent_fields.isaac.as_ref()),
-                voice_limit_group: CriCsbArchiveBuilder::parse_voice_group_table(parent_fields.sound_element.as_ref()),
+                voice_limit_group: CriCsbArchiveBuilder::parse_voice_group_table(parent_fields.voice_limit_group.as_ref()),
             }
         )
     }

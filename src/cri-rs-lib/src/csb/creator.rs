@@ -98,26 +98,15 @@ pub fn create_from_dir(path: &Path) -> Result<(), CommonBinaryError> {
         let data = match expected_format {
             CriSoundArchiveFormat::Adx => todo!(),
             CriSoundArchiveFormat::Dsp => CriCsbSoundArchiveEnum::AdpcmWii(
-                CriCsbAdpcmWiiArchive {
-                    original_string_pool: root_entry.meta_info.original_string_pool.clone(),
-                    name: relative_name.clone(),
+                CriAdpcmWiiEntry {
+                    loop_flag: loop_flag,
                     sfreq: root_entry.meta_info.sfreq,
-                    fmt: 4,
-                    stmflg: 0,
                     nsmpl: root_entry.meta_info.nsmpl,
-                    nch: root_entry.meta_info.nch,        
-                    entries: vec![
-                        CriAdpcmWiiEntry {
-                            loop_flag: loop_flag,
-                            sfreq: root_entry.meta_info.sfreq,
-                            nsmpl: root_entry.meta_info.nsmpl,
-                            nch: root_entry.meta_info.nch,
-                            // TODO: turns out there can be two headers in one header,
-                            // so this import is incorrect (as well as the extraction, probably)
-                            header: data[..0x60].to_vec(),
-                            data: data[0x60..].to_vec(),
-                        }
-                    ],
+                    nch: root_entry.meta_info.nch,
+                    // TODO: turns out there can be two headers in one header,
+                    // so this import is incorrect (as well as the extraction, probably)
+                    header: data[..0x60].to_vec(),
+                    data: data[0x60..].to_vec(),
                 }
             ),
             CriSoundArchiveFormat::Wav => todo!(),

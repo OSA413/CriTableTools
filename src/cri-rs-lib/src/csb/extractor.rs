@@ -2,9 +2,9 @@ use std::{fs::{self, create_dir_all}, path::Path};
 
 use cri_table::table::{CriTable, UTF_SIGNATURE};
 
-use crate::{aax::archive::CriCsbAaxArchive, adpcm_wii::archive::CriCsbAdpcmWiiArchive, csb::{common::archive::CriCsbArchive, sound_element::sound_element_metainfo::CriCsbSoundElementMetaInfo}, sound_archive::CriCsbSoundArchiveEnum, traits::FromCriTable};
+use crate::{aax::archive::CriCsbAaxArchive, adpcm_wii::entry::CriAdpcmWiiEntry, csb::{common::archive::CriCsbArchive, sound_element::sound_element_metainfo::CriCsbSoundElementMetaInfo}, sound_archive::CriCsbSoundArchiveEnum, traits::FromCriTable};
 
-fn extract_aax(entry_dir_name: &Path, aax: &CriCsbAaxArchive) {
+fn extract_aax(aax: &CriCsbAaxArchive, entry_dir_name: &Path) {
     for entry in &aax.entries {
         fs::write(
             entry_dir_name.join(entry.flag.to_file_name().with_added_extension("adx")),
@@ -13,31 +13,27 @@ fn extract_aax(entry_dir_name: &Path, aax: &CriCsbAaxArchive) {
     }
 }
 
-fn extract_dps(dsp: &CriCsbAdpcmWiiArchive, base_dir: &Path) {
-    for entry in &dsp.entries {
-        let entry_dir_name = &base_dir.join(&dsp.name);
-        create_dir_all(entry_dir_name).unwrap();
-        fs::write(
-            entry_dir_name.join(entry.loop_flag.to_file_name().with_added_extension("dsp")),
-            [
-                entry.header.clone(),
-                entry.data.clone(),
-            ].concat(),
-        ).unwrap();
-        
-        fs::write(
-            entry_dir_name.join("sound_element.json"),
-            serde_json::to_string(&CriCsbSoundElementMetaInfo {                
-                original_string_pool: dsp.original_string_pool.clone(),
-                name: dsp.name.clone(),
-                fmt: dsp.fmt,
-                nch: dsp.nch,
-                stmflg: dsp.stmflg,
-                sfreq: dsp.sfreq,
-                nsmpl: dsp.nsmpl,
-            }).unwrap(),
-        ).unwrap();
-    }
+fn extract_dps(dsp: &CriAdpcmWiiEntry, base_dir: &Path) {
+    create_dir_all(base_dir).unwrap();
+    fs::write(
+        base_dir.join(dsp.loop_flag.to_file_name().with_added_extension("dsp")),
+        [
+            dsp.header.clone(),
+            dsp.data.clone(),
+        ].concat(),
+    ).unwrap();
+    
+    fs::write(
+        base_dir.join("sound_element.json"),
+        serde_json::to_string(&CriCsbSoundElementMetaInfo {
+            original_string_pool: vec![],
+            stmflg: 0,
+            fmt: 4,
+            nch: dsp.nch,
+            sfreq: dsp.sfreq,
+            nsmpl: dsp.nsmpl,
+        }).unwrap(),
+    ).unwrap();
 }
 
 pub fn extract(path: &Path) {
@@ -48,11 +44,12 @@ pub fn extract(path: &Path) {
     let output_directory_name = base_directory.join(path.file_stem().unwrap());
 
     for sound_entry in &csb.sound_element.0 {
+        let file_dir = output_directory_name.join(&sound_entry.name);
         match &sound_entry.data {
             CriCsbSoundArchiveEnum::Aax(archive)
-                => extract_aax(&output_directory_name, archive),
+                => extract_aax(&archive, &file_dir),
             CriCsbSoundArchiveEnum::AdpcmWii(archive)
-                => extract_dps(&archive, &output_directory_name),
+                => extract_dps(&archive, &file_dir),
         }
     }
 
