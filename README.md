@@ -45,8 +45,8 @@ A tool to fully extract, re-create and patch CSB files (supports related CPK fil
 | Sonic Lost World | PC | ✅(CPK table read) | ⏳ | ❌ | ❌ | ❌ | Low-tier WIP |
 | Sonic Forces | PC | ✅(CPK table read) | ⏳ | ❌ |❌ | ❌ | Low-tier WIP |
 
-* "Table Read" means that the files can be read with cri-table2json and its underlying libraries such as `cri-table`.
-* "Structure Read" means that the files can be read with a higher-level abstraction libs such as `cri-rs-lib`.
+* "Table Read" means that the files can be read with `cri-table2json` and its underlying libraries such as `cri-table`.
+* "Structure Read" means that the files can be read (and probably extracted) with a higher-level abstraction tools and libs such as `csb-rs` and `cri-rs-lib`.
 
 ¹ - Please note that this game **heavily** expects the file to be almost exactly byte-to-byte correct, so that's why you should try patching the CSB file first instead of trying to recreate it from the extrated directory.
 
