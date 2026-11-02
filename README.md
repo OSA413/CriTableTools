@@ -45,6 +45,8 @@ A tool to fully extract, re-create and patch CSB files (supports related CPK fil
 
 ¹ - Please note that this game **heavily** expects the file to be almost exactly byte-to-byte correct, so that's why you should try patching the CSB file first instead of trying to recreate it from the extrated directory.
 
+*Your game is not in the list? Try creating an issue with game's name and platform and I'll think about it.*
+
 ## Want to contribute?
 
 Contributions welcome to the Rust rewrite.
