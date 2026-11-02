@@ -36,14 +36,18 @@ A tool to fully extract, re-create and patch CSB files (supports related CPK fil
 
 ## Tested games
 
-* Sonic and the Black Knight (Wii) (table and structure read, extraction with metadata, creation from the extracted CSB¹, correct patching)
-* Sonic 4 Episode 1 (PC) (table read, extraction with metadata (not from CPK yet, or use v0.1.0), creation from the extracted CSB)
-* Sonic 4 Episode 2 (PC) (table read, extraction with metadata (not from CPK yet, or use v0.1.0), creation from the extracted CSB)
-* Sonic Generations (PC) (table read, extraction (in v0.1.0))
-* Sonic Lost World (PC) (CPK table read)
-* Sonic Forces (PC) (CPK table read)
+| Game | Platform(s) | Table Read | Structure Read | Extraction | Re-creation | Patching | Notes |
+|------|-------------|------------|----------------|------------|-------------|----------|-------|
+| Sonic and the Black Knight | Wii | ✅ | ✅ | ✅ | ✅¹ | ✅ | ¹ |
+| Sonic 4 Episode 1 | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
+| Sonic 4 Episode 2 | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
+| Sonic Generations | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
+| Sonic Lost World | PC | ✅(CPK table read) | ⏳ | ❌ | ❌ | ❌ | Low-tier WIP |
+| Sonic Forces | PC | ✅(CPK table read) | ⏳ | ❌ |❌ | ❌ | Low-tier WIP |
 
 ¹ - Please note that this game **heavily** expects the file to be almost exactly byte-to-byte correct, so that's why you should try patching the CSB file first instead of trying to recreate it from the extrated directory.
+
+² - Last time it properly worked in [v0.1.0](https://github.com/OSA413/CriTableTools/releases/tag/v0.1.0).
 
 *Your game is not in the list? Try creating an issue with game's name and platform and I'll think about it.*
 
