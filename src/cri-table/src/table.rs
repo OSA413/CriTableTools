@@ -541,11 +541,10 @@ impl CriTable {
                 if let CriFieldValue::Data(value) = row {
                     let mut data = value.clone();
                     data.extend(std::iter::repeat_n(0, CriTable::length_nice(data.len()) - data.len()));
-
-                    let hash = get_sha256(value);
+                    let hash = get_sha256(&data);
                     if result.iter().find(|entry| entry.hash == hash).is_none() {
                         result.push(TableDataPoolBuilderEntry {
-                            data: value.clone(),
+                            data,
                             hash,
                             pointer: result.last().map(|last| CriTable::length_nice(last.data.len()) + last.pointer).unwrap_or(0),
                         });
@@ -556,7 +555,6 @@ impl CriTable {
                         TableOrData::Table(table) => table.write().unwrap(),
                     };
                     data.extend(std::iter::repeat_n(0, CriTable::length_nice(data.len()) - data.len()));
-
                     let hash = get_sha256(&data);
                     if result.iter().find(|entry| entry.hash == hash).is_none() {
                         result.push(TableDataPoolBuilderEntry {

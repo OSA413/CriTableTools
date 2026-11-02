@@ -82,7 +82,7 @@ impl CriFieldValue {
                 let original_length = data.len();
 
                 data.extend(std::iter::repeat_n(0, CriTable::length_nice(data.len()) - data.len()));
-
+                
                 [
                     data_pool.get(&get_sha256(&data)).unwrap().0.to_be_bytes().to_vec(),
                     (original_length as u32).to_be_bytes().to_vec(),
@@ -94,30 +94,10 @@ impl CriFieldValue {
                 data.extend(std::iter::repeat_n(0, CriTable::length_nice(data.len()) - data.len()));
 
                 [
-                    data_pool.get(&get_sha256(value)).unwrap().0.to_be_bytes().to_vec(),
+                    data_pool.get(&get_sha256(data)).unwrap().0.to_be_bytes().to_vec(),
                     (original_length as u32).to_be_bytes().to_vec(),
                 ].concat()
             },
-            _ => self.to_bytes_common(),
-        }
-    }
-
-    
-    pub fn to_bytes_for_data(&self, _ttype: &CriFieldType) -> Vec<u8> {
-        match self {
-            CriFieldValue::String(value) => value.bytes().chain(vec![0]).collect(),
-            CriFieldValue::Data(value) => {
-                
-                value.clone()
-            },
-            CriFieldValue::ProbablyTable(table_or_data) => {
-                
-
-                match table_or_data {
-                    TableOrData::Data(value) => value.clone(),
-                    TableOrData::Table(table) => table.write().unwrap(),
-                }
-            }
             _ => self.to_bytes_common(),
         }
     }
