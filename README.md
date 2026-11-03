@@ -48,7 +48,7 @@ A tool to fully extract, re-create and patch CSB files (supports related CPK fil
 * "Table Read" means that the files can be read with `cri-table2json` and its underlying libraries such as `cri-table`.
 * "Structure Read" means that the files can be read (and probably extracted) with a higher-level abstraction tools and libs such as `csb-rs` and `cri-rs-lib`.
 
-¹ - Please note that this game **heavily** expects the file to be almost exactly byte-to-byte correct, so that's why you should try patching the CSB file first instead of trying to recreate it from the extrated directory.
+¹ - Please note that this game **heavily** expects the file to be almost exactly byte-to-byte correct, so that's why you should try patching the CSB file first instead of trying to recreate it from the extracted directory.
 
 ² - Last time it properly worked in [v0.1.0](https://github.com/OSA413/CriTableTools/releases/tag/v0.1.0).
 
