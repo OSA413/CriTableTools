@@ -1,10 +1,12 @@
 # CriTableTools, a partial Rust rewrite of SonicAudioTools
 
-A set of tools to modify CRIWARE file formats.
+Tools and libs to modify CRIWARE file formats, rewritten in Rust.
+
+These tools and libs are supposed to do its job at extracting/creating/patching the CriTable containers the best it can. If you are looking for the sound (ADX/DSP) convertion tools, you should find it somewhere else.
 
 Currently it only supports CSB files (that can be bundled with a CPK file).
 
-The latest version of the programs can be found on [GitHub Actions](https://github.com/OSA413/CriTableTools/actions).
+The Midday version of the programs can be found on [GitHub Actions](https://github.com/OSA413/CriTableTools/actions).
 
 More or less suitable for use versions are planned to be published on GitHub's release page.
 
@@ -16,13 +18,10 @@ Please note that most of the CLI tools support the `--help` flag to show help.
 
 ## What is left behind / will not be implemented in the Rust rewrite (as for now)
 
-* Only CSB/CPK files are supported
-* the compression of files, since in the original code the reading was only implemented, but I want to write the files as well.
-* parallel processing of files since it would still hit the IO bottleneck (original project has a parallel extractor of the files).
-* file alignment since it wasn't implemented in the original code.
-* also the masking seems to be unused (always `false`)
-* ahead-of-time values loading was implemented instead of lazy-loading (I mean the file is read fully in one iteration instead of jumping on the stream in the memory between the pointers and values)
-* Only the "latest" version of CSB and CPK are supported
+* Only CSB/CPK files are currently supported
+* Decompression of files
+* Ahead-of-time values loading is implemented instead of lazy-loading (I mean the file is read fully in one iteration instead of jumping on the stream in the memory between the pointers and values)
+* Only the "latest" version of CSB and CPK are supported (check tested games below).
 
 ## List of tools
 
@@ -37,16 +36,17 @@ A tool to fully extract, re-create and patch CSB files (supports related CPK fil
 ## Tested games
 
 | Game | Platform(s) | Table Read | Structure Read | Extraction | Re-creation | Patching | Notes |
-|------|-------------|------------|----------------|------------|-------------|----------|-------|
+| ---- | ----------- | ---------- | -------------- | ---------- | ----------- | -------- | ----- |
+| Sonic Free Riders | XBOX 360 | ✅ | ✅ | ✅ | ❓ | ❓ | Not tested |
 | Sonic and the Black Knight | Wii | ✅ | ✅ | ✅ | ✅¹ | ✅ | ¹ |
 | Sonic 4 Episode 1 | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
 | Sonic 4 Episode 2 | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
 | Sonic Generations | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
 | Sonic Lost World | PC | ✅(CPK table read) | ⏳ | ❌ | ❌ | ❌ | Low-tier WIP |
-| Sonic Forces | PC | ✅(CPK table read) | ⏳ | ❌ |❌ | ❌ | Low-tier WIP |
+| Sonic Forces | PC | ✅(CPK table read) | ⏳ | ❌ | ❌ | ❌ | Low-tier WIP |
 
 * "Table Read" means that the files can be read with `cri-table2json` and its underlying libraries such as `cri-table`.
-* "Structure Read" means that the files can be read (and probably extracted) with a higher-level abstraction tools and libs such as `csb-rs` and `cri-rs-lib`.
+* "Structure Read" means that the files can be read/extracted with a higher-level abstraction tools and libs such as `csb-rs` and `cri-rs-lib`.
 
 ¹ - Please note that this game **heavily** expects the file to be almost exactly byte-to-byte correct, so that's why you should try patching the CSB file first instead of trying to recreate it from the extracted directory.
 
