@@ -80,8 +80,11 @@ struct CriTableRowDefaultValue {
         if (field_raw_flags & CriFieldRawFlags::Guid == CriFieldRawFlags::Guid) {
             u128 default_value;
         } else if (field_raw_flags & CriFieldRawFlags::Data == CriFieldRawFlags::Data) {
-            u32 default_value_pad;
-            u32 default_value_pad2;
+            u32 data_pointer;
+            u32 data_length;
+            u8 default_value[data_length] @ data_pointer
+                + parent.parent.table_info.data_pool_position
+                + 0x08;
         } else if (field_raw_flags & CriFieldRawFlags::String == CriFieldRawFlags::String) {
             u32 string_pointer;
             char default_value[] @ string_pointer
