@@ -37,8 +37,8 @@ A tool to fully extract, re-create and patch CSB files (supports related CPK fil
 
 | Game | Platform(s) | Table Read | Structure Read | Extraction | Re-creation | Patching | Notes |
 | ---- | ----------- | ---------- | -------------- | ---------- | ----------- | -------- | ----- |
-| Sonic Free Riders | XBOX 360 | ✅ | ✅ | ✅ | ❓ | ❓ | Not tested |
 | Sonic and the Black Knight | Wii | ✅ | ✅ | ✅ | ✅¹ | ✅ | ¹ |
+| Sonic Free Riders | XBOX 360 | ✅ | ✅ | ✅ | ❓ | ❓ | Not tested |
 | Sonic 4 Episode 1 | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
 | Sonic 4 Episode 2 | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
 | Sonic Generations | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
