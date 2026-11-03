@@ -19,14 +19,10 @@ pub mod swlpcm {
     // pub mod loop_flag;
 }
 pub mod cpk {
-    pub mod data {
-        // This will be used as a standalone CPK archive
-    }
-    pub mod sound {
-        pub mod archive;
-        pub mod mode;
-        pub mod entry;
-    }
+    pub mod archive;
+    pub mod mode;
+    pub mod toc;
+    pub mod etoc;
 }
 pub mod csb {
     pub mod extractor;

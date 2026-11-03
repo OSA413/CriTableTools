@@ -181,4 +181,5 @@ struct CriTable {
     CriTableRowWrapper rows[table_info.row_count];
 };
 
+// Note: if you want to investigate a CPK file, remove the fiest 0x10 bytes of the file because the current hexpat doesn't account for such displacement/header (if you set 0x10 instead below)
 CriTable cri_table @ 0x00;

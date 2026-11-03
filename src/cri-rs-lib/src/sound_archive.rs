@@ -7,6 +7,7 @@ use crate::{aax::archive::CriCsbAaxArchive, adpcm_wii::{archive::CriCsbAdpcmWiiA
 pub enum CriCsbSoundArchiveEnum {
     Aax(CriCsbAaxArchive),
     AdpcmWii(CriAdpcmWiiEntry),
+    Stream,
 }
 
 impl FromCriTable for CriCsbSoundArchiveEnum {
@@ -30,10 +31,11 @@ impl FromCriTable for CriCsbSoundArchiveEnum {
 impl ToCriTable for CriCsbSoundArchiveEnum {
     fn to_table(&self) -> Result<CriTable, CommonBinaryError> {
         let result = match self {
-            CriCsbSoundArchiveEnum::Aax(cri_csb_aax_archive) => todo!(),
+            CriCsbSoundArchiveEnum::Aax(_cri_csb_aax_archive) => todo!(),
             CriCsbSoundArchiveEnum::AdpcmWii(entry) => {
-                entry.to_table().unwrap()               
+                entry.to_table().unwrap()
             },
+            CriCsbSoundArchiveEnum::Stream => todo!(),
         };
 
         Ok(result)

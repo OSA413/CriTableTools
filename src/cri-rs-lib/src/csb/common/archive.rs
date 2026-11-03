@@ -166,7 +166,7 @@ impl CriCsbArchiveBuilder {
 
             let mut result = Vec::with_capacity(table.row_count());
             for sdl_row_index in 0..table.row_count() {
-                let sdl_name = table.get_field("name").unwrap().to_string(sdl_row_index).unwrap();                
+                let sdl_name = table.get_field("name").unwrap().to_string(sdl_row_index).unwrap();
                 let sound_element_table = table.get_field("data").unwrap().to_table(sdl_row_index).unwrap();
                 let data = CriCsbSoundArchiveEnum::from_table(sound_element_table).unwrap();
 

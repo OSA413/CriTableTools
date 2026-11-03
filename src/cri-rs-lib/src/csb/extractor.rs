@@ -2,7 +2,7 @@ use std::{fs::{self, create_dir_all}, path::Path};
 
 use cri_table::table::{CriTable, UTF_SIGNATURE};
 
-use crate::{aax::archive::CriCsbAaxArchive, adpcm_wii::entry::CriAdpcmWiiEntry, csb::{common::archive::CriCsbArchive, sound_element::sound_element_metainfo::CriCsbSoundElementMetaInfo}, sound_archive::CriCsbSoundArchiveEnum, traits::FromCriTable};
+use crate::{aax::archive::CriCsbAaxArchive, adpcm_wii::entry::CriAdpcmWiiEntry, cpk::archive::CriCpkArchive, csb::{common::archive::CriCsbArchive, sound_element::sound_element_metainfo::CriCsbSoundElementMetaInfo}, find_related_cpk_of_csb, sound_archive::CriCsbSoundArchiveEnum, traits::FromCriTable};
 
 fn extract_aax(aax: &CriCsbAaxArchive, entry_dir_name: &Path) {
     create_dir_all(entry_dir_name).unwrap();
@@ -44,6 +44,13 @@ pub fn extract(path: &Path) {
     let base_directory = path.parent().unwrap();
     let output_directory_name = base_directory.join(path.file_stem().unwrap());
 
+    let _cpk = find_related_cpk_of_csb(&path)
+        .map(|cpk_path| fs::read(cpk_path)
+        .map(|cpk_content| {
+            CriCpkArchive::read(&cpk_content, 0)
+        })
+    );
+
     for sound_entry in &csb.sound_element.0 {
         let file_dir = output_directory_name.join(&sound_entry.name);
         match &sound_entry.data {
@@ -51,6 +58,7 @@ pub fn extract(path: &Path) {
                 => extract_aax(&archive, &file_dir),
             CriCsbSoundArchiveEnum::AdpcmWii(archive)
                 => extract_dps(&archive, &file_dir),
+            CriCsbSoundArchiveEnum::Stream => todo!(),
         }
     }
 
