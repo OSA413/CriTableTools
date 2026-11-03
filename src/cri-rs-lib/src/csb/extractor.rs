@@ -5,6 +5,7 @@ use cri_table::table::{CriTable, UTF_SIGNATURE};
 use crate::{aax::archive::CriCsbAaxArchive, adpcm_wii::entry::CriAdpcmWiiEntry, csb::{common::archive::CriCsbArchive, sound_element::sound_element_metainfo::CriCsbSoundElementMetaInfo}, sound_archive::CriCsbSoundArchiveEnum, traits::FromCriTable};
 
 fn extract_aax(aax: &CriCsbAaxArchive, entry_dir_name: &Path) {
+    create_dir_all(entry_dir_name).unwrap();
     for entry in &aax.entries {
         fs::write(
             entry_dir_name.join(entry.flag.to_file_name().with_added_extension("adx")),
