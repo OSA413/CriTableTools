@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use common_utils::walk_dir::walk_dir;
 use cri_table::table::{CriTable, UTF_SIGNATURE};
 
-use crate::{adpcm_wii::{archive::CriCsbAdpcmWiiArchive, entry::CriAdpcmWiiEntry}, csb::{common::archive::CriCsbArchive, creator::parse_entry, sound_element::{CriCsbSoundElement, sound_element_metainfo::CriCsbSoundElementMetaInfo}}, sound_archive::CriCsbSoundArchiveEnum, sound_archive_mode::CriSoundArchiveFormat, traits::{FromCriTable, ToCriTable}};
+use crate::{adpcm_wii::entry::CriAdpcmWiiEntry, csb::{common::archive::CriCsbArchive, creator::parse_entry, sound_element::CriCsbSoundElement}, sound_archive::CriCsbSoundArchiveEnum, sound_archive_mode::CriSoundArchiveFormat, traits::{FromCriTable, ToCriTable}};
 
 pub fn patch(path: &Path) {
     let path_path = Path::new(path);
@@ -41,12 +41,6 @@ pub fn patch(path: &Path) {
         let entry_position = csb.sound_element.0.iter().position(|x| x.name == relative_name).unwrap();
 
         let old_entry = &csb.sound_element.0[entry_position];
-        let old_entry_sound_element = &old_entry.data;
-
-        let sound_element_meta_data = fs::read_to_string(root_entry.root_dir_path.join("sound_element.json"))
-            .map(|data| serde_json::from_str::<CriCsbSoundElementMetaInfo>(&data))
-            .unwrap();
-
         let data = fs::read(entry).unwrap();
 
         let data = match expected_format {
@@ -110,6 +104,21 @@ pub fn patch(path: &Path) {
     //     .map(|data| serde_json::from_str::<Vec<CriCsbAdpcmWiiVoiceLimitGroup>>(&data))
     //     .unwrap()
     //     .unwrap();
+
+    // for i in 0..csb.sound_element.0.len() {
+    //     for j in i+1..csb.sound_element.0.len() {
+    //         match (&csb.sound_element.0[i].data, &csb.sound_element.0[j].data) {
+    //             (CriCsbSoundArchiveEnum::Aax(entry0), CriCsbSoundArchiveEnum::Aax(entry1)) => todo!(),
+    //             (CriCsbSoundArchiveEnum::AdpcmWii(entry0), CriCsbSoundArchiveEnum::AdpcmWii(entry1)) => {
+    //                 if entry0.data == entry1.data
+    //                 && entry0.header == entry1.header {
+    //                     println!("{} and {} are equal!", csb.sound_element.0[i].name, csb.sound_element.0[j].name);
+    //                 }
+    //             },
+    //             (_, _) => ()
+    //         }
+    //     }
+    // }
 
     fs::write(path.with_added_extension("patched"), csb.to_bytes().unwrap()).unwrap();
 }

@@ -1,5 +1,5 @@
 use common_binary::error::CommonBinaryError;
-use cri_table::{field_dto::CriFieldDto, field_type::CriFieldType, field_value::CriFieldValue, table::CriTable};
+use cri_table::table::CriTable;
 
 use crate::{adpcm_wii::entry::CriAdpcmWiiEntry, loop_flag::CriLoopFlag};
 
