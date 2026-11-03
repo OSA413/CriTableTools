@@ -19,6 +19,7 @@ Please note that most of the CLI tools support the `--help` flag to show help.
 ## What is left behind / will not be implemented in the Rust rewrite (as for now)
 
 * Only CSB/CPK files are currently supported, if you are looking for ACB/AWB file support, try using this: https://github.com/seiunx-dev/cridecoder (I haven't tested it but it looks promising).
+* It contains only CLI tools, not GUI tools.
 * Decompression of files.
 * Ahead-of-time values loading is implemented instead of lazy-loading (I mean the file is read fully in one iteration instead of jumping on the stream in the memory between the pointers and values).
 * Only the "latest" version of CPK files are supported.
