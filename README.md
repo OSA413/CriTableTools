@@ -4,8 +4,6 @@ Tools and libs to modify CRIWARE file formats, rewritten in Rust.
 
 These tools and libs are supposed to do its job at extracting/creating/patching the CriTable containers the best it can. If you are looking for the sound (ADX/DSP) convertion tools, you should find it somewhere else.
 
-Currently it only supports CSB files (that can be bundled with a CPK file).
-
 The Midday version of the programs can be found on [GitHub Actions](https://github.com/OSA413/CriTableTools/actions).
 
 More or less suitable for use versions are planned to be published on GitHub's release page.
@@ -16,30 +14,32 @@ Please note that most of the CLI tools support the `--help` flag to show help.
 
 ------------
 
-## What is left behind / will not be implemented in the Rust rewrite (as for now)
+## Differences from the original SonicAudioTools
 
-* Only CSB/CPK files are currently supported, if you are looking for ACB/AWB file support, try using this: https://github.com/seiunx-dev/cridecoder (I haven't tested it but it looks promising).
+* Only CSB/CPK files are supported, if you are looking for ACB/AWB file support, try using this: https://github.com/seiunx-dev/cridecoder (I haven't tested it but it looks promising).
 * It contains only CLI tools, not GUI tools.
-* Decompression of files.
+* Decompression of files is not supported.
 * Ahead-of-time values loading is implemented instead of lazy-loading (I mean the file is read fully in one iteration instead of jumping on the stream in the memory between the pointers and values).
-* Only the "latest" version of CPK files are supported.
+* For the simplification purposes, only the "latest" version of CPK files is supported (so far I haven't seen games with other versions of CPK).
+* Added support for DSP/ADPCM_WII audio files.
+* Pure Rust implementation.
 
 ## List of tools
 
 ### cri-table2json
 
-A tool for a convenient examination of arbitrary CriTable files (CSB, CPK)
+A tool for a convenient examination of arbitrary CriTable files (CSB, CPK). You can use [the hexpat for ImHex](./imhex-patterns/cri-table.hexpat) alongside.
 
 ### csb-rs (wip)
 
-A tool to fully extract, re-create and patch CSB files (supports related CPK files)
+A tool to fully extract, re-create, and patch CSB files (supports related CPK files)
 
 ## Tested games
 
 | Game | Platform(s) | Table Read | Structure Read | Extraction | Re-creation | Patching | Notes |
 | ---- | ----------- | ---------- | -------------- | ---------- | ----------- | -------- | ----- |
 | Sonic and the Black Knight | Wii | ✅ | ✅ | ✅ | ✅¹ | ✅ | ¹ |
-| Sonic Free Riders | XBOX 360 | ✅ | ✅ | ✅ | ❓ | ❓ | Not tested |
+| Sonic Free Riders | XBOX 360 | ✅ | ✅ (CPK WIP) | ✅ | ❓ | ❓ | Not tested |
 | Sonic 4 Episode 1 | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
 | Sonic 4 Episode 2 | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
 | Sonic Generations | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
