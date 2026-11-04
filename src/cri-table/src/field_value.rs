@@ -8,7 +8,7 @@ use crate::{field_type::CriFieldType, table::CriTable};
 #[derive(Clone, Serialize, Debug, PartialEq)]
 #[serde(tag = "type", content = "value")]
 pub enum CriFieldValue {
-    // A helper type for the default_value writing
+    Null,
     Default,
     Byte(u8),
     SByte(i8),

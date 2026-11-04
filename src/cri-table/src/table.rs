@@ -349,8 +349,10 @@ impl CriTable {
                     if field_flags.row_storage {
                         let value_pointer = starting_pointer + header_rows_position + (header_row_length * row_index) + field_offset;
                         field_type.read_value(source, starting_pointer, header_string_pool_position, header_data_pool_position, value_pointer)?
-                    } else {
+                    } else if default_value.is_some() {
                         CriFieldValue::Default
+                    } else {
+                        CriFieldValue::Null
                     }
                 };
 

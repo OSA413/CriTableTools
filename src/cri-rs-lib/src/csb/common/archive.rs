@@ -167,18 +167,24 @@ impl CriCsbArchiveBuilder {
             let mut result = Vec::with_capacity(table.row_count());
             for sdl_row_index in 0..table.row_count() {
                 let sdl_name = table.get_field("name").unwrap().to_string(sdl_row_index).unwrap();
-                let sound_element_table = table.get_field("data").unwrap().to_table(sdl_row_index).unwrap();
-                let data = CriCsbSoundArchiveEnum::from_table(sound_element_table).unwrap();
+                let streaming_flag = table.get_field("stmflg").unwrap().to_bool(sdl_row_index).unwrap();
+                let data = if streaming_flag {
+                    CriCsbSoundArchiveEnum::Stream
+                } else {
+                    let sound_element_table = table.get_field("data").unwrap().to_table(sdl_row_index).unwrap();
+                    CriCsbSoundArchiveEnum::from_table(sound_element_table).unwrap()
+                };
 
                 match (&format, &data) {
                     (CriSoundArchiveFormat::Adx, CriCsbSoundArchiveEnum::Aax(_)) => (),
                     (CriSoundArchiveFormat::Dsp, CriCsbSoundArchiveEnum::AdpcmWii(_)) => (),
+                    (CriSoundArchiveFormat::Adx, CriCsbSoundArchiveEnum::Stream) => (),
                     (format, data) =>
                         panic!("Incorret combination of format and data: {format:?}, {data:?}"),
                 }
 
                 result.push(CriCsbSoundElement {
-                    original_string_pool: sound_element_table.original_string_pool.clone(),
+                    original_string_pool: vec![],
                     name: sdl_name.clone(),
                     data,
                     fmt: table.get_field("fmt").unwrap().to_u8(sdl_row_index).unwrap(),

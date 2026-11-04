@@ -31,8 +31,13 @@ impl CriTableField {
     }
 
     pub fn to_u8(&self, row_index: usize) -> Result<u8, CommonBinaryError> {
+        let value = match &self.rows.get(row_index).unwrap() {
+            CriFieldValue::Null => &self.ttype.get_null_value(),
+            _ => &self.rows[row_index]
+        };
+
         match &self.ttype {
-            CriFieldType::Byte => match &self.rows[row_index] {
+            CriFieldType::Byte => match value {
                 CriFieldValue::Byte(value) => Ok(*value),
                 CriFieldValue::Default => match self.default_value.as_ref().unwrap() {
                     CriFieldValue::Byte(value) => Ok(*value),
@@ -45,8 +50,13 @@ impl CriTableField {
     }
 
     pub fn to_i8(&self, row_index: usize) -> Result<i8, CommonBinaryError> {
+        let value = match &self.rows.get(row_index).unwrap() {
+            CriFieldValue::Null => &self.ttype.get_null_value(),
+            _ => &self.rows[row_index]
+        };
+
         match &self.ttype {
-            CriFieldType::SByte => match &self.rows[row_index] {
+            CriFieldType::SByte => match value {
                 CriFieldValue::SByte(value) => Ok(*value),
                 CriFieldValue::Default => match self.default_value.as_ref().unwrap() {
                     CriFieldValue::SByte(value) => Ok(*value),
@@ -59,8 +69,13 @@ impl CriTableField {
     }
 
     pub fn to_u16(&self, row_index: usize) -> Result<u16, CommonBinaryError> {
+        let value = match &self.rows.get(row_index).unwrap() {
+            CriFieldValue::Null => &self.ttype.get_null_value(),
+            _ => &self.rows[row_index]
+        };
+
         match &self.ttype {
-            CriFieldType::UInt16 => match &self.rows[row_index] {
+            CriFieldType::UInt16 => match value {
                 CriFieldValue::UInt16(value) => Ok(*value),
                 CriFieldValue::Default => match self.default_value.as_ref().unwrap() {
                     CriFieldValue::UInt16(value) => Ok(*value),
@@ -73,8 +88,13 @@ impl CriTableField {
     }
 
     pub fn to_i16(&self, row_index: usize) -> Result<i16, CommonBinaryError> {
+        let value = match &self.rows.get(row_index).unwrap() {
+            CriFieldValue::Null => &self.ttype.get_null_value(),
+            _ => &self.rows[row_index]
+        };
+
         match &self.ttype {
-            CriFieldType::Int16 => match &self.rows[row_index] {
+            CriFieldType::Int16 => match value {
                 CriFieldValue::Int16(value) => Ok(*value),
                 CriFieldValue::Default => match self.default_value.as_ref().unwrap() {
                     CriFieldValue::Int16(value) => Ok(*value),
@@ -87,46 +107,61 @@ impl CriTableField {
     }
 
     pub fn to_u32(&self, row_index: usize) -> Result<u32, CommonBinaryError> {
+        let value = match &self.rows.get(row_index).unwrap() {
+            CriFieldValue::Null => &self.ttype.get_null_value(),
+            _ => &self.rows[row_index]
+        };
+
         match &self.ttype {
-            CriFieldType::UInt32 => match &self.rows.get(row_index) {
-                Some(row) => match row {
+            CriFieldType::UInt32 => match &value {
+                // Some(row) => match row {
                     CriFieldValue::UInt32(value) => Ok(*value),
                     CriFieldValue::Default => match self.default_value.as_ref().unwrap() {
                         CriFieldValue::UInt32(value) => Ok(*value),
                         _ => panic!("dsadsa"),
                     },
                     value => panic!("Expected value of UInt32, got {value:?}"),
-                },
-                None => Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
-                    pointer: row_index,
-                    source_len: self.rows.len(),
-                    when: "tryint to access row of field for u32".to_string(),
-                }))
+                // },
+                // None => Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
+                //     pointer: row_index,
+                //     source_len: self.rows.len(),
+                //     when: "tryint to access row of field for u32".to_string(),
+                // }))
             },
             ttype => panic!("Expected type of UInt32, got {ttype:?}"),
         }
     }
 
     pub fn to_f32(&self, row_index: usize) -> Result<f32, CommonBinaryError> {
+        let value = match &self.rows.get(row_index).unwrap() {
+            CriFieldValue::Null => &self.ttype.get_null_value(),
+            _ => &self.rows[row_index]
+        };
+
         match &self.ttype {
-            CriFieldType::Single => match &self.rows.get(row_index) {
-                Some(row) => match row {
+            CriFieldType::Single => match value {
+                // Some(row) => match row {
                     CriFieldValue::Single(value) => Ok(*value),
                     value => panic!("Expected value of Single, got {value:?}"),
-                },
-                None => Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
-                    pointer: row_index,
-                    source_len: self.rows.len(),
-                    when: "tryint to access row of field for f32".to_string(),
-                }))
+                // },
+                // None => Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
+                //     pointer: row_index,
+                //     source_len: self.rows.len(),
+                //     when: "tryint to access row of field for f32".to_string(),
+                // }))
             },
             ttype => panic!("Expected type of Single, got {ttype:?}"),
         }
     }
 
     pub fn to_u64(&self, row_index: usize) -> Result<u64, CommonBinaryError> {
+        let value = match &self.rows.get(row_index).unwrap() {
+            CriFieldValue::Null => &self.ttype.get_null_value(),
+            _ => &self.rows[row_index]
+        };
+
         match &self.ttype {
-            CriFieldType::UInt64 => match &self.rows[row_index] {
+            CriFieldType::UInt64 => match &value {
                 CriFieldValue::UInt64(value) => Ok(*value),
                 value => panic!("Expected value of UInt64, got {value:?}"),
             },
@@ -135,27 +170,37 @@ impl CriTableField {
     }
 
     pub fn to_string(&self, row_index: usize) -> Result<String, CommonBinaryError> {
+        let value = match &self.rows.get(row_index).unwrap() {
+            CriFieldValue::Null => &self.ttype.get_null_value(),
+            _ => &self.rows[row_index]
+        };
+
         match &self.ttype {
-            CriFieldType::String => match &self.rows.get(row_index) {
-                Some(row) => match row {
+            CriFieldType::String => match value {
+                // Some(row) => match row {
                     CriFieldValue::String(value) => Ok(value.clone()),
                     CriFieldValue::Default => match self.default_value.as_ref().unwrap() {
                         CriFieldValue::String(value) => Ok(value.clone()),
                         _ => panic!("dsadsa"),
                     },
                     value => panic!("Expected value of String, got {value:?}"),
-                },
-                None => Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
-                    pointer: row_index,
-                    source_len: self.rows.len(),
-                    when: "trying to access row of field to for string".to_string(),
-                }))
+                // },
+                // None => Err(CommonBinaryError::PointerOutOfBounds(PointerOutOfBoundsDetails {
+                //     pointer: row_index,
+                //     source_len: self.rows.len(),
+                //     when: "trying to access row of field to for string".to_string(),
+                // }))
             },
             ttype => panic!("Expected type of String, got {ttype:?}"),
         }
     }
 
     pub fn to_data(&self, row_index: usize) -> Result<&Vec<u8>, CommonBinaryError> {
+        let _value = match &self.rows.get(row_index).unwrap() {
+            CriFieldValue::Null => panic!("Default value for ProbablyTable should not exist"),//&self.ttype.get_null_value(),
+            _ => (),//&self.rows[row_index]
+        };
+
         match &self.ttype {
             CriFieldType::Data => match &self.rows[row_index] {
                 CriFieldValue::Data(value) => Ok(value),
@@ -173,6 +218,11 @@ impl CriTableField {
     }
 
     pub fn to_table(&self, row_index: usize) -> Result<&CriTable, CommonBinaryError> {
+        let _value = match &self.rows.get(row_index).unwrap() {
+            CriFieldValue::Null => panic!("Default value for ProbablyTable should not exist"),//&self.ttype.get_null_value(),
+            _ => (),//&self.rows[row_index]
+        };
+
         match &self.ttype {
             CriFieldType::ProbablyTable => match &self.rows[row_index] {
                 CriFieldValue::ProbablyTable(value) => match value {

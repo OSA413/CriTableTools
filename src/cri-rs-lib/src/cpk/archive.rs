@@ -1,7 +1,7 @@
 use common_binary::error::CommonBinaryError;
 use cri_table::table::{CriTable, UTF_SIGNATURE};
 
-use crate::cpk::{etoc::CriCpkEToc, mode::CriCpkMode, toc::CriCpkToc};
+use crate::cpk::{etoc::CriCpkEtoc, mode::CriCpkMode, toc::CriCpkToc};
 
 pub struct CriCpkArchive
 {
@@ -15,7 +15,7 @@ pub struct CriCpkArchive
     pub toc: Vec<CriCpkToc>,
     pub etoc_offset: u64,
     pub etoc_size: u64,
-    pub etoc: Vec<CriCpkEToc>,
+    pub etoc: Vec<CriCpkEtoc>,
     // unused?
     pub itoc_offset: u64,
     pub itoc_size: u64,
@@ -68,13 +68,13 @@ impl CriCpkArchive {
         let mut entries = Vec::with_capacity(table.row_count());
         for toc_row_index in 0..table.row_count() {
             let entry = CriCpkToc {
-                dir_name: table.get_field("DirName").unwrap().to_u8(toc_row_index).unwrap(),
-                file_name: table.get_field("FileName").unwrap().to_u8(toc_row_index).unwrap(),
-                file_size: table.get_field("FileSize").unwrap().to_u8(toc_row_index).unwrap(),
-                extract_size: table.get_field("ExtractSize").unwrap().to_u8(toc_row_index).unwrap(),
-                file_offset: table.get_field("FileOffset").unwrap().to_u8(toc_row_index).unwrap(),
-                id: table.get_field("ID").unwrap().to_u8(toc_row_index).unwrap(),
-                user_string: table.get_field("UserString").unwrap().to_u8(toc_row_index).unwrap(),
+                dir_name: table.get_field("DirName").unwrap().to_string(toc_row_index).unwrap(),
+                file_name: table.get_field("FileName").unwrap().to_string(toc_row_index).unwrap(),
+                file_size: table.get_field("FileSize").unwrap().to_u32(toc_row_index).unwrap(),
+                extract_size: table.get_field("ExtractSize").unwrap().to_u32(toc_row_index).unwrap(),
+                file_offset: table.get_field("FileOffset").unwrap().to_u64(toc_row_index).unwrap(),
+                id: table.get_field("ID").unwrap().to_u32(toc_row_index).unwrap(),
+                user_string: table.get_field("UserString").unwrap().to_string(toc_row_index).unwrap(),
             };
             entries.push(entry);
         }
@@ -82,14 +82,14 @@ impl CriCpkArchive {
         entries
     }
 
-    pub fn parse_etoc_from_parent(source: &[u8], parent_table: &CriTable) -> Vec<CriCpkEToc> {
-        let toc_position = parent_table.get_field("ETocOffset").unwrap().to_u64(0).unwrap();
+    pub fn parse_etoc_from_parent(source: &[u8], parent_table: &CriTable) -> Vec<CriCpkEtoc> {
+        let toc_position = parent_table.get_field("EtocOffset").unwrap().to_u64(0).unwrap();
         let toc_section_pointer = CriCpkArchive::get_section_pointer(source, toc_position as usize, *b"ETOC").unwrap();
         let table = CriTable::read(source, Some(toc_section_pointer), UTF_SIGNATURE).unwrap();
         
         let mut entries = Vec::with_capacity(table.row_count());
         for toc_row_index in 0..table.row_count() {
-            let entry = CriCpkEToc {
+            let entry = CriCpkEtoc {
                 update_date_time: table.get_field("UpdateDateTime").unwrap().to_u64(toc_row_index).unwrap(),
                 local_dir: table.get_field("LocalDir").unwrap().to_string(toc_row_index).unwrap(),
             };
@@ -120,9 +120,6 @@ impl CriCpkArchive {
             eprintln!("Unsupported CriCpkMode [{mode:?}]");
             return Err(CommonBinaryError::SeeConsole());
         }
-
-        let toc = CriCpkArchive::parse_toc_from_parent(&source, &table);
-        let etoc = CriCpkArchive::parse_etoc_from_parent(&source, &table);
 
         let update_date_time = table.get_field("UpdateDateTime").unwrap().to_u64(0).unwrap();
         let file_size = table.get_field("FileSize").unwrap().to_u64(0).unwrap();
@@ -159,6 +156,13 @@ impl CriCpkArchive {
         let comment = table.get_field("Comment").unwrap().to_string(0).unwrap();
         let codec = table.get_field("Codec").unwrap().to_u32(0).unwrap();
         let dpk_itoc = table.get_field("DpkItoc").unwrap().to_u32(0).unwrap();
+
+        assert_eq!(itoc_crc, 0, "ITOC crc must be 0");
+        assert_eq!(gtoc_crc, 0, "GTOC crc must be 0");
+        assert_eq!(toc_crc, 0, "TOC crc must be 0");
+
+        let toc = CriCpkArchive::parse_toc_from_parent(&source, &table);
+        let etoc = CriCpkArchive::parse_etoc_from_parent(&source, &table);
 
         Ok(CriCpkArchive {
             update_date_time,
