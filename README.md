@@ -16,12 +16,14 @@ Please note that most of the CLI tools support the `--help` flag to show help.
 
 ## Differences from the original SonicAudioTools
 
-* Only CSB/CPK files are supported, if you are looking for ACB/AWB file support, try using this: https://github.com/seiunx-dev/cridecoder (I haven't tested it but it looks promising).
+* Only CSB/CPK files are supported.
+  * If you are looking for ACB/AWB file support, try using this: https://github.com/seiunx-dev/cridecoder (I haven't tested it but it looks promising).
+  * If you are looking for an arbitrary high-level abstraction over the CRI tables, try using this: https://crates.io/crates/criware-utf (I haven't tested it, again).
 * It contains only CLI tools, not GUI tools.
 * Decompression of files is not supported.
 * Ahead-of-time values loading is implemented instead of lazy-loading (I mean the file is read fully in one iteration instead of jumping on the stream in the memory between the pointers and values).
 * For the simplification purposes, only the "latest" version of CPK files is supported (so far I haven't seen games with other versions of CPK).
-* Added support for DSP/ADPCM_WII audio files.
+* Added support for DSP/ADPCM_WII (mono) audio files.
 * Pure Rust implementation.
 
 ## List of tools
@@ -38,7 +40,7 @@ A tool to fully extract, re-create, and patch CSB files (supports related CPK fi
 
 | Game | Platform(s) | Table Read | Structure Read | Extraction | Re-creation | Patching | Notes |
 | ---- | ----------- | ---------- | -------------- | ---------- | ----------- | -------- | ----- |
-| Sonic and the Black Knight | Wii | ✅ | ✅ | ✅ | ✅¹ | ✅ | ¹ |
+| Sonic and the Black Knight | Wii | ✅ | ✅ | ✅ | ✅¹ | ✅ | ¹ ³ |
 | Sonic Free Riders | XBOX 360 | ✅ | ✅ (CPK WIP) | ✅ | ❓ | ❓ | Not tested |
 | Sonic 4 Episode 1 | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
 | Sonic 4 Episode 2 | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
@@ -53,7 +55,9 @@ A tool to fully extract, re-create, and patch CSB files (supports related CPK fi
 
 ² - Last time it properly worked in [v0.1.0](https://github.com/OSA413/CriTableTools/releases/tag/v0.1.0).
 
-*Your game is not in the list? Try creating an issue with game's name and platform and I'll think about it.*
+³ - Only one-channel (mono) audio is currently extracted and imported properly.
+
+*Your game is not in the list and **is not working**? Try creating an issue with game's name and platform and I'll think about it.*
 
 ## Want to contribute?
 
@@ -65,7 +69,7 @@ If you want to contribute to the original C# project, please follow the original
 
 ## Special thanks
 
-Special thanks to [Skyth](https://github.com/blueskythlikesclouds) for the [original C# tools](https://github.com/blueskythlikesclouds/SonicAudioTools) and for licensing them under the MIT license.
+Special thanks to [Skyth](https://github.com/blueskythlikesclouds) for the [original C# tools](https://github.com/blueskythlikesclouds/SonicAudioTools) and for licensing them under the MIT license. Btw check out the [original project's wiki](https://github.com/blueskythlikesclouds/SonicAudioTools/wiki/CSB-Builder) to understand what's going on with the CSB format.
 
 ## AI disclosure and usage policy and contribution guide (for the rewritten project)
 
