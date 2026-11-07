@@ -40,7 +40,7 @@ A tool to fully extract, re-create, and patch CSB files (supports related CPK fi
 
 | Game | Platform(s) | Table Read | Structure Read | Extraction | Re-creation | Patching | Notes |
 | ---- | ----------- | ---------- | -------------- | ---------- | ----------- | -------- | ----- |
-| Sonic and the Black Knight | Wii | ✅ | ✅ | ✅ | ✅¹ | ✅ | ¹ ³ |
+| Sonic and the Black Knight | Wii | ✅ | ✅ | ✅ | ✅¹ | ✅ | ¹, ³ |
 | Sonic Free Riders | XBOX 360 | ✅ | ✅ (CPK WIP) | ✅ | ❓ | ❓ | Not tested |
 | Sonic 4 Episode 1 | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
 | Sonic 4 Episode 2 | PC | ✅ | ⏳ | ⏳² | ❌ | ❌ | ², WIP |
@@ -57,7 +57,7 @@ A tool to fully extract, re-create, and patch CSB files (supports related CPK fi
 
 ³ - Only one-channel (mono) audio is currently extracted and imported properly.
 
-*Your game is not in the list and **is not working**? Try creating an issue with game's name and platform and I'll think about it.*
+*Your game is not in the list and **is not working**? Try creating an issue with game's name and platform and I'll think about it.* **Please, don't share proprietary/retail files.**
 
 ## Want to contribute?
 
